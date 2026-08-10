@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Floorplan Studio — Source One Events</title>
-<link rel="stylesheet" href="styles.css?v=19" />
+<link rel="stylesheet" href="styles.css?v=20" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%234f7cff'/><g fill='none' stroke='white' stroke-width='8'><rect x='22' y='22' width='24' height='24'/><rect x='54' y='22' width='24' height='24'/><rect x='22' y='54' width='56' height='24'/></g></svg>" />
 </head>
 <body>
@@ -72,6 +72,10 @@
 
       <div class="spacer"></div>
 
+      <button class="btn ghost" id="btnAccount" title="Cloud sync and sign in">
+        <svg viewBox="0 0 24 24"><path d="M6.5 19a4.5 4.5 0 0 1-.5-8.97 6 6 0 0 1 11.6-1.55A4.25 4.25 0 0 1 18 19z"/></svg>
+        <span id="accountLabel">Local</span>
+      </button>
       <button class="btn ghost" id="btnPlans">
         <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg> Plans
       </button>
@@ -198,17 +202,20 @@
 
 <input type="file" id="filePicker" hidden />
 
-<script src="js/geometry.js?v=19"></script>
-<script src="js/config.js?v=19"></script>
-<script src="js/state.js?v=19"></script>
-<script src="js/rules.js?v=19"></script>
-<script src="js/render.js?v=19"></script>
-<script src="js/interactions.js?v=19"></script>
-<script src="js/ui.js?v=19"></script>
-<script src="js/publish.js?v=19"></script>
-<script src="js/exporters.js?v=19"></script>
-<script src="js/samples.js?v=19"></script>
-<script src="js/pcma.js?v=19"></script>
-<script src="js/main.js?v=19"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<script src="js/geometry.js?v=20"></script>
+<script src="js/config.js?v=20"></script>
+<script src="js/state.js?v=20"></script>
+<script src="js/backend.js?v=20"></script>
+<script src="js/store-supabase.js?v=20"></script>
+<script src="js/rules.js?v=20"></script>
+<script src="js/render.js?v=20"></script>
+<script src="js/interactions.js?v=20"></script>
+<script src="js/ui.js?v=20"></script>
+<script src="js/publish.js?v=20"></script>
+<script src="js/exporters.js?v=20"></script>
+<script src="js/samples.js?v=20"></script>
+<script src="js/pcma.js?v=20"></script>
+<script src="js/main.js?v=20"></script>
 </body>
 </html>

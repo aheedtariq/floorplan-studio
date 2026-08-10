@@ -17,6 +17,21 @@
     FP.initInteractions(canvas);
     FP.initUI();
 
+    /* Restore any Supabase session before choosing a store, so a signed-in
+       user lands on their cloud plans rather than briefly on local ones.
+       Never let a backend problem stop the editor from opening. */
+    try {
+      await FP.auth?.init?.();
+      if (FP.auth?.signedIn?.() && FP.prefs.store === 'supabase') {
+        FP.useStore('supabase');
+      }
+    } catch (e) {
+      console.warn('Auth unavailable — continuing with local storage', e);
+    }
+    FP.syncAccountBadge?.();
+    FP.on('auth', () => FP.syncAccountBadge?.());
+    FP.on('store-changed', () => FP.syncAccountBadge?.());
+
     await openInitialPlan();
 
     FP.render.fit();

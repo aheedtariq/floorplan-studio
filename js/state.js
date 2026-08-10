@@ -26,8 +26,24 @@
 
   /* ---------------- ids ---------------- */
   let seq = 0;
-  FP.uid = (p = 'el') =>
-    `${p}_${Date.now().toString(36)}${(seq++).toString(36)}${Math.floor(Math.random() * 1296).toString(36)}`;
+  /* Real UUIDs, because these ids become Postgres uuid primary keys the
+     moment a plan is saved to the cloud. Generating them client-side means
+     a plan drafted offline keeps its identity when it syncs — no
+     rewriting of parent_id references on the way up. */
+  FP.uid = () => {
+    if (root.crypto?.randomUUID) return root.crypto.randomUUID();
+    /* Fallback for older/insecure contexts: RFC 4122 v4 shape. */
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+      const r = (Math.random() * 16) | 0;
+      const v = c === 'x' ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  };
+  void seq;
+
+  FP.isUuid = (v) =>
+    typeof v === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 
   const clone = (v) => JSON.parse(JSON.stringify(v));
   FP.clone = clone;
@@ -524,6 +540,24 @@
         props: { ...FP.defaultProps(el.kind), ...el.props },
       };
     });
+    /* Ids became uuids when the cloud store landed, because they are used
+       directly as Postgres primary keys. Rewrite any older id here — and
+       every parentId pointing at one — so a plan drafted before that
+       change uploads with its booth interiors still attached. Doing it at
+       load time means it happens once, not on every save. */
+    const idMap = {};
+    const remap = (old) => {
+      if (!old) return null;
+      if (FP.isUuid(old)) return old;
+      if (!idMap[old]) idMap[old] = FP.uid();
+      return idMap[old];
+    };
+    if (!FP.isUuid(out.id)) out.id = remap(out.id);
+    out.elements.forEach((el) => {
+      el.id = remap(el.id);
+      el.parentId = el.parentId ? remap(el.parentId) : null;
+    });
+
     out.schema = 2;
     return out;
   };

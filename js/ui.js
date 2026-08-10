@@ -1135,6 +1135,175 @@
   }
 
   /* ============================================================
+     Account / cloud sync
+
+     Storage is either the browser or Supabase, chosen at runtime through
+     FP.useStore(). Everything above FP.store is identical either way, so
+     this panel is the whole of the difference the user sees.
+     ============================================================ */
+  function syncAccountBadge() {
+    const el = $('accountLabel');
+    if (!el) return;
+    const cloud = FP.storeId?.() === 'supabase';
+    const email = FP.auth?.signedIn?.() ? FP.auth.user().email : null;
+    el.textContent = cloud && email ? email.split('@')[0] : cloud ? 'Cloud' : 'Local';
+    $('btnAccount').classList.toggle('on', cloud && !!email);
+  }
+  FP.syncAccountBadge = syncAccountBadge;
+
+  function accountModal() {
+    const ok = FP.auth?.available?.();
+    const signedIn = FP.auth?.signedIn?.();
+    const cloud = FP.storeId?.() === 'supabase';
+    const user = signedIn ? FP.auth.user() : null;
+    const role = FP.auth?.role?.();
+
+    if (!ok) {
+      FP.modal({
+        title: 'Cloud sync',
+        body: `<p class="helptext">The Supabase client could not be loaded, so cloud
+          sync is unavailable. Plans are saving to this browser only.</p>
+          <p class="helptext">This usually means the page is open from a
+          <code>file://</code> path or the network blocked the CDN. Serve the folder
+          over http and reload.</p>`,
+        foot: '<button class="btn primary" data-close>Close</button>',
+        onMount: (_b, f) => (f.querySelector('[data-close]').onclick = FP.closeModal),
+      });
+      return;
+    }
+
+    const body = signedIn ? `
+      <div class="grp">
+        <h4 class="grp-title">Signed in</h4>
+        <div class="kv"><span>Account</span><span>${esc(user.email)}</span></div>
+        <div class="kv"><span>Role</span><span>${esc(role || 'pending')}</span></div>
+        <div class="kv"><span>Can edit plans</span><span>${FP.auth.canEdit() ? 'yes' : 'no'}</span></div>
+      </div>
+      <div class="grp">
+        <h4 class="grp-title">Where plans are saved</h4>
+        <div class="seg" id="storeSeg">
+          <button data-store="local"${!cloud ? ' class="on"' : ''}>This browser</button>
+          <button data-store="supabase"${cloud ? ' class="on"' : ''}>Cloud</button>
+        </div>
+        <p class="helptext" style="margin-top:8px">
+          Cloud plans are shared with your team and protected by row level
+          security — exhibitors only ever see their own booth.
+        </p>
+        ${cloud ? '' : `<button class="mini" id="btnPushPlan" style="width:100%;margin-top:6px">
+          Upload the open plan to the cloud</button>`}
+      </div>` : `
+      <div class="grp">
+        <h4 class="grp-title">Sign in</h4>
+        <div class="field"><label>Email</label>
+          <input class="inp" id="acEmail" type="email" placeholder="you@sourceoneevents.com"/></div>
+        <div class="field"><label>Password</label>
+          <input class="inp" id="acPass" type="password" placeholder="••••••••"/></div>
+        <div class="btn-row">
+          <button class="mini" id="btnSignIn">Sign in</button>
+          <button class="mini" id="btnSignUp">Create account</button>
+        </div>
+        <p class="helptext" style="margin-top:10px">
+          Or get a one-time link by email — no password needed.
+        </p>
+        <button class="mini" id="btnMagic" style="width:100%">Email me a sign-in link</button>
+        <div id="acMsg" class="helptext" style="margin-top:10px"></div>
+      </div>
+      <div class="grp">
+        <h4 class="grp-title">Working offline</h4>
+        <p class="helptext" style="margin:0">Without signing in the editor still works
+          fully — plans save to this browser and export as files.</p>
+      </div>`;
+
+    FP.modal({
+      title: 'Cloud sync',
+      body,
+      foot: signedIn
+        ? `<button class="btn ghost" data-signout>Sign out</button>
+           <button class="btn primary" data-close>Done</button>`
+        : '<button class="btn primary" data-close>Close</button>',
+      onMount: (b, f) => {
+        f.querySelector('[data-close]').onclick = FP.closeModal;
+
+        f.querySelector('[data-signout]')?.addEventListener('click', async () => {
+          await FP.auth.signOut();
+          FP.useStore('local');
+          FP.closeModal();
+          syncAccountBadge();
+          FP.toast('Signed out — back to local storage');
+        });
+
+        b.querySelectorAll('[data-store]').forEach((btn) =>
+          btn.addEventListener('click', async () => {
+            const which = btn.dataset.store;
+            FP.useStore(which);
+            syncAccountBadge();
+            FP.closeModal();
+            FP.toast(which === 'supabase' ? 'Saving to the cloud' : 'Saving to this browser');
+            if (which === 'supabase') plansModal();
+          }));
+
+        b.querySelector('#btnPushPlan')?.addEventListener('click', async () => {
+          try {
+            FP.useStore('supabase');
+            await FP.store.put(FP.plan);
+            FP.closeModal();
+            syncAccountBadge();
+            FP.toast(`Uploaded “${FP.plan.name}”`);
+          } catch (err) {
+            FP.useStore('local');
+            FP.toast(err.message || 'Upload failed', true);
+          }
+        });
+
+        const msg = (t, bad) => {
+          const m = b.querySelector('#acMsg');
+          if (m) { m.textContent = t; m.style.color = bad ? 'var(--err)' : 'var(--ok)'; }
+        };
+        const creds = () => ({
+          email: (b.querySelector('#acEmail')?.value || '').trim(),
+          pass: b.querySelector('#acPass')?.value || '',
+        });
+
+        b.querySelector('#btnSignIn')?.addEventListener('click', async () => {
+          const { email, pass } = creds();
+          if (!email || !pass) return msg('Enter an email and password.', true);
+          msg('Signing in…');
+          const r = await FP.auth.signInWithPassword(email, pass);
+          if (r.error) return msg(r.error, true);
+          FP.useStore('supabase');
+          FP.closeModal();
+          syncAccountBadge();
+          FP.toast('Signed in');
+          plansModal();
+        });
+
+        b.querySelector('#btnSignUp')?.addEventListener('click', async () => {
+          const { email, pass } = creds();
+          if (!email || !pass) return msg('Enter an email and password.', true);
+          msg('Creating account…');
+          const r = await FP.auth.signUpWithPassword(email, pass);
+          if (r.error) return msg(r.error, true);
+          if (r.needsConfirmation) {
+            return msg('Check your email to confirm the address, then sign in.');
+          }
+          FP.useStore('supabase');
+          FP.closeModal();
+          syncAccountBadge();
+          FP.toast('Account created');
+        });
+
+        b.querySelector('#btnMagic')?.addEventListener('click', async () => {
+          const { email } = creds();
+          if (!email) return msg('Enter your email first.', true);
+          msg('Sending…');
+          const r = await FP.auth.signInWithMagicLink(email);
+          msg(r.error || 'Link sent — check your inbox.', !!r.error);
+        });
+      },
+    });
+  }
+
+  /* ============================================================
      Plans modal
      ============================================================ */
   async function plansModal() {
@@ -1323,6 +1492,7 @@
 
     $('btnHelp').onclick = helpModal;
     $('btnPlans').onclick = plansModal;
+    $('btnAccount').onclick = accountModal;
 
     const menu = $('exportMenu');
     $('btnExport').onclick = (e) => { e.stopPropagation(); menu.hidden = !menu.hidden; };
