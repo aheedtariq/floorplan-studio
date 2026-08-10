@@ -1,0 +1,3807 @@
+{
+  "id": "plan_pcma_msmihsgr",
+  "schema": 2,
+  "name": "PCMA Convening Leaders — Expo Floor",
+  "venue": "TBC — set in the Plan tab",
+  "hall": "Exhibit Hall",
+  "dates": {
+    "loadIn": "",
+    "open": "",
+    "teardown": "",
+    "deadline": "",
+    "freeze": ""
+  },
+  "unit": "ft",
+  "width": 300,
+  "height": 180,
+  "grid": 5,
+  "nextSpaceNo": 235,
+  "elements": [
+    {
+      "id": "el_pcma000",
+      "kind": "loading-dock",
+      "shape": "rect",
+      "layer": "structure",
+      "parentId": null,
+      "geometry": {
+        "x": 246,
+        "y": 0,
+        "w": 22,
+        "h": 14,
+        "rot": 0
+      },
+      "props": {
+        "label": "Dock 1",
+        "dockId": "D1"
+      }
+    },
+    {
+      "id": "el_pcma001",
+      "kind": "loading-dock",
+      "shape": "rect",
+      "layer": "structure",
+      "parentId": null,
+      "geometry": {
+        "x": 272,
+        "y": 0,
+        "w": 22,
+        "h": 14,
+        "rot": 0
+      },
+      "props": {
+        "label": "Dock 2",
+        "dockId": "D2"
+      }
+    },
+    {
+      "id": "el_pcma002",
+      "kind": "door",
+      "shape": "rect",
+      "layer": "structure",
+      "parentId": null,
+      "geometry": {
+        "x": 120,
+        "y": 178,
+        "w": 20,
+        "h": 2,
+        "rot": 0
+      },
+      "props": {
+        "label": "Main entrance",
+        "clearance": 12
+      }
+    },
+    {
+      "id": "el_pcma003",
+      "kind": "door",
+      "shape": "rect",
+      "layer": "structure",
+      "parentId": null,
+      "geometry": {
+        "x": 155,
+        "y": 178,
+        "w": 20,
+        "h": 2,
+        "rot": 0
+      },
+      "props": {
+        "label": "Entrance 2",
+        "clearance": 12
+      }
+    },
+    {
+      "id": "el_pcma004",
+      "kind": "fire-exit",
+      "shape": "rect",
+      "layer": "safety",
+      "parentId": null,
+      "geometry": {
+        "x": 0,
+        "y": 40,
+        "w": 2,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "label": "Exit A",
+        "clearance": 10
+      }
+    },
+    {
+      "id": "el_pcma005",
+      "kind": "fire-exit",
+      "shape": "rect",
+      "layer": "safety",
+      "parentId": null,
+      "geometry": {
+        "x": 0,
+        "y": 110,
+        "w": 2,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "label": "Exit B",
+        "clearance": 10
+      }
+    },
+    {
+      "id": "el_pcma006",
+      "kind": "fire-exit",
+      "shape": "rect",
+      "layer": "safety",
+      "parentId": null,
+      "geometry": {
+        "x": 298,
+        "y": 40,
+        "w": 2,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "label": "Exit C",
+        "clearance": 10
+      }
+    },
+    {
+      "id": "el_pcma007",
+      "kind": "fire-exit",
+      "shape": "rect",
+      "layer": "safety",
+      "parentId": null,
+      "geometry": {
+        "x": 298,
+        "y": 110,
+        "w": 2,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "label": "Exit D",
+        "clearance": 10
+      }
+    },
+    {
+      "id": "el_pcma008",
+      "kind": "fire-exit",
+      "shape": "rect",
+      "layer": "safety",
+      "parentId": null,
+      "geometry": {
+        "x": 70,
+        "y": 0,
+        "w": 10,
+        "h": 2,
+        "rot": 0
+      },
+      "props": {
+        "label": "Exit E",
+        "clearance": 10
+      }
+    },
+    {
+      "id": "el_pcma009",
+      "kind": "fire-exit",
+      "shape": "rect",
+      "layer": "safety",
+      "parentId": null,
+      "geometry": {
+        "x": 210,
+        "y": 0,
+        "w": 10,
+        "h": 2,
+        "rot": 0
+      },
+      "props": {
+        "label": "Exit F",
+        "clearance": 10
+      }
+    },
+    {
+      "id": "el_pcma00a",
+      "kind": "extinguisher",
+      "shape": "marker",
+      "layer": "safety",
+      "parentId": null,
+      "geometry": {
+        "x": 108,
+        "y": 6,
+        "r": 1.2
+      },
+      "props": {
+        "label": "Extinguisher"
+      }
+    },
+    {
+      "id": "el_pcma00b",
+      "kind": "extinguisher",
+      "shape": "marker",
+      "layer": "safety",
+      "parentId": null,
+      "geometry": {
+        "x": 200,
+        "y": 6,
+        "r": 1.2
+      },
+      "props": {
+        "label": "Extinguisher"
+      }
+    },
+    {
+      "id": "el_pcma00c",
+      "kind": "first-aid",
+      "shape": "rect",
+      "layer": "amenities",
+      "parentId": null,
+      "geometry": {
+        "x": 86,
+        "y": 150,
+        "w": 14,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "label": "First aid"
+      }
+    },
+    {
+      "id": "el_pcma00d",
+      "kind": "column",
+      "shape": "rect",
+      "layer": "structure",
+      "parentId": null,
+      "geometry": {
+        "x": 110,
+        "y": 54,
+        "w": 2.5,
+        "h": 2.5,
+        "rot": 0
+      },
+      "props": {
+        "label": "Col"
+      }
+    },
+    {
+      "id": "el_pcma00e",
+      "kind": "column",
+      "shape": "rect",
+      "layer": "structure",
+      "parentId": null,
+      "geometry": {
+        "x": 203,
+        "y": 54,
+        "w": 2.5,
+        "h": 2.5,
+        "rot": 0
+      },
+      "props": {
+        "label": "Col"
+      }
+    },
+    {
+      "id": "el_pcma00f",
+      "kind": "column",
+      "shape": "rect",
+      "layer": "structure",
+      "parentId": null,
+      "geometry": {
+        "x": 110,
+        "y": 86,
+        "w": 2.5,
+        "h": 2.5,
+        "rot": 0
+      },
+      "props": {
+        "label": "Col"
+      }
+    },
+    {
+      "id": "el_pcma00g",
+      "kind": "column",
+      "shape": "rect",
+      "layer": "structure",
+      "parentId": null,
+      "geometry": {
+        "x": 203,
+        "y": 86,
+        "w": 2.5,
+        "h": 2.5,
+        "rot": 0
+      },
+      "props": {
+        "label": "Col"
+      }
+    },
+    {
+      "id": "el_pcma00h",
+      "kind": "column",
+      "shape": "rect",
+      "layer": "structure",
+      "parentId": null,
+      "geometry": {
+        "x": 110,
+        "y": 118,
+        "w": 2.5,
+        "h": 2.5,
+        "rot": 0
+      },
+      "props": {
+        "label": "Col"
+      }
+    },
+    {
+      "id": "el_pcma00i",
+      "kind": "column",
+      "shape": "rect",
+      "layer": "structure",
+      "parentId": null,
+      "geometry": {
+        "x": 203,
+        "y": 118,
+        "w": 2.5,
+        "h": 2.5,
+        "rot": 0
+      },
+      "props": {
+        "label": "Col"
+      }
+    },
+    {
+      "id": "el_pcma00j",
+      "kind": "dead-space",
+      "shape": "rect",
+      "layer": "zones",
+      "parentId": null,
+      "geometry": {
+        "x": 244,
+        "y": 14,
+        "w": 52,
+        "h": 12,
+        "rot": 0
+      },
+      "props": {
+        "label": "Dock turning circle",
+        "notes": "Must stay clear for forklift access during load-in."
+      }
+    },
+    {
+      "id": "el_pcma00k",
+      "kind": "dead-space",
+      "shape": "rect",
+      "layer": "zones",
+      "parentId": null,
+      "geometry": {
+        "x": 0,
+        "y": 150,
+        "w": 22,
+        "h": 30,
+        "rot": 0
+      },
+      "props": {
+        "label": "Low ceiling",
+        "notes": "Ceiling drops under the concourse overhang — not sellable."
+      }
+    },
+    {
+      "id": "el_pcma00l",
+      "kind": "aisle",
+      "shape": "rect",
+      "layer": "zones",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 48,
+        "w": 172,
+        "h": 12,
+        "rot": 0
+      },
+      "props": {
+        "label": "Aisle 100"
+      }
+    },
+    {
+      "id": "el_pcma00m",
+      "kind": "aisle",
+      "shape": "rect",
+      "layer": "zones",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 80,
+        "w": 172,
+        "h": 12,
+        "rot": 0
+      },
+      "props": {
+        "label": "Aisle 200"
+      }
+    },
+    {
+      "id": "el_pcma00n",
+      "kind": "aisle",
+      "shape": "rect",
+      "layer": "zones",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 112,
+        "w": 172,
+        "h": 12,
+        "rot": 0
+      },
+      "props": {
+        "label": "Aisle 300"
+      }
+    },
+    {
+      "id": "el_pcma00o",
+      "kind": "aisle",
+      "shape": "rect",
+      "layer": "zones",
+      "parentId": null,
+      "geometry": {
+        "x": 105,
+        "y": 28,
+        "w": 12,
+        "h": 116,
+        "rot": 0
+      },
+      "props": {
+        "label": "Cross aisle"
+      }
+    },
+    {
+      "id": "el_pcma00p",
+      "kind": "aisle",
+      "shape": "rect",
+      "layer": "zones",
+      "parentId": null,
+      "geometry": {
+        "x": 197,
+        "y": 28,
+        "w": 15,
+        "h": 116,
+        "rot": 0
+      },
+      "props": {
+        "label": "Cross aisle 2"
+      }
+    },
+    {
+      "id": "el_pcma00q",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "101",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma00r",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 35,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "102",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma00s",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 45,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "103",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma00t",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 55,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "104",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma00u",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 65,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "105",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma00v",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 75,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "106",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma00w",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 85,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "107",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma00x",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 95,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "108",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma00y",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 117,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "109",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma00z",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 127,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "110",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma010",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 137,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "111",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma011",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 147,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "112",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma012",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 157,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "113",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma013",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 167,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "114",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma014",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 177,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "115",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma015",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 187,
+        "y": 28,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "116",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma016",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "117",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma017",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 35,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "118",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma018",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 45,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "119",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma019",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 55,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "120",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01a",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 65,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "121",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01b",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 75,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "122",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01c",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 85,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "123",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01d",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 95,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "124",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma01e",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 117,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "125",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma01f",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 127,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "126",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01g",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 137,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "127",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01h",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 147,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "128",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01i",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 157,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "129",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01j",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 167,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "130",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01k",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 177,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "131",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01l",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 187,
+        "y": 38,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "132",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma01m",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "133",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma01n",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 35,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "134",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01o",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 45,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "135",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01p",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 55,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "136",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01q",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 65,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "137",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01r",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 75,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "138",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01s",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 85,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "139",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01t",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 95,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "140",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma01u",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 117,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "141",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma01v",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 127,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "142",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01w",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 137,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "143",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01x",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 147,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "144",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01y",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 157,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "145",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma01z",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 167,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "146",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma020",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 177,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "147",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma021",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 187,
+        "y": 60,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "148",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma022",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "149",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma023",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 35,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "150",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma024",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 45,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "151",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma025",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 55,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "152",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma026",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 65,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "153",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma027",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 75,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "154",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma028",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 85,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "155",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma029",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 95,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "156",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma02a",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 117,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "157",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma02b",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 127,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "158",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02c",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 137,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "159",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02d",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 147,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "160",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02e",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 157,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "161",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02f",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 167,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "162",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02g",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 177,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "163",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02h",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 187,
+        "y": 70,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "164",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma02i",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "165",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma02j",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 35,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "166",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02k",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 45,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "167",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02l",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 55,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "168",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02m",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 65,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "169",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02n",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 75,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "170",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02o",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 85,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "171",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02p",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 95,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "172",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma02q",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 117,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "173",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma02r",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 127,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "174",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02s",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 137,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "175",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02t",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 147,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "176",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02u",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 157,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "177",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02v",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 167,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "178",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02w",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 177,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "179",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma02x",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 187,
+        "y": 92,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "180",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma02y",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "181",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma02z",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 35,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "182",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma030",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 45,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "183",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma031",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 55,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "184",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma032",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 65,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "185",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma033",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 75,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "186",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma034",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 85,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "187",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma035",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 95,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "188",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma036",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 117,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "189",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma037",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 127,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "190",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma038",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 137,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "191",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma039",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 147,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "192",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03a",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 157,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "193",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03b",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 167,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "194",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03c",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 177,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "195",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03d",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 187,
+        "y": 102,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "196",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma03e",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "197",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma03f",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 35,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "198",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03g",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 45,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "199",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03h",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 55,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "200",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03i",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 65,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "201",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03j",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 75,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "202",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03k",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 85,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "203",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03l",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 95,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "204",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma03m",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 117,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "205",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma03n",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 127,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "206",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03o",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 137,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "207",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03p",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 147,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "208",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03q",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 157,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "209",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03r",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 167,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "210",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03s",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 177,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "211",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03t",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 187,
+        "y": 124,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "212",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma03u",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "213",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma03v",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 35,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "214",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03w",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 45,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "215",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03x",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 55,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "216",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03y",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 65,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "217",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma03z",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 75,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "218",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma040",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 85,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "219",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma041",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 95,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "220",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma042",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 117,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "221",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma043",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 127,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "222",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma044",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 137,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "223",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma045",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 147,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "224",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma046",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 157,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "225",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma047",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 167,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "226",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma048",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 177,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "227",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "inline",
+        "tier": "standard"
+      }
+    },
+    {
+      "id": "el_pcma049",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 187,
+        "y": 134,
+        "w": 10,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "number": "228",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "corner",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma04a",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 212,
+        "y": 28,
+        "w": 30,
+        "h": 30,
+        "rot": 0
+      },
+      "props": {
+        "number": "229",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "island",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma04b",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 252,
+        "y": 28,
+        "w": 30,
+        "h": 30,
+        "rot": 0
+      },
+      "props": {
+        "number": "230",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "island",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma04c",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 212,
+        "y": 70,
+        "w": 30,
+        "h": 30,
+        "rot": 0
+      },
+      "props": {
+        "number": "231",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "island",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma04d",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 252,
+        "y": 70,
+        "w": 30,
+        "h": 30,
+        "rot": 0
+      },
+      "props": {
+        "number": "232",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "island",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma04e",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 212,
+        "y": 112,
+        "w": 30,
+        "h": 30,
+        "rot": 0
+      },
+      "props": {
+        "number": "233",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "island",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma04f",
+      "kind": "space",
+      "shape": "rect",
+      "layer": "spaces",
+      "parentId": null,
+      "geometry": {
+        "x": 252,
+        "y": 112,
+        "w": 30,
+        "h": 30,
+        "rot": 0
+      },
+      "props": {
+        "number": "234",
+        "status": "available",
+        "exhibitor": "",
+        "spaceType": "island",
+        "tier": "premium"
+      }
+    },
+    {
+      "id": "el_pcma04g",
+      "kind": "registration",
+      "shape": "rect",
+      "layer": "amenities",
+      "parentId": null,
+      "geometry": {
+        "x": 110,
+        "y": 152,
+        "w": 80,
+        "h": 12,
+        "rot": 0
+      },
+      "props": {
+        "label": "Registration"
+      }
+    },
+    {
+      "id": "el_pcma04h",
+      "kind": "stage",
+      "shape": "rect",
+      "layer": "amenities",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 150,
+        "w": 55,
+        "h": 26,
+        "rot": 0
+      },
+      "props": {
+        "label": "Learning theatre"
+      }
+    },
+    {
+      "id": "el_pcma04i",
+      "kind": "lounge",
+      "shape": "rect",
+      "layer": "amenities",
+      "parentId": null,
+      "geometry": {
+        "x": 200,
+        "y": 150,
+        "w": 50,
+        "h": 22,
+        "rot": 0
+      },
+      "props": {
+        "label": "Braindate lounge"
+      }
+    },
+    {
+      "id": "el_pcma04j",
+      "kind": "food",
+      "shape": "rect",
+      "layer": "amenities",
+      "parentId": null,
+      "geometry": {
+        "x": 256,
+        "y": 148,
+        "w": 40,
+        "h": 24,
+        "rot": 0
+      },
+      "props": {
+        "label": "Food & beverage"
+      }
+    },
+    {
+      "id": "el_pcma04k",
+      "kind": "lounge",
+      "shape": "rect",
+      "layer": "amenities",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 8,
+        "w": 34,
+        "h": 16,
+        "rot": 0
+      },
+      "props": {
+        "label": "Networking lounge"
+      }
+    },
+    {
+      "id": "el_pcma04l",
+      "kind": "av-booth",
+      "shape": "rect",
+      "layer": "amenities",
+      "parentId": null,
+      "geometry": {
+        "x": 150,
+        "y": 8,
+        "w": 12,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "label": "AV / production"
+      }
+    },
+    {
+      "id": "el_pcma04m",
+      "kind": "storage",
+      "shape": "rect",
+      "layer": "amenities",
+      "parentId": null,
+      "geometry": {
+        "x": 175,
+        "y": 8,
+        "w": 16,
+        "h": 10,
+        "rot": 0
+      },
+      "props": {
+        "label": "Storage"
+      }
+    },
+    {
+      "id": "el_pcma04n",
+      "kind": "electrical-panel",
+      "shape": "rect",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x": 2,
+        "y": 4,
+        "w": 5,
+        "h": 2.5,
+        "rot": 0
+      },
+      "props": {
+        "panelId": "MDP-1",
+        "voltage": "480",
+        "phase": "3",
+        "mainAmps": 1200,
+        "clearance": 3,
+        "label": "Main distribution",
+        "notes": "House service tie-in."
+      }
+    },
+    {
+      "id": "el_pcma04o",
+      "kind": "disconnect",
+      "shape": "marker",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x": 9,
+        "y": 5.25,
+        "r": 1
+      },
+      "props": {
+        "label": "Service disconnect",
+        "panelId": "MDP-1"
+      }
+    },
+    {
+      "id": "el_pcma04p",
+      "kind": "distro-box",
+      "shape": "rect",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x": 20,
+        "y": 52,
+        "w": 2.5,
+        "h": 2,
+        "rot": 0
+      },
+      "props": {
+        "distroId": "D-1",
+        "panelId": "MDP-1",
+        "voltage": "208",
+        "phase": "3",
+        "mainAmps": 100,
+        "label": "D-1"
+      }
+    },
+    {
+      "id": "el_pcma04q",
+      "kind": "distro-box",
+      "shape": "rect",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x": 20,
+        "y": 84,
+        "w": 2.5,
+        "h": 2,
+        "rot": 0
+      },
+      "props": {
+        "distroId": "D-2",
+        "panelId": "MDP-1",
+        "voltage": "208",
+        "phase": "3",
+        "mainAmps": 100,
+        "label": "D-2"
+      }
+    },
+    {
+      "id": "el_pcma04r",
+      "kind": "distro-box",
+      "shape": "rect",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x": 20,
+        "y": 116,
+        "w": 2.5,
+        "h": 2,
+        "rot": 0
+      },
+      "props": {
+        "distroId": "D-3",
+        "panelId": "MDP-1",
+        "voltage": "208",
+        "phase": "3",
+        "mainAmps": 100,
+        "label": "D-3"
+      }
+    },
+    {
+      "id": "el_pcma04s",
+      "kind": "distro-box",
+      "shape": "rect",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x": 205,
+        "y": 52,
+        "w": 2.5,
+        "h": 2,
+        "rot": 0
+      },
+      "props": {
+        "distroId": "D-4",
+        "panelId": "MDP-1",
+        "voltage": "208",
+        "phase": "3",
+        "mainAmps": 100,
+        "label": "D-4"
+      }
+    },
+    {
+      "id": "el_pcma04t",
+      "kind": "distro-box",
+      "shape": "rect",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x": 205,
+        "y": 84,
+        "w": 2.5,
+        "h": 2,
+        "rot": 0
+      },
+      "props": {
+        "distroId": "D-5",
+        "panelId": "MDP-1",
+        "voltage": "208",
+        "phase": "3",
+        "mainAmps": 100,
+        "label": "D-5"
+      }
+    },
+    {
+      "id": "el_pcma04u",
+      "kind": "distro-box",
+      "shape": "rect",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x": 205,
+        "y": 116,
+        "w": 2.5,
+        "h": 2,
+        "rot": 0
+      },
+      "props": {
+        "distroId": "D-6",
+        "panelId": "MDP-1",
+        "voltage": "208",
+        "phase": "3",
+        "mainAmps": 100,
+        "label": "D-6"
+      }
+    },
+    {
+      "id": "el_pcma04v",
+      "kind": "electrical-run",
+      "shape": "line",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x1": 4.5,
+        "y1": 6.5,
+        "x2": 21,
+        "y2": 52,
+        "thickness": 0.5
+      },
+      "props": {
+        "circuitId": "F-1",
+        "panelId": "MDP-1",
+        "voltage": "208",
+        "phase": "1",
+        "gauge": "2",
+        "amps": 100,
+        "method": "overhead"
+      }
+    },
+    {
+      "id": "el_pcma04w",
+      "kind": "electrical-run",
+      "shape": "line",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x1": 4.5,
+        "y1": 6.5,
+        "x2": 21,
+        "y2": 84,
+        "thickness": 0.5
+      },
+      "props": {
+        "circuitId": "F-2",
+        "panelId": "MDP-1",
+        "voltage": "208",
+        "phase": "1",
+        "gauge": "1/0",
+        "amps": 100,
+        "method": "overhead"
+      }
+    },
+    {
+      "id": "el_pcma04x",
+      "kind": "electrical-run",
+      "shape": "line",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x1": 4.5,
+        "y1": 6.5,
+        "x2": 21,
+        "y2": 116,
+        "thickness": 0.5
+      },
+      "props": {
+        "circuitId": "F-3",
+        "panelId": "MDP-1",
+        "voltage": "208",
+        "phase": "1",
+        "gauge": "1/0",
+        "amps": 100,
+        "method": "overhead"
+      }
+    },
+    {
+      "id": "el_pcma04y",
+      "kind": "electrical-run",
+      "shape": "line",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x1": 4.5,
+        "y1": 6.5,
+        "x2": 206,
+        "y2": 52,
+        "thickness": 0.5
+      },
+      "props": {
+        "circuitId": "F-4",
+        "panelId": "MDP-1",
+        "voltage": "208",
+        "phase": "1",
+        "gauge": "1/0",
+        "amps": 100,
+        "method": "overhead"
+      }
+    },
+    {
+      "id": "el_pcma04z",
+      "kind": "electrical-run",
+      "shape": "line",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x1": 4.5,
+        "y1": 6.5,
+        "x2": 206,
+        "y2": 84,
+        "thickness": 0.5
+      },
+      "props": {
+        "circuitId": "F-5",
+        "panelId": "MDP-1",
+        "voltage": "208",
+        "phase": "1",
+        "gauge": "1/0",
+        "amps": 100,
+        "method": "overhead"
+      }
+    },
+    {
+      "id": "el_pcma050",
+      "kind": "electrical-run",
+      "shape": "line",
+      "layer": "electrical",
+      "parentId": null,
+      "geometry": {
+        "x1": 4.5,
+        "y1": 6.5,
+        "x2": 206,
+        "y2": 116,
+        "thickness": 0.5
+      },
+      "props": {
+        "circuitId": "F-6",
+        "panelId": "MDP-1",
+        "voltage": "208",
+        "phase": "1",
+        "gauge": "1/0",
+        "amps": 100,
+        "method": "overhead"
+      }
+    },
+    {
+      "id": "el_pcma051",
+      "kind": "rigging-zone",
+      "shape": "rect",
+      "layer": "utilities",
+      "parentId": null,
+      "geometry": {
+        "x": 25,
+        "y": 28,
+        "w": 172,
+        "h": 116,
+        "rot": 0
+      },
+      "props": {
+        "label": "Rigging permitted"
+      }
+    },
+    {
+      "id": "el_pcma052",
+      "kind": "text",
+      "shape": "text",
+      "layer": "annotate",
+      "parentId": null,
+      "geometry": {
+        "x": 150,
+        "y": 20,
+        "rot": 0
+      },
+      "props": {
+        "text": "PCMA CONVENING LEADERS",
+        "fontSize": 7,
+        "color": "#8b96a8"
+      }
+    },
+    {
+      "id": "el_pcma053",
+      "kind": "text",
+      "shape": "text",
+      "layer": "annotate",
+      "parentId": null,
+      "geometry": {
+        "x": 133,
+        "y": 176,
+        "rot": 0
+      },
+      "props": {
+        "text": "MAIN ENTRANCE",
+        "fontSize": 4,
+        "color": "#22c55e"
+      }
+    },
+    {
+      "id": "el_pcma054",
+      "kind": "dimension",
+      "shape": "line",
+      "layer": "annotate",
+      "parentId": null,
+      "geometry": {
+        "x1": 0,
+        "y1": -8,
+        "x2": 300,
+        "y2": -8,
+        "thickness": 0
+      },
+      "props": {}
+    },
+    {
+      "id": "el_pcma055",
+      "kind": "dimension",
+      "shape": "line",
+      "layer": "annotate",
+      "parentId": null,
+      "geometry": {
+        "x1": -8,
+        "y1": 0,
+        "x2": -8,
+        "y2": 180,
+        "thickness": 0
+      },
+      "props": {}
+    }
+  ],
+  "underlay": null,
+  "layers": {},
+  "ruleConfig": {
+    "r-aisle": {
+      "params": {
+        "min": 10
+      }
+    }
+  },
+  "fieldDefs": [],
+  "revision": 1,
+  "created": 1786322834523,
+  "updated": 1786322834523
+}

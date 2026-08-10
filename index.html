@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Floorplan Studio — Source One Events</title>
+<link rel="stylesheet" href="styles.css?v=19" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%234f7cff'/><g fill='none' stroke='white' stroke-width='8'><rect x='22' y='22' width='24' height='24'/><rect x='54' y='22' width='24' height='24'/><rect x='22' y='54' width='56' height='24'/></g></svg>" />
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">
+        <svg viewBox="0 0 100 100" aria-hidden="true">
+          <rect width="100" height="100" rx="20" fill="var(--accent)"/>
+          <g fill="none" stroke="#fff" stroke-width="8">
+            <rect x="22" y="22" width="24" height="24"/>
+            <rect x="54" y="22" width="24" height="24"/>
+            <rect x="22" y="54" width="56" height="24"/>
+          </g>
+        </svg>
+      </div>
+      <div class="brand-text">
+        <div class="brand-title">Floorplan Studio</div>
+        <div class="brand-sub">Source One Events</div>
+      </div>
+    </div>
+
+    <div class="plan-name-wrap">
+      <input id="planName" class="plan-name" value="Untitled Show" spellcheck="false" aria-label="Plan name" />
+      <span id="saveState" class="save-state">Saved</span>
+    </div>
+
+    <div class="topbar-actions">
+      <div class="btn-group">
+        <button class="tb" id="btnUndo" title="Undo (Ctrl+Z)" aria-label="Undo">
+          <svg viewBox="0 0 24 24"><path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/></svg>
+        </button>
+        <button class="tb" id="btnRedo" title="Redo (Ctrl+Shift+Z)" aria-label="Redo">
+          <svg viewBox="0 0 24 24"><path d="m15 14 5-5-5-5"/><path d="M20 9H10a6 6 0 0 0 0 12h3"/></svg>
+        </button>
+      </div>
+
+      <div class="btn-group">
+        <button class="tb" id="btnZoomOut" title="Zoom out (−)">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M8 11h6M20 20l-3.5-3.5"/></svg>
+        </button>
+        <button class="tb wide" id="btnZoomLevel" title="Reset zoom to 100%">100%</button>
+        <button class="tb" id="btnZoomIn" title="Zoom in (+)">
+          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M8 11h6M11 8v6M20 20l-3.5-3.5"/></svg>
+        </button>
+        <button class="tb" id="btnFit" title="Fit plan to screen (F)">
+          <svg viewBox="0 0 24 24"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+        </button>
+      </div>
+
+      <div class="btn-group">
+        <button class="tb toggle" id="btnGrid" title="Toggle grid (G)" aria-pressed="true">
+          <svg viewBox="0 0 24 24"><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg>
+        </button>
+        <button class="tb toggle" id="btnSnap" title="Toggle snap to grid (S)" aria-pressed="true">
+          <svg viewBox="0 0 24 24"><path d="M12 3v6m0 6v6M3 12h6m6 0h6"/><circle cx="12" cy="12" r="2.5"/></svg>
+        </button>
+        <button class="tb toggle" id="btnLabels" title="Toggle labels (L)" aria-pressed="true">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h10M4 17h7"/></svg>
+        </button>
+      </div>
+
+      <div class="spacer"></div>
+
+      <button class="btn ghost" id="btnPlans">
+        <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h10"/></svg> Plans
+      </button>
+      <div class="menu-wrap">
+        <button class="btn ghost" id="btnExport">
+          <svg viewBox="0 0 24 24"><path d="M12 3v12m0-12 4 4m-4-4-4 4"/><path d="M4 17v3h16v-3"/></svg> Export
+        </button>
+        <div class="menu" id="exportMenu" hidden>
+          <button data-export="png">PNG image</button>
+          <button data-export="svg">SVG vector</button>
+          <button data-export="pdf">Print / PDF</button>
+          <div class="menu-sep"></div>
+          <button data-export="json">Plan file (.json)</button>
+          <button data-export="csv">Booth manifest (.csv)</button>
+          <button data-export="electrical">Electrical schedule (.csv)</button>
+          <button data-export="workorders">Booth work orders</button>
+          <div class="menu-sep"></div>
+          <button data-export="publish">Publish public directory…</button>
+          <div class="menu-sep"></div>
+          <button data-export="import">Import plan file…</button>
+        </div>
+      </div>
+      <button class="tb" id="btnTheme" title="Toggle light / dark">
+        <svg viewBox="0 0 24 24"><path d="M20 14a8 8 0 1 1-10-10 7 7 0 0 0 10 10Z"/></svg>
+      </button>
+      <button class="tb" id="btnHelp" title="Keyboard shortcuts (?)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.4 2.3c-.6.3-.9.8-.9 1.4v.3"/><path d="M12 17h.01"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ============ BODY ============ -->
+  <div class="body">
+
+    <!-- LEFT: tool catalog -->
+    <aside class="panel left" id="leftPanel">
+      <div class="tool-rail" id="toolRail"></div>
+
+      <div class="panel-scroll">
+        <div class="search-wrap">
+          <svg viewBox="0 0 24 24" class="search-ic"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+          <input id="catalogSearch" placeholder="Search elements…" spellcheck="false" />
+        </div>
+
+        <section class="sect">
+          <h3 class="sect-title">Quick booths <span class="hint">click to arm, drag on plan</span></h3>
+          <div class="preset-grid" id="boothPresets"></div>
+        </section>
+
+        <div id="catalog"></div>
+
+        <section class="sect">
+          <h3 class="sect-title">Bulk tools</h3>
+          <button class="row-btn" id="btnBoothRow">
+            <svg viewBox="0 0 24 24"><rect x="2" y="9" width="5" height="6"/><rect x="9.5" y="9" width="5" height="6"/><rect x="17" y="9" width="5" height="6"/></svg>
+            Generate booth row / block…
+          </button>
+          <button class="row-btn" id="btnAutoNumber">
+            <svg viewBox="0 0 24 24"><path d="M5 8h3v8M13 8h3a2 2 0 0 1 0 4h-3v4h5"/></svg>
+            Auto-number booths
+          </button>
+          <button class="row-btn" id="btnUnderlay">
+            <svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m4 16 5-5 4 4 3-3 4 4"/></svg>
+            Import reference image…
+          </button>
+        </section>
+      </div>
+    </aside>
+
+    <!-- CENTER: canvas -->
+    <main class="stage" id="stage">
+      <svg id="canvas" xmlns="http://www.w3.org/2000/svg"></svg>
+
+      <div class="stage-overlay">
+        <div class="scalebar" id="scaleBar">
+          <div class="scalebar-line"><span></span><span></span></div>
+          <div class="scalebar-label" id="scaleLabel">10 ft</div>
+        </div>
+        <div class="hud" id="hud">
+          <span id="hudTool">Select</span>
+          <span class="dot"></span>
+          <span id="hudCoords">0, 0 ft</span>
+          <span class="dot"></span>
+          <span id="hudSel">Nothing selected</span>
+        </div>
+      </div>
+
+      <div class="context-toast" id="toast" hidden></div>
+    </main>
+
+    <!-- RIGHT: inspector -->
+    <aside class="panel right">
+      <div class="tabs" id="tabs">
+        <button class="tab active" data-tab="props">Properties</button>
+        <button class="tab" data-tab="booths">Booths</button>
+        <button class="tab" data-tab="safety">Safety<span class="badge" id="safetyBadge" hidden>0</span></button>
+        <button class="tab" data-tab="power">Power</button>
+        <button class="tab" data-tab="plan">Plan</button>
+      </div>
+      <div class="panel-scroll">
+        <div class="tabpane active" id="tab-props"></div>
+        <div class="tabpane" id="tab-booths"></div>
+        <div class="tabpane" id="tab-safety"></div>
+        <div class="tabpane" id="tab-power"></div>
+        <div class="tabpane" id="tab-plan"></div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- ============ MODALS ============ -->
+<div class="modal-backdrop" id="modalBackdrop" hidden>
+  <div class="modal" id="modal" role="dialog" aria-modal="true">
+    <div class="modal-head">
+      <h2 id="modalTitle">Title</h2>
+      <button class="tb" id="modalClose" aria-label="Close">
+        <svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-foot" id="modalFoot"></div>
+  </div>
+</div>
+
+<input type="file" id="filePicker" hidden />
+
+<script src="js/geometry.js?v=19"></script>
+<script src="js/config.js?v=19"></script>
+<script src="js/state.js?v=19"></script>
+<script src="js/rules.js?v=19"></script>
+<script src="js/render.js?v=19"></script>
+<script src="js/interactions.js?v=19"></script>
+<script src="js/ui.js?v=19"></script>
+<script src="js/publish.js?v=19"></script>
+<script src="js/exporters.js?v=19"></script>
+<script src="js/samples.js?v=19"></script>
+<script src="js/pcma.js?v=19"></script>
+<script src="js/main.js?v=19"></script>
+</body>
+</html>
