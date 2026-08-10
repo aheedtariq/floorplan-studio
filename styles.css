@@ -530,6 +530,42 @@ select.inp { appearance: none; background-image: linear-gradient(45deg, transpar
 .calib b { display: block; font-size: 12px; font-weight: 560; margin-bottom: 2px; }
 .calib span { font-size: 10.5px; color: var(--tx-3); line-height: 1.45; }
 
+/* ---------- team & access ---------- */
+.team-head, .team-row {
+  display: grid; grid-template-columns: 1fr 150px 96px;
+  gap: 10px; align-items: center;
+}
+.team-head {
+  font-size: 10px; font-weight: 650; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--tx-3); padding: 0 8px 6px; border-bottom: 1px solid var(--line);
+}
+.team-row {
+  padding: 8px; border-radius: var(--r-md); border: 1px solid transparent; transition: .1s;
+}
+.team-row:hover { background: var(--bg-3); }
+.team-row.off { opacity: .5; }
+.team-who { min-width: 0; }
+.team-who b { display: block; font-size: 12.5px; font-weight: 570; }
+.team-who span {
+  font-size: 11px; color: var(--tx-3);
+  display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.team-who .you {
+  font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em;
+  background: var(--accent-soft); color: var(--accent);
+  padding: 1px 5px; border-radius: 99px; vertical-align: middle;
+}
+.team-role { padding: 5px 8px; font-size: 12px; }
+.team-role:disabled { opacity: .55; cursor: not-allowed; }
+.team-active { flex: none; }
+.team-active:disabled { opacity: .55; cursor: not-allowed; }
+.team-row.off .team-active { color: var(--tx-3); }
+
+@media (max-width: 620px) {
+  .team-head { display: none; }
+  .team-row { grid-template-columns: 1fr; gap: 6px; }
+}
+
 /* ---------- plan templates ---------- */
 .tpl-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .tpl {

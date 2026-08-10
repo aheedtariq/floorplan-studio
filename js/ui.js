@@ -1191,7 +1191,11 @@
         </p>
         ${cloud ? '' : `<button class="mini" id="btnPushPlan" style="width:100%;margin-top:6px">
           Upload the open plan to the cloud</button>`}
-      </div>` : `
+      </div>
+      ${FP.auth.isAdmin() ? `<div class="grp">
+        <h4 class="grp-title">Administration</h4>
+        <button class="mini" id="btnTeam" style="width:100%">Team &amp; access…</button>
+      </div>` : ''}` : `
       <div class="grp">
         <h4 class="grp-title">Sign in</h4>
         <div class="field"><label>Email</label>
@@ -1241,6 +1245,8 @@
             FP.toast(which === 'supabase' ? 'Saving to the cloud' : 'Saving to this browser');
             if (which === 'supabase') plansModal();
           }));
+
+        b.querySelector('#btnTeam')?.addEventListener('click', () => FP.adminModal());
 
         b.querySelector('#btnPushPlan')?.addEventListener('click', async () => {
           try {
