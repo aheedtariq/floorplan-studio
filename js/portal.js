@@ -159,8 +159,14 @@
     const space = rows.find((e) => e.exhibitor_id === ex.id && !e.parent_id) || null;
     const plan = FP.cloud.planFromRows(show, rows);
 
+    /* Catalog and any existing order, so the Order card can render in the
+       same pass rather than popping in afterwards. */
+    await FP.order?.load?.(show.id, ex.id);
+
     return { ex, show, rows, space, plan, submissions: subs || [] };
   }
+
+  FP.portalContext = () => ctx;
 
   const latest = () => ctx?.submissions?.[0] || null;
 
@@ -318,6 +324,8 @@
           answers[fields[fields.length - 1].key] ?? '', unit, locked)}
       </div>
 
+      ${FP.order ? FP.order.html(locked) : ''}
+
       <div class="p-submit">
         <div class="status">
           Status
@@ -357,6 +365,7 @@
   }
 
   function wireForm(locked) {
+    FP.order?.wire?.(locked, () => renderPortal());
     if (locked) return;
 
     document.querySelectorAll('[data-f]').forEach((el) => {
