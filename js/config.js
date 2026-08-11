@@ -317,17 +317,17 @@
      Everything else is editable data.
      ------------------------------------------------------------ */
   const ruleDefs = [
-    { id: 'r-overlap',   type: 'no-overlap',       severity: 'error',   enabled: true,
+    { id: 'r-overlap',   type: 'no-overlap',       severity: 'error',   enabled: true, scope: 'hall',
       name: 'Booths must not overlap', params: {} },
-    { id: 'r-bounds',    type: 'inside-bounds',    severity: 'error',   enabled: true,
+    { id: 'r-bounds',    type: 'inside-bounds',    severity: 'error',   enabled: true, scope: 'hall',
       name: 'Everything stays inside the hall', params: {} },
-    { id: 'r-blocking',  type: 'not-on-blocking',  severity: 'error',   enabled: true,
+    { id: 'r-blocking',  type: 'not-on-blocking',  severity: 'error',   enabled: true, scope: 'hall',
       name: 'No booths on dead space or obstructions', params: {} },
-    { id: 'r-clearance', type: 'keep-clear',       severity: 'error',   enabled: true,
+    { id: 'r-clearance', type: 'keep-clear',       severity: 'error',   enabled: true, scope: 'hall',
       name: 'Fire exit and egress clearance', params: { defaultClearance: 10 } },
-    { id: 'r-exits',     type: 'min-exit-count',   severity: 'error',   enabled: true,
+    { id: 'r-exits',     type: 'min-exit-count',   severity: 'error',   enabled: true, scope: 'hall',
       name: 'Hall must have fire exits', params: { min: 2 } },
-    { id: 'r-aisle',     type: 'min-aisle-width',  severity: 'warning', enabled: true,
+    { id: 'r-aisle',     type: 'min-aisle-width',  severity: 'warning', enabled: true, scope: 'hall',
       name: 'Minimum aisle width', params: { min: 10 } },
     { id: 'r-footprint', type: 'inside-footprint', severity: 'error',   enabled: true,
       name: 'Booth contents stay inside the footprint', params: {} },
@@ -335,21 +335,21 @@
       name: 'Height limits by space type', params: {} },
     { id: 'r-power',     type: 'power-capacity',   severity: 'warning', enabled: true,
       name: 'Power draw within circuit capacity', params: { capacity: 20 } },
-    { id: 'r-rigzone',   type: 'rigging-in-zone',  severity: 'warning', enabled: true,
+    { id: 'r-rigzone',   type: 'rigging-in-zone',  severity: 'warning', enabled: true, scope: 'hall',
       name: 'Rigging points inside allowed zones', params: {} },
     { id: 'r-required',  type: 'required-fields',  severity: 'warning', enabled: true,
       name: 'Required details complete', params: {} },
-    { id: 'r-numbered',  type: 'unique-numbers',   severity: 'warning', enabled: true,
+    { id: 'r-numbered',  type: 'unique-numbers',   severity: 'warning', enabled: true, scope: 'hall',
       name: 'Space numbers unique and present', params: {} },
 
     /* ---- electrical ---- */
-    { id: 'r-panel-load', type: 'panel-load',      severity: 'warning', enabled: true,
+    { id: 'r-panel-load', type: 'panel-load',      severity: 'warning', enabled: true, scope: 'hall',
       name: 'Panel load within capacity',
       /* NEC 210.19 continuous-load derate: design to 80% of the breaker. */
       params: { derate: 0.8 } },
-    { id: 'r-unassigned', type: 'unassigned-power', severity: 'warning', enabled: true,
+    { id: 'r-unassigned', type: 'unassigned-power', severity: 'warning', enabled: true, scope: 'hall',
       name: 'Power drops assigned to a panel', params: {} },
-    { id: 'r-vdrop',     type: 'voltage-drop',     severity: 'warning', enabled: true,
+    { id: 'r-vdrop',     type: 'voltage-drop',     severity: 'warning', enabled: true, scope: 'hall',
       name: 'Voltage drop within limit', params: { maxPercent: 3 } },
   ];
 

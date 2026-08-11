@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Exhibitor Portal — Source One Events</title>
+<link rel="stylesheet" href="styles.css?v=24" />
+<link rel="stylesheet" href="portal.css?v=24" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%234f7cff'/><g fill='none' stroke='white' stroke-width='8'><rect x='22' y='22' width='24' height='24'/><rect x='54' y='22' width='24' height='24'/><rect x='22' y='54' width='56' height='24'/></g></svg>" />
+</head>
+<body class="portal">
+
+<header class="p-top">
+  <div class="brand">
+    <div class="brand-mark">
+      <svg viewBox="0 0 100 100" aria-hidden="true">
+        <rect width="100" height="100" rx="20" fill="var(--accent)"/>
+        <g fill="none" stroke="#fff" stroke-width="8">
+          <rect x="22" y="22" width="24" height="24"/>
+          <rect x="54" y="22" width="24" height="24"/>
+          <rect x="22" y="54" width="56" height="24"/>
+        </g>
+      </svg>
+    </div>
+    <div class="brand-text">
+      <div class="brand-title">Exhibitor Portal</div>
+      <div class="brand-sub">Source One Events</div>
+    </div>
+  </div>
+  <div class="p-top-right">
+    <span id="pWho" class="p-who"></span>
+    <button class="btn ghost" id="pSignOut" hidden>Sign out</button>
+    <button class="tb" id="pTheme" title="Toggle light / dark">
+      <svg viewBox="0 0 24 24"><path d="M20 14a8 8 0 1 1-10-10 7 7 0 0 0 10 10Z"/></svg>
+    </button>
+  </div>
+</header>
+
+<main id="pMain">
+  <div class="p-loading">Loading…</div>
+</main>
+
+<div class="context-toast" id="toast" hidden></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<script src="js/geometry.js?v=24"></script>
+<script src="js/config.js?v=24"></script>
+<script src="js/state.js?v=24"></script>
+<script src="js/backend.js?v=24"></script>
+<script src="js/store-supabase.js?v=24"></script>
+<script src="js/rules.js?v=24"></script>
+<script src="js/render.js?v=24"></script>
+<script src="js/portal.js?v=24"></script>
+</body>
+</html>

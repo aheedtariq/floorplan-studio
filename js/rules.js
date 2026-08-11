@@ -499,7 +499,9 @@
     if (!plan || !plan.elements) return [];
     const ctx = buildContext(plan);
 
-    if (opts.scope?.type === 'booth' && opts.scope.spaceId) {
+    const boothScope = opts.scope?.type === 'booth' && !!opts.scope.spaceId;
+
+    if (boothScope) {
       const sp = ctx.all.find((e) => e.id === opts.scope.spaceId);
       ctx.spaces = sp ? [sp] : [];
       ctx.obstructors = ctx.obstructors.filter((e) => e.id === opts.scope.spaceId);
@@ -509,6 +511,16 @@
 
     for (const rec of rules.records(plan)) {
       if (!rec.enabled) continue;
+
+      /* Hall-level rules must not run for a single booth. An exhibitor
+         cannot see the fire exits, aisles or neighbouring stands those
+         rules reason about — row level security hides them — so running
+         one here would report "no fire exits on this plan" to someone who
+         is simply not allowed to see them, and block a submission they
+         have no way to fix. Scope is a property of the rule record, so a
+         show can retune it without touching this file. */
+      if (boothScope && rec.scope === 'hall') continue;
+
       const fn = EVAL[rec.type];
       if (!fn) continue;
       let found;

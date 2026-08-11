@@ -204,6 +204,11 @@
     },
   };
 
+  /* The row <-> plan mapping is also what the exhibitor portal needs to
+     turn the handful of rows RLS lets it see into a plan the renderer
+     understands. Exported so there is exactly one mapping in the codebase. */
+  FP.cloud = { planFromRows, fromRow, toRow, showRow, normalise };
+
   FP.stores = FP.stores || {};
   FP.stores.supabase = cloudStore;
   FP.stores.local = FP.store;          /* whatever state.js installed */
