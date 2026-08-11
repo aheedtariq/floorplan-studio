@@ -263,8 +263,23 @@
         Everything checks out against the show rules.
       </div>`;
     }
-    return issues.map((i) => `<div class="p-finding ${esc(i.severity)}">
-      <div><b>${esc(i.message)}</b><span>${esc(i.detail)}</span></div>
+    /* Ordering sixteen stools produces sixteen identical findings, which
+       reads as panic rather than information. Collapse repeats into one
+       line with a count — the exhibitor needs to know what is wrong and
+       how much of it, not to scroll past the same sentence. */
+    const grouped = [];
+    const seen = new Map();
+    for (const i of issues) {
+      const key = `${i.severity}|${i.message}`;
+      if (seen.has(key)) { seen.get(key).count += 1; continue; }
+      const entry = { ...i, count: 1 };
+      seen.set(key, entry);
+      grouped.push(entry);
+    }
+
+    return grouped.map((i) => `<div class="p-finding ${esc(i.severity)}">
+      <div><b>${esc(i.message)}${i.count > 1 ? ` <span class="p-count">× ${i.count}</span>` : ''}</b>
+        <span>${esc(i.detail)}</span></div>
     </div>`).join('');
   }
 
@@ -450,6 +465,8 @@
     FP.toast(status === 'submitted' ? 'Submitted — thank you' : 'Draft saved');
     await refresh();
   }
+
+  FP.portalRefresh = () => refresh();
 
   async function refresh() {
     const next = await loadContext();

@@ -171,6 +171,117 @@
     document.getElementById('oSave')?.addEventListener('click', () => O.save());
   };
 
+  /* ============================================================
+     Ordering something puts it on the floor plan.
+
+     Every placeable catalog item carries spec.elementKind and
+     spec.footprint, so a Standard Counter becomes a 4 × 2 ft counter
+     inside the exhibitor's own footprint, at true scale.
+
+     Placement is a shelf pack: left to right along the back of the
+     booth, wrapping to a new row when the width runs out. It is not
+     trying to be a designer — the exhibitor can drag things afterwards.
+     What it is trying to do is make ORDERING TOO MUCH VISIBLE. If the
+     furniture will not fit, items spill past the footprint and the
+     existing inside-footprint rule reports it, before load-in rather
+     than on the floor.
+
+     Only elements this routine created are ever removed, marked with
+     props.fromOrder. Anything the exhibitor placed by hand survives.
+     ============================================================ */
+
+  const MARGIN = 0.75;   // ft of clear space inside the booth edge
+  const GAP = 0.5;       // ft between adjacent items
+
+  /** Build the element rows for the current order inside a space. */
+  function layout(space, byId) {
+    const g = space.geometry;
+    const usableW = g.w - MARGIN * 2;
+    const rows = [];
+
+    /* Largest first: big counters get the clean runs, stools fill in. */
+    const queue = [];
+    for (const [itemId, line] of Object.entries(lines)) {
+      const item = byId[itemId];
+      const kind = item?.spec?.elementKind;
+      const fp = item?.spec?.footprint;
+      if (!kind || !Array.isArray(fp)) continue;      // not a floor object
+      for (let i = 0; i < line.qty; i++) {
+        queue.push({
+          item, kind,
+          w: item.spec.fullWidth ? usableW : Number(fp[0]),
+          h: Number(fp[1]),
+        });
+      }
+    }
+    /* Full-width pieces (the back wall graphic) pin to the back edge. */
+    queue.sort((a, b) => (b.item.spec.fullWidth ? 1 : 0) - (a.item.spec.fullWidth ? 1 : 0)
+      || (b.w * b.h) - (a.w * a.h));
+
+    let cx = g.x + MARGIN;
+    let cy = g.y + MARGIN;
+    let rowH = 0;
+
+    for (const piece of queue) {
+      /* Wrap when this piece would run past the right-hand edge. */
+      if (cx > g.x + MARGIN && cx + piece.w > g.x + g.w - MARGIN) {
+        cx = g.x + MARGIN;
+        cy += rowH + GAP;
+        rowH = 0;
+      }
+      rows.push({
+        kind: piece.kind,
+        geometry: { x: cx, y: cy, w: piece.w, h: piece.h, rot: 0 },
+        props: {
+          label: piece.item.name,
+          fromOrder: piece.item.id,
+          ...(piece.item.spec.height ? { height: piece.item.spec.height } : {}),
+        },
+      });
+      cx += piece.w + GAP;
+      rowH = Math.max(rowH, piece.h);
+    }
+    return rows;
+  }
+
+  /**
+   * Sync the booth contents to the order. Returns how many were placed,
+   * or null when there is nothing to place into.
+   */
+  O.placeInBooth = async () => {
+    const ctx = FP.portalContext?.();
+    const sb = FP.auth.client();
+    if (!sb || !ctx?.space) return null;
+
+    const space = FP.get ? ctx.plan.elements.find((e) => e.id === ctx.space.id) : null;
+    if (!space) return null;
+
+    const rows = layout(space, O.itemsById());
+
+    /* Clear only what a previous order placed. */
+    const { error: delErr } = await sb.from('element')
+      .delete()
+      .eq('parent_id', space.id)
+      .not('props->>fromOrder', 'is', null);
+    if (delErr) { console.warn(delErr.message); return null; }
+
+    if (rows.length) {
+      const payload = rows.map((r, i) => ({
+        show_id: ctx.show.id,
+        parent_id: space.id,
+        kind: r.kind,
+        shape: FP.config.kind(r.kind).shape,
+        layer: FP.config.kind(r.kind).layer,
+        geometry: r.geometry,
+        props: r.props,
+        z: 100 + i,
+      }));
+      const { error } = await sb.from('element').insert(payload);
+      if (error) { console.warn(error.message); return null; }
+    }
+    return rows.length;
+  };
+
   /* ---------------- persistence ---------------- */
 
   O.save = async (showId, exhibitorId) => {
@@ -211,7 +322,12 @@
       if (error) return msg(error.message, true);
     }
 
-    msg(`Order saved — ${O.count()} item${O.count() === 1 ? '' : 's'}.`);
+    /* Ordering something puts it on the plan, so the exhibitor sees
+       immediately whether it fits. */
+    const placed = await O.placeInBooth();
+    msg(`Order saved — ${O.count()} item${O.count() === 1 ? '' : 's'}` +
+        (placed ? `, ${placed} placed in your booth.` : '.'));
     FP.toast?.('Order saved');
+    await FP.portalRefresh?.();
   };
 })(window);
