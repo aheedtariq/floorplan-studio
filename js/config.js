@@ -53,6 +53,9 @@
     run:     '<path d="M3 17c4 0 4-10 8-10s4 10 8 10"/>',
     gen:     '<rect x="3" y="8" width="18" height="10" rx="2"/><path d="m12 2-2 4h4l-2 4"/><path d="M7 18v2M17 18v2"/>',
     discon:  '<circle cx="12" cy="12" r="9"/><path d="M12 6v7"/><path d="M8.5 8.5a5 5 0 1 0 7 0"/>',
+    stool:   '<circle cx="12" cy="10" r="5"/><path d="M12 15v6M9 21h6"/>',
+    monitor: '<rect x="3" y="5" width="18" height="11" rx="1.5"/><path d="M12 16v3M8 19h8"/>',
+    shelf:   '<path d="M4 8h16M4 14h16M4 6v12M20 6v12"/>',
   };
   FP.ICONS = ic;
 
@@ -212,8 +215,17 @@
     { id: 'display', name: 'Display / banner', cat: 'contents', layer: 'contents', shape: 'rect', scope: ['booth'],
       size: [8, 1], fill: '#818cf8', stroke: '#6366f1', opacity: .55, icon: ic.banner,
       flags: { heightRegulated: true }, fields: [F.label, { ...F.height, default: 8 }] },
+    { id: 'stool', name: 'Bar stool', cat: 'contents', layer: 'contents', shape: 'rect', scope: ['booth'],
+      size: [1.5, 1.5], fill: '#cbd5e1', stroke: '#64748b', opacity: .6, icon: ic.stool,
+      fields: [F.label] },
+    { id: 'monitor', name: 'Monitor / TV', cat: 'contents', layer: 'contents', shape: 'rect', scope: ['booth'],
+      size: [4, 1.5], fill: '#334155', stroke: '#1e293b', opacity: .8, icon: ic.monitor,
+      flags: { heightRegulated: true }, fields: [F.label, { ...F.height, default: 6 }] },
+    { id: 'shelf', name: 'Shelf', cat: 'contents', layer: 'contents', shape: 'rect', scope: ['booth'],
+      size: [4, 1], fill: '#94a3b8', stroke: '#64748b', opacity: .5, icon: ic.shelf,
+      fields: [F.label] },
     { id: 'counter', name: 'Reception counter', cat: 'contents', layer: 'contents', shape: 'rect', scope: ['booth'],
-      size: [4, 2], fill: '#f0abfc', stroke: '#d946ef', opacity: .5, icon: ic.reg, fields: [F.label] },
+      size: [4, 2], fill: '#e7e5e4', stroke: '#78716c', opacity: .55, icon: ic.reg, fields: [F.label] },
 
     /* ---- utilities ---- */
     { id: 'power-drop', name: 'Power drop', cat: 'utilities', layer: 'utilities', shape: 'marker', scope: ['hall', 'booth'],

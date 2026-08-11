@@ -181,9 +181,20 @@
         const cx = q.x + q.w / 2, cy = q.y + q.h / 2;
         const rot = q.rot ? ` transform="rotate(${n(q.rot)} ${n(cx)} ${n(cy)})"` : '';
         out += `<g ${attrs}${rot}>`;
-        out += `<rect x="${n(q.x)}" y="${n(q.y)}" width="${n(q.w)}" height="${n(q.h)}"
-                  fill="${base}" fill-opacity="${opacity}" stroke="${strokeCol}"
-                  stroke-width="1.6" vector-effect="non-scaling-stroke" ${dash}/>`;
+
+        /* Furniture draws its own outline — a round table is a circle, and
+           a circle sitting inside a visible square reads as a wireframe,
+           not a floor plan. Those kinds get an invisible rect purely so
+           they stay clickable. */
+        if (SELF_DRAWN.has(k.id)) {
+          out += `<rect x="${n(q.x)}" y="${n(q.y)}" width="${n(q.w)}" height="${n(q.h)}"
+                    fill="transparent" stroke="none"/>`;
+        } else {
+          out += `<rect x="${n(q.x)}" y="${n(q.y)}" width="${n(q.w)}" height="${n(q.h)}"
+                    fill="${base}" fill-opacity="${opacity}" stroke="${strokeCol}"
+                    stroke-width="1.6" vector-effect="non-scaling-stroke" ${dash}/>`;
+        }
+
         out += symbolFor(el, k, q, opts);
         out += labelFor(el, k, q, opts);
         out += '</g>';
@@ -321,10 +332,17 @@
     if (opts.ghost || !hasSymbol(k)) return '';
     const zoom = FP.state.view.zoom;
     const wpx = box.w * zoom, hpx = box.h * zoom;
-    if (wpx < 22 || hpx < 14) return '';
 
     const col = el.props.color || k.stroke;
     const custom = ARCH[k.id];
+
+    /* Self-drawn kinds ARE the object, not decoration on top of one. The
+       size gate below must never reach them: skipping a stool's circle
+       would leave nothing on the plan at all, because the generic
+       rectangle underneath was deliberately suppressed for it. */
+    if (custom && SELF_DRAWN.has(k.id)) return custom(el, box, col, zoom);
+
+    if (wpx < 22 || hpx < 14) return '';
     if (custom) return custom(el, box, col, zoom);
 
     /* Backdrop areas sit under the booths and are already named in their
@@ -350,7 +368,191 @@
   }
 
   /* ---------- architectural symbols, drawn to real geometry ---------- */
+  /* Kinds whose ARCH entry paints the whole object, so the generic
+     rectangle underneath is suppressed. */
+  const SELF_DRAWN = new Set(['chair', 'stool', 'table', 'counter', 'display',
+                              'monitor', 'shelf', 'column',
+                              'electrical-panel', 'distro-box']);
+
   const ARCH = {
+    /* ---- furniture, drawn the way a floor plan draws furniture ----
+
+       Seating is a circle. A round table is a circle. A rectangular table
+       has radiused corners. None of it is a hard-edged box, because on a
+       real drawing a hard-edged box means built structure, and reading a
+       stool as structure is exactly the confusion worth avoiding. */
+
+    /* Stools and chairs: a plan circle, with a seat-back arc when the
+       element is big enough for one to be legible. */
+    chair(el, b, col, zoom) {
+      const r = Math.min(b.w, b.h) / 2;
+      const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+      const showBack = r * zoom > 9;
+      return `<g pointer-events="none">
+        <circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r * 0.86)}"
+          fill="${col}" fill-opacity=".3" stroke="${col}" stroke-width="1.5"
+          vector-effect="non-scaling-stroke"/>
+        ${showBack ? `<path d="M ${n(cx - r * 0.6)} ${n(cy + r * 0.55)}
+          A ${n(r * 0.75)} ${n(r * 0.75)} 0 0 0 ${n(cx + r * 0.6)} ${n(cy + r * 0.55)}"
+          fill="none" stroke="${col}" stroke-width="1.6" stroke-linecap="round"
+          vector-effect="non-scaling-stroke" opacity=".85"/>` : ''}
+      </g>`;
+    },
+
+    /* A bar stool is a plain circle with a footring — no back, which is
+       what distinguishes it from a chair at a glance. */
+    stool(el, b, col, zoom) {
+      const r = Math.min(b.w, b.h) / 2;
+      const cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+      const ring = r * zoom > 7;
+      return `<g pointer-events="none">
+        <circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r * 0.82)}"
+          fill="${col}" fill-opacity=".32" stroke="${col}" stroke-width="1.5"
+          vector-effect="non-scaling-stroke"/>
+        ${ring ? `<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r * 0.42)}"
+          fill="none" stroke="${col}" stroke-width="1.2" opacity=".7"
+          vector-effect="non-scaling-stroke"/>` : ''}
+      </g>`;
+    },
+
+    /* A monitor is a screen on a stand: heavy face, short pedestal. */
+    monitor(el, b, col) {
+      const { ax, dir } = inwardAxis(b);
+      const horiz = b.w >= b.h;
+      const faceT = Math.min(b.w, b.h) * 0.42;
+      /* the screen faces the aisle */
+      let fx, fy, fw, fh;
+      if (horiz) {
+        fw = b.w; fh = faceT;
+        fx = b.x; fy = (ax === 'y' && dir < 0) ? b.y + b.h - faceT : b.y;
+      } else {
+        fw = faceT; fh = b.h;
+        fy = b.y; fx = (ax === 'x' && dir < 0) ? b.x + b.w - faceT : b.x;
+      }
+      return `<g pointer-events="none">
+        <rect x="${n(b.x)}" y="${n(b.y)}" width="${n(b.w)}" height="${n(b.h)}"
+          rx="${n(Math.min(b.w, b.h) * 0.12)}" fill="${col}" fill-opacity=".18"
+          stroke="${col}" stroke-width="1.2" vector-effect="non-scaling-stroke"/>
+        <rect x="${n(fx)}" y="${n(fy)}" width="${n(fw)}" height="${n(fh)}"
+          fill="${col}" fill-opacity=".8"/>
+      </g>`;
+    },
+
+    /* A shelf is wall-mounted: a double line, never a solid block, so it
+       does not read as floor-occupying furniture. */
+    shelf(el, b, col) {
+      const horiz = b.w >= b.h;
+      const lines = horiz
+        ? [[b.x, b.y + b.h * 0.32, b.x + b.w, b.y + b.h * 0.32],
+           [b.x, b.y + b.h * 0.72, b.x + b.w, b.y + b.h * 0.72]]
+        : [[b.x + b.w * 0.32, b.y, b.x + b.w * 0.32, b.y + b.h],
+           [b.x + b.w * 0.72, b.y, b.x + b.w * 0.72, b.y + b.h]];
+      return `<g pointer-events="none" opacity=".85">
+        ${lines.map(([x1, y1, x2, y2]) =>
+          `<line x1="${n(x1)}" y1="${n(y1)}" x2="${n(x2)}" y2="${n(y2)}"
+            stroke="${col}" stroke-width="2" stroke-linecap="round"
+            vector-effect="non-scaling-stroke"/>`).join('')}
+      </g>`;
+    },
+
+    /* Square-ish tables are round tables; long ones are radiused rects. */
+    table(el, b, col) {
+      const round = Math.abs(b.w - b.h) < Math.min(b.w, b.h) * 0.35;
+      if (round) {
+        const r = Math.min(b.w, b.h) / 2;
+        return `<circle cx="${n(b.x + b.w / 2)}" cy="${n(b.y + b.h / 2)}" r="${n(r * 0.92)}"
+          fill="${col}" fill-opacity=".26" stroke="${col}" stroke-width="1.6"
+          vector-effect="non-scaling-stroke" pointer-events="none"/>`;
+      }
+      const rad = Math.min(b.w, b.h) * 0.22;
+      return `<rect x="${n(b.x)}" y="${n(b.y)}" width="${n(b.w)}" height="${n(b.h)}"
+        rx="${n(rad)}" fill="${col}" fill-opacity=".26" stroke="${col}"
+        stroke-width="1.6" vector-effect="non-scaling-stroke" pointer-events="none"/>`;
+    },
+
+    /* A counter is a service piece: radiused, with the customer-facing
+       edge drawn heavy so the direction of service is readable. */
+    counter(el, b, col) {
+      const rad = Math.min(b.w, b.h) * 0.18;
+      const horiz = b.w >= b.h;
+      const { ax, dir } = inwardAxis(b);
+      /* front faces the aisle, i.e. the middle of the hall */
+      let fx1, fy1, fx2, fy2;
+      if (ax === 'y') {
+        const y = dir > 0 ? b.y + b.h : b.y;
+        fx1 = b.x; fy1 = y; fx2 = b.x + b.w; fy2 = y;
+      } else {
+        const x = dir > 0 ? b.x + b.w : b.x;
+        fx1 = x; fy1 = b.y; fx2 = x; fy2 = b.y + b.h;
+      }
+      void horiz;
+      return `<g pointer-events="none">
+        <rect x="${n(b.x)}" y="${n(b.y)}" width="${n(b.w)}" height="${n(b.h)}"
+          rx="${n(rad)}" fill="${col}" fill-opacity=".3" stroke="${col}"
+          stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+        <line x1="${n(fx1)}" y1="${n(fy1)}" x2="${n(fx2)}" y2="${n(fy2)}"
+          stroke="${col}" stroke-width="3.4" stroke-linecap="round"
+          vector-effect="non-scaling-stroke" opacity=".9"/>
+      </g>`;
+    },
+
+    /* A graphic panel is a solid bar — it is a printed surface, not a
+       volume, so it reads as a heavy line with support ticks. */
+    display(el, b, col, zoom) {
+      const thin = Math.min(b.w, b.h);
+      const long = Math.max(b.w, b.h);
+      const horiz = b.w >= b.h;
+      const ticks = thin * zoom > 4 && long > 4;
+      const t = Math.max(thin * 0.5, 0.08);
+      return `<g pointer-events="none">
+        <rect x="${n(b.x)}" y="${n(b.y)}" width="${n(b.w)}" height="${n(b.h)}"
+          fill="${col}" fill-opacity=".62" stroke="${col}" stroke-width="1.2"
+          vector-effect="non-scaling-stroke"/>
+        ${ticks ? [0.16, 0.5, 0.84].map((f) => {
+          const px = horiz ? b.x + b.w * f : b.x + b.w / 2;
+          const py = horiz ? b.y + b.h / 2 : b.y + b.h * f;
+          const dx = horiz ? 0 : t * 1.6, dy = horiz ? t * 1.6 : 0;
+          return `<line x1="${n(px - dx)}" y1="${n(py - dy)}"
+            x2="${n(px + dx)}" y2="${n(py + dy)}" stroke="${col}"
+            stroke-width="1.4" vector-effect="non-scaling-stroke" opacity=".55"/>`;
+        }).join('') : ''}
+      </g>`;
+    },
+
+    /* ---- electrical boards ----
+       A board is equipment, not furniture: solid body, and the breaker
+       or outlet detail only once there is room for it to be legible. */
+    'electrical-panel'(el, b, col, zoom) {
+      const detail = Math.min(b.w, b.h) * zoom > 26;
+      let out = `<rect x="${n(b.x)}" y="${n(b.y)}" width="${n(b.w)}" height="${n(b.h)}"
+        fill="${col}" fill-opacity=".85" stroke="${col}" stroke-width="1.4"
+        vector-effect="non-scaling-stroke"/>`;
+      if (detail) {
+        for (let i = 1; i <= 3; i++) {
+          const y = b.y + (b.h * i) / 4;
+          out += `<line x1="${n(b.x + b.w * 0.14)}" y1="${n(y)}"
+            x2="${n(b.x + b.w * 0.86)}" y2="${n(y)}" stroke="#fff"
+            stroke-width="1.3" opacity=".55" vector-effect="non-scaling-stroke"/>`;
+        }
+      }
+      return `<g pointer-events="none">${out}</g>`;
+    },
+
+    'distro-box'(el, b, col, zoom) {
+      const r = Math.min(b.w, b.h) * 0.14;
+      const detail = Math.min(b.w, b.h) * zoom > 20;
+      let out = `<rect x="${n(b.x)}" y="${n(b.y)}" width="${n(b.w)}" height="${n(b.h)}"
+        rx="${n(Math.min(b.w, b.h) * 0.14)}" fill="${col}" fill-opacity=".9"
+        stroke="${col}" stroke-width="1.4" vector-effect="non-scaling-stroke"/>`;
+      if (detail) {
+        for (let i = 0; i < 3; i++) {
+          out += `<circle cx="${n(b.x + b.w * (0.26 + i * 0.24))}" cy="${n(b.y + b.h * 0.62)}"
+            r="${n(r)}" fill="#fff" opacity=".7"/>`;
+        }
+      }
+      return `<g pointer-events="none">${out}</g>`;
+    },
+
     /* Booth spaces: draw the sides that are CLOSED.
 
        This is the difference an exhibitor pays for. An inline booth backs
@@ -579,6 +781,18 @@
        overflowing name reads as if it belongs to the neighbouring booth. */
     const maxChars = Math.floor(box.w / (fs * 0.54));
     if (maxChars < 2) return '';
+
+    /* Furniture is not captioned on a real drawing. A stool labelled
+       "Ale Bar Stool" cannot physically fit the words inside a 1.5 ft
+       circle, so the text escapes the shape and collides with whatever is
+       next to it — which is exactly what makes a plan look amateur.
+       Draw the name only when it genuinely fits inside the object;
+       otherwise the symbol speaks for itself and the name lives in the
+       order list and the properties panel. */
+    if (el.layer === 'contents') {
+      const needed = title.length * fs * 0.58;
+      if (needed > box.w * 0.9 || fs * zoom < 8) return '';
+    }
 
     /* A symbol owns the middle of the box, so the caption drops to the
        foot of it rather than sitting on top of the glyph. */
