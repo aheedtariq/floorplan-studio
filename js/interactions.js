@@ -791,6 +791,81 @@
     return els;
   };
 
+  /**
+   * Aisle numbering — the convention actually used on the floor.
+   *
+   * On a real plan the number encodes WHERE the booth is, not the order it
+   * was drawn: the hundreds digit is the aisle, and the last two digits
+   * run along it, odd down one side and even down the other. So 600, 602,
+   * 604 face 501, 503, 505 across a 10 ft aisle, and a crew member reading
+   * "607" knows the aisle and the side before they look up.
+   *
+   * Booths are grouped into rows by their back edge, rows are paired into
+   * aisles, and each pair gets one hundred-block.
+   *
+   * @param {object} opts
+   *   startAisle  first hundred-block (1 -> 100s)
+   *   step        gap between consecutive booths on a side
+   *   evenSide    'north' | 'south' — which side takes the even numbers
+   */
+  I.aisleNumber = ({ startAisle = 1, step = 2, evenSide = 'far' } = {}) => {
+    const spaces = FP.spaces();
+    if (!spaces.length) return 0;
+
+    /* Group booths into rows by their leading edge. */
+    const tol = 2;
+    const rows = [];
+    spaces
+      .map((el) => ({ el, b: G.bbox(el) }))
+      .sort((a, b) => a.b.y - b.b.y)
+      .forEach((item) => {
+        const row = rows.find((r) => Math.abs(r.y - item.b.y) <= tol);
+        if (row) { row.items.push(item); row.bottom = Math.max(row.bottom, item.b.y + item.b.h); }
+        else rows.push({ y: item.b.y, bottom: item.b.y + item.b.h, items: [item] });
+      });
+    rows.sort((a, b) => a.y - b.y);
+
+    /* Two rows share a hundred-block when they FACE EACH OTHER across an
+       aisle. Rows that touch are back-to-back: they face opposite ways, so
+       they belong to different aisles and must not be paired. */
+    FP.snapshot();
+    let aisle = startAisle;
+    const used = new Set();
+
+    for (let i = 0; i < rows.length; i += 1) {
+      if (used.has(i)) continue;
+      const a = rows[i];
+      const b = rows[i + 1];
+      const gap = b ? b.y - a.bottom : Infinity;
+      const facing = b && gap > tol;      /* a real aisle between them */
+
+      const hundreds = aisle * 100;
+      const assign = (row, odd) => {
+        if (!row) return;
+        row.items.sort((p, q) => p.b.x - q.b.x).forEach((it, n) => {
+          it.el.props.number = String(hundreds + (odd ? 1 : 0) + n * step);
+        });
+      };
+
+      if (facing) {
+        /* The far side of the aisle takes the even numbers by default. */
+        const nearIsOdd = evenSide === 'far';
+        assign(a, nearIsOdd);
+        assign(b, !nearIsOdd);
+        used.add(i + 1);
+      } else {
+        /* An edge row with no facing partner still gets its own aisle. */
+        assign(a, false);
+      }
+      aisle += 1;
+    }
+
+    FP.plan.nextSpaceNo = aisle * 100;
+    FP.changed();
+    R().draw();
+    return spaces.length;
+  };
+
   /** Renumber every space in reading order so the manifest matches the floor. */
   I.autoNumber = (start = 101, stepBy = 1, prefix = '') => {
     const rowTol = 2;
@@ -809,6 +884,70 @@
     FP.changed();
     R().draw();
     return spaces.length;
+  };
+
+  /* ============================================================
+     Electrical buses.
+
+     Floor power runs on buses spaced at the module the whole floor is
+     built on: 10 ft booth + 10 ft aisle + 10 ft booth = 30 ft. Put the
+     buses on that pitch and every booth backs onto one, so no drop has to
+     cross an aisle — which is the thing you cannot do, because a cable
+     across an aisle is a trip hazard and a fire-marshal conversation.
+
+     Generating them from the module rather than by eye means the spacing
+     is right by construction, and re-running it after the floor changes
+     is one click instead of redrawing by hand.
+     ============================================================ */
+  I.BUS_MODULE = 30;
+
+  /**
+   * Lay bus runs across the hall on the 30 ft module.
+   * @param {object} opts
+   *   axis     'h' | 'v'  direction the buses run
+   *   spacing  centre-to-centre, defaults to the 30 ft module
+   *   offset   distance from the hall edge to the first bus
+   *   panelId  board the runs are fed from
+   *   gauge, amps
+   */
+  I.generateBuses = ({ axis = 'h', spacing = I.BUS_MODULE, offset = 15,
+                       panelId = 'MDP-1', gauge = '2', amps = 100 } = {}) => {
+    const p = FP.plan;
+    const span = axis === 'h' ? p.height : p.width;
+    const across = axis === 'h' ? p.width : p.height;
+    const els = [];
+
+    let n = 1;
+    for (let d = offset; d <= span - 1; d += spacing) {
+      const geom = axis === 'h'
+        ? { x1: 0, y1: d, x2: across, y2: d }
+        : { x1: d, y1: 0, x2: d, y2: across };
+      const el = FP.makeElement('electrical-run', geom, null);
+      Object.assign(el.props, {
+        circuitId: `BUS-${n}`, panelId, gauge, amps,
+        voltage: '208', method: 'floor',
+        label: `Bus ${n} — ${spacing} ft module`,
+      });
+      els.push(el);
+      n += 1;
+    }
+    if (els.length) FP.addElements(els);
+    return els;
+  };
+
+  /**
+   * Distance from each space to the nearest bus. Anything beyond half the
+   * module is, by definition, on the wrong side of an aisle.
+   */
+  I.busReach = () => {
+    const buses = FP.plan.elements.filter(
+      (e) => C.flag(e.kind, 'cableRun') && !e.parentId);
+    if (!buses.length) return [];
+    return FP.spaces().map((sp) => {
+      let best = Infinity;
+      for (const bus of buses) best = Math.min(best, G.gapBetween(sp, bus));
+      return { space: sp, distance: best };
+    });
   };
 
   FP.initInteractions = (el) => {

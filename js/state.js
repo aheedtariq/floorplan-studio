@@ -57,6 +57,8 @@
     view: { x: -12, y: -12, zoom: 4 },   // world offset + px per world unit
     scope: { type: 'hall', spaceId: null },
     showGrid: true,
+    /* How booths are coloured: replaces highlighting them by hand. */
+    colorBy: 'status',
     snap: true,
     showLabels: true,
     dirty: false,
@@ -159,6 +161,22 @@
 
   FP.childrenOf = (spaceId) => FP.plan.elements.filter((e) => e.parentId === spaceId);
   FP.spaces = () => FP.plan.elements.filter((e) => C.flag(e.kind, 'sellable') && !e.parentId);
+
+  /**
+   * Total ordered load per space, summed from the power drops inside it.
+   * Built in one pass because the renderer needs it for every space on
+   * every paint, and walking the children per space would be quadratic.
+   */
+  FP.ampsBySpace = () => {
+    const map = {};
+    for (const el of FP.plan.elements) {
+      if (!el.parentId || !C.flag(el.kind, 'power')) continue;
+      map[el.parentId] = (map[el.parentId] || 0) + (Number(el.props.amps) || 0);
+    }
+    return map;
+  };
+
+  FP.spaceAmps = (spaceId) => FP.ampsBySpace()[spaceId] || 0;
 
   FP.select = (ids, additive = false) => {
     const list = Array.isArray(ids) ? ids : ids ? [ids] : [];

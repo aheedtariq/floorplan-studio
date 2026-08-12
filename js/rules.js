@@ -467,6 +467,44 @@
     return out;
   };
 
+  /**
+   * Every booth must back onto a bus.
+   *
+   * The floor is built on a 30 ft module — 10 ft booth, 10 ft aisle,
+   * 10 ft booth — and buses are laid on that pitch so each booth reaches
+   * the one behind it. A booth further than half the module from any bus
+   * can only be fed by running cable across an aisle, which is a trip
+   * hazard and will not pass a fire marshal.
+   */
+  EVAL['bus-reach'] = (ctx, rule) => {
+    const module = rule.params.module ?? 30;
+    const limit = rule.params.maxDistance ?? module / 2;
+
+    const buses = ctx.hall.filter((e) => ctx.cfg.flag(e.kind, 'cableRun'));
+    if (!buses.length) return [];
+
+    const out = [];
+    for (const sp of ctx.spaces) {
+      /* Only booths that actually ordered power need to reach a bus. */
+      const draw = ctx.childrenOf(sp.id)
+        .filter((e) => ctx.cfg.flag(e.kind, 'power'))
+        .reduce((sum, d) => sum + (Number(d.props.amps) || 0), 0);
+      if (!draw) continue;
+
+      let nearest = Infinity;
+      for (const bus of buses) nearest = Math.min(nearest, G.gapBetween(sp, bus));
+      if (nearest <= limit + 1e-6) continue;
+
+      out.push({
+        message: `${label(sp)} is ${G.fmtLen(nearest, ctx.unit)} from the nearest bus`,
+        detail: `Feeding it would cross an aisle. Buses sit on a ${module} ft module `
+              + `(booth + aisle + booth); add a run within ${G.fmtLen(limit, ctx.unit)}.`,
+        ids: [sp.id],
+      });
+    }
+    return out;
+  };
+
   /* ============================================================
      Runner
      ============================================================ */

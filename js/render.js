@@ -148,7 +148,15 @@
   /* Null when the element carries no status at all — the public document
      strips status deliberately, and those spaces colour from props.color
      instead of silently defaulting to the first workflow state. */
-  function statusColor(el) {
+  /* How a space is coloured. Under the default 'status' mode this is the
+     workflow colour; other modes derive it from the data — power ordered,
+     tier, space type — which is what replaces highlighting booths by hand.
+     Null means "no opinion", and the caller falls back to the kind. */
+  function spaceColor(el, opts) {
+    if (FP.state.colorBy && FP.state.colorBy !== 'status') {
+      const hit = C.colorFor(el, FP.state.colorBy, opts?.amps?.[el.id] || 0);
+      if (hit) return hit.color;
+    }
     if (!el.props.status) return null;
     const s = C.status(el.props.status);
     return s ? s.color : null;
@@ -162,8 +170,9 @@
     const ghost = opts.ghost;
 
     const isSpace = C.flag(el.kind, 'sellable');
-    const base = isSpace ? (statusColor(el) || el.props.color || k.fill) : fillFor(el, k);
-    const strokeCol = isSpace ? (statusColor(el) || el.props.color || k.stroke) : (el.props.color || k.stroke);
+    const sc = isSpace ? spaceColor(el, opts) : null;
+    const base = isSpace ? (sc || el.props.color || k.fill) : fillFor(el, k);
+    const strokeCol = isSpace ? (sc || el.props.color || k.stroke) : (el.props.color || k.stroke);
     /* Ghosts were tuned against dark paper; on white they need more body. */
     const opacity = ghost ? 0.28 : (k.opacity ?? 0.9);
 
@@ -1061,7 +1070,9 @@
       .map((el, i) => ({ el, i, o: C.layerOrder(el.layer) }))
       .sort((a, b) => a.o - b.o || a.i - b.i);
 
-    const opts = { issues, unit };
+    /* Summed once per paint, not per space — see FP.ampsBySpace. */
+    const opts = { issues, unit,
+      amps: FP.state.colorBy === 'power' ? FP.ampsBySpace() : null };
 
     /* In booth scope the surrounding hall is drawn as a faint reference. */
     if (scoped && space) {

@@ -1,3 +1,11 @@
 .DS_Store
 node_modules/
 *.log
+
+# Reference photos of live client plans — kept locally for design reference,
+# never committed: the repo is headed for GitHub and these carry a real
+# show's exhibitor and booth data.
+plans/*.jpg
+plans/*.jpeg
+plans/*.png
+plans/*.heic

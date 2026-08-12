@@ -98,6 +98,41 @@
   };
 
   /* ------------------------------------------------------------
+     Colour-by modes.
+
+     On the working plans this replaces, booths are highlighted BY HAND —
+     yellow for a 10 amp order, pink for 20 amp — one booth at a time,
+     with a felt pen. That is slow, and it goes stale the moment an order
+     changes. Colouring is derived from the data instead, so the map is
+     never out of date and never mis-highlighted.
+
+     Buckets are records, so a show can recolour without code.
+     ------------------------------------------------------------ */
+  const colorModes = [
+    { id: 'status', name: 'Booking status', from: 'status' },
+
+    { id: 'power', name: 'Power ordered', from: 'amps',
+      /* Matched to the pen colours the team already reads. */
+      buckets: [
+        { max: 0,   name: 'No power',      color: '#e2e8f0' },
+        { max: 10,  name: 'Up to 10 A',    color: '#facc15' },
+        { max: 20,  name: '11 – 20 A',     color: '#ec4899' },
+        { max: 30,  name: '21 – 30 A',     color: '#a855f7' },
+        { max: 60,  name: '31 – 60 A',     color: '#f97316' },
+        { max: Infinity, name: 'Over 60 A', color: '#ef4444' },
+      ] },
+
+    { id: 'tier', name: 'Price tier', from: 'tier',
+      values: { premium: '#4f7cff', standard: '#94a3b8', discount: '#22c55e' } },
+
+    { id: 'type', name: 'Space type', from: 'spaceType',
+      values: { inline: '#94a3b8', corner: '#06b6d4', peninsula: '#f59e0b', island: '#a855f7' } },
+
+    { id: 'submission', name: 'Submission received', from: 'submitted',
+      values: { yes: '#22c55e', no: '#ef4444' } },
+  ];
+
+  /* ------------------------------------------------------------
      Layers — drawn bottom to top.
      ------------------------------------------------------------ */
   const layerDefs = [
@@ -361,6 +396,10 @@
       params: { derate: 0.8 } },
     { id: 'r-unassigned', type: 'unassigned-power', severity: 'warning', enabled: true, scope: 'hall',
       name: 'Power drops assigned to a panel', params: {} },
+    { id: 'r-bus',       type: 'bus-reach',        severity: 'warning', enabled: true, scope: 'hall',
+      name: 'Booths reach an electrical bus',
+      /* 10 ft booth + 10 ft aisle + 10 ft booth */
+      params: { module: 30, maxDistance: 15 } },
     { id: 'r-vdrop',     type: 'voltage-drop',     severity: 'warning', enabled: true, scope: 'hall',
       name: 'Voltage drop within limit', params: { maxPercent: 3 } },
   ];
@@ -388,6 +427,7 @@
     spaceTypes: spaceTypeDefs,
     rules: ruleDefs,
     presets: presetDefs,
+    colorModes,
     palette: ['#4f7cff', '#22c55e', '#f59e0b', '#ef4444', '#a855f7',
               '#14b8a6', '#f97316', '#06b6d4', '#ec4899', '#64748b'],
     _index: {},
@@ -424,6 +464,44 @@
   cfg.layerOrder = (id) => (cfg._index.layers[id]?.order ?? 99);
   cfg.kindsForScope = (scope) => cfg.kinds.filter((k) => !k.scope || k.scope.includes(scope));
   cfg.flag = (kindId, flag) => !!cfg.kind(kindId)?.flags?.[flag];
+  cfg.colorMode = (id) => cfg.colorModes.find((m) => m.id === id) || cfg.colorModes[0];
+
+  /**
+   * The colour a space should take under a given mode, plus the legend
+   * entry it belongs to. Returns null when the mode does not apply, so
+   * the caller can fall back to the kind's own colour.
+   *
+   * @param {object} space  the space element
+   * @param {string} modeId
+   * @param {number} amps   total ordered load, supplied by the caller
+   *                        because it is summed from child drops
+   */
+  cfg.colorFor = (space, modeId, amps) => {
+    const mode = cfg.colorMode(modeId);
+    if (!mode) return null;
+
+    if (mode.id === 'status') {
+      const st = cfg.status(space.props.status);
+      return st ? { color: st.color, label: st.name } : null;
+    }
+
+    if (mode.buckets) {
+      const v = Number(amps) || 0;
+      const b = mode.buckets.find((x) => v <= x.max) || mode.buckets[mode.buckets.length - 1];
+      return { color: b.color, label: b.name };
+    }
+
+    if (mode.values) {
+      let key = space.props[mode.from];
+      if (mode.id === 'submission') key = space.props.submitted ? 'yes' : 'no';
+      const color = mode.values[key];
+      if (!color) return null;
+      const nice = mode.id === 'type' ? cfg.spaceType(key).name
+                 : String(key).charAt(0).toUpperCase() + String(key).slice(1);
+      return { color, label: nice };
+    }
+    return null;
+  };
 
   reindex();
   FP.config = cfg;
