@@ -191,9 +191,15 @@
   .meta div b { font-size: 13px; }
   .plan { border: 1px solid #dde3ec; padding: 8px; margin-bottom: 18px; }
   .plan svg { width: 100%; height: auto; }
-  .legend { display: flex; flex-wrap: wrap; gap: 10px 20px; margin-bottom: 20px; font-size: 11px; }
-  .legend i { display: inline-block; width: 11px; height: 11px; border-radius: 2px;
-              margin-right: 5px; vertical-align: -1px; }
+  .legend-h { font-size: 12px; margin: 0 0 8px; }
+  /* the legend carries real drawings, so it is laid out as a grid rather
+     than a wrapped run of chips — symbols need to line up to be compared */
+  .legend { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 7px 16px; margin-bottom: 20px; font-size: 11px;
+            border: 1px solid #dde3ec; border-radius: 4px; padding: 11px 13px; }
+  .legend .lg { display: flex; align-items: center; gap: 8px; break-inside: avoid; }
+  .legend .lg svg { flex: 0 0 auto; }
+  .legend .lg em { font-style: normal; color: #131a26; }
   table { width: 100%; border-collapse: collapse; font-size: 11px; }
   th { text-align: left; border-bottom: 1.5px solid #131a26; padding: 5px 6px; font-size: 10px;
        text-transform: uppercase; letter-spacing: .05em; color: #5a6779; }
@@ -218,8 +224,9 @@
   <div><span>Opens</span><b>${esc(p.dates.open || '—')}</b></div>
 </div>
 <div class="plan">${planSvg()}</div>
+<h2 class="legend-h">Legend</h2>
 <div class="legend">${legendKinds.map((k) =>
-  `<span><i style="background:${k.fill}"></i>${esc(k.name)}</span>`).join('')}</div>
+  `<span class="lg">${FP.render.symbolSwatch(k.id, 18)}<em>${esc(k.name)}</em></span>`).join('')}</div>
 
 <div class="pagebreak"></div>
 <h2>Space manifest</h2>

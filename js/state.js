@@ -264,6 +264,17 @@
     FP.plan.elements.forEach((e) => { if (e.parentId && kill.has(e.parentId)) kill.add(e.id); });
     FP.plan.elements = FP.plan.elements.filter((e) => !kill.has(e.id));
     FP.state.selection = [];
+
+    /* Deleting the booth you are standing inside would leave the editor
+       scoped to an element that no longer exists: the catalog, the
+       renderer and the rules would all be looking at a dead id, with no
+       obvious way back to the hall. Step out first. Undo/redo guards the
+       same case in afterHistory(). */
+    if (FP.state.scope.spaceId && kill.has(FP.state.scope.spaceId)) {
+      FP.state.scope = { type: 'hall', spaceId: null };
+      FP.emit('scope');
+    }
+
     FP.changed();
     FP.emit('select');
     return kill.size;

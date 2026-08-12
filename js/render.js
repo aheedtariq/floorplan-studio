@@ -743,6 +743,8 @@
 
   /* Labels inside rects/polys — hidden when they'd be unreadable. */
   function labelFor(el, k, box, opts) {
+    /* A legend swatch is the symbol alone; the name sits beside it. */
+    if (opts.swatch) return '';
     if (!FP.state.showLabels || opts.ghost) return '';
     const zoom = FP.state.view.zoom;
     const wpx = box.w * zoom, hpx = box.h * zoom;
@@ -1092,4 +1094,68 @@
   }
 
   R.paintNow = paint;
+
+  /**
+   * A standalone swatch of one kind's plan symbol, for a printed legend.
+   *
+   * Deliberately runs the real drawElement path rather than re-drawing a
+   * lookalike: a legend that is maintained separately from the plan will
+   * eventually disagree with it, and a legend that disagrees with the
+   * drawing is worse than no legend at all.
+   *
+   * @param {string} kindId
+   * @param {number} px      swatch height in pixels
+   * @param {boolean} vars   inline concrete colours (for a print window
+   *                         that has none of the app's CSS variables)
+   */
+  R.symbolSwatch = (kindId, px = 20, vars = true) => {
+    const k = C.kind(kindId);
+    if (!k) return '';
+
+    /* A landscape box reads best for most kinds; markers get a square. */
+    const W = k.shape === 'marker' ? 6 : 10;
+    const H = 6;
+
+    const el = {
+      id: 'swatch', kind: k.id, shape: k.shape, layer: k.layer,
+      parentId: null, geometry: {}, props: {},
+    };
+    switch (k.shape) {
+      case 'rect': el.geometry = { x: 0.6, y: 0.6, w: W - 1.2, h: H - 1.2, rot: 0 }; break;
+      case 'line': el.geometry = { x1: 0.5, y1: H / 2, x2: W - 0.5, y2: H / 2,
+                                   thickness: k.thickness ?? 0.5 }; break;
+      case 'marker': el.geometry = { x: W / 2, y: H / 2, r: Math.min(W, H) * 0.3 }; break;
+      case 'poly': el.geometry = { pts: [[0.6, 0.6], [W - 0.6, 1.2], [W - 1.2, H - 0.6], [1, H - 1]] }; break;
+      default: el.geometry = { x: 0.6, y: H * 0.68, rot: 0 };
+    }
+    /* Spaces need a type, or the wall symbol has nothing to orient from. */
+    if (C.flag(k.id, 'sellable')) el.props.spaceType = 'inline';
+
+    /* The drawing code reads live view state; borrow it and put it back. */
+    const saved = FP.state.view.zoom;
+    const savedPlan = FP.plan;
+    FP.state.view.zoom = (px / H) * 3;
+    let body = '';
+    try {
+      body = drawElement(el, { issues: {}, unit: 'ft', swatch: true });
+    } catch (err) {
+      console.warn('swatch failed for', kindId, err);
+    } finally {
+      FP.state.view.zoom = saved;
+      FP.plan = savedPlan;
+    }
+
+    const style = vars ? `<style>svg{${SWATCH_VARS}}</style>` : '';
+    return `<svg viewBox="0 0 ${W} ${H}" width="${Math.round((px * W) / H)}" height="${px}"
+      xmlns="http://www.w3.org/2000/svg" style="vertical-align:middle">${style}${body}</svg>`;
+  };
+
+  /* Concrete values for the variables the drawing code emits, so a swatch
+     stands alone in a print window with no stylesheet attached. */
+  const SWATCH_VARS = [
+    '--paper:#ffffff', '--ink:#131a26', '--ink-2:#5a6779',
+    '--tx:#131a26', '--tx-2:#5a6779', '--tx-3:#8b96a8',
+    '--line:#dde3ec', '--line-2:#c6cfdd', '--accent:#4f7cff',
+    '--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif',
+  ].join(';');
 })(window);
