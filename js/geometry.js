@@ -78,11 +78,15 @@
       case 'poly':
         return G.polyBBox(q.pts);
       case 'line': {
-        const t = (q.thickness || 0.5) / 2;
-        return {
-          x: Math.min(q.x1, q.x2) - t, y: Math.min(q.y1, q.y2) - t,
-          w: Math.abs(q.x2 - q.x1) + t * 2, h: Math.abs(q.y2 - q.y1) + t * 2,
-        };
+        /* Thickness pads the line PERPENDICULAR to its own direction, not
+           along both axes uniformly — a perfectly horizontal cable is
+           only ever thicker vertically. Padding both axes made an
+           edge-to-edge horizontal bus register as spilling past the wall
+           it was drawn flush against, purely from stroke width. Derive
+           this from the same four corners G.outline already computes
+           correctly for any orientation, so hit-testing, rendering and
+           bounds-checking can never disagree about a line's true extent. */
+        return G.polyBBox(G.outline(el).map((p) => [p.x, p.y]));
       }
       case 'text': {
         const fs = el.props?.fontSize || 4;
