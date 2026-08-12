@@ -11,6 +11,7 @@
   async function boot() {
     /* theme before first paint */
     document.documentElement.dataset.theme = FP.prefs.theme || 'dark';
+    if (FP.prefs.colorBy) FP.state.colorBy = FP.prefs.colorBy;
 
     const canvas = document.getElementById('canvas');
     FP.render.init(canvas);

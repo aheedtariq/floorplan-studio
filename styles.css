@@ -18,7 +18,7 @@
 
   --rail: 52px;
   --left-w: 288px;
-  --right-w: 330px;
+  --right-w: 360px;
   --top-h: 56px;
 
   /* The drawing surface is a document, not part of the UI chrome. It stays
@@ -243,23 +243,36 @@ svg { display: block; }
 
 .sect-head {
   position: sticky; top: 0; z-index: 2;
-  display: flex; align-items: center; gap: 7px; width: 100%;
-  padding: 11px 12px 8px; background: var(--bg-2);
-  font-size: 10.5px; font-weight: 650; letter-spacing: .07em;
-  text-transform: uppercase; color: var(--tx-3);
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 9px 12px; background: var(--bg-2);
+  font-size: 11px; font-weight: 650; letter-spacing: .03em;
+  color: var(--tx-2); border-radius: var(--r-sm);
+  transition: background .12s;
 }
-.sect-head:hover { color: var(--tx-2); }
+.sect-head:hover { background: var(--bg-3); color: var(--tx); }
 .sect-head .chev {
-  width: 11px; height: 11px; flex: 0 0 11px;
+  width: 11px; height: 11px; flex: 0 0 11px; color: var(--tx-3);
   fill: none; stroke: currentColor; stroke-width: 2.6;
   stroke-linecap: round; stroke-linejoin: round;
   transform: rotate(90deg); transition: transform .15s ease;
 }
 .sect.closed .chev { transform: none; }
 .sect.closed .cat-list { display: none; }
+
+/* Each category gets a small tinted icon chip in its own colour — the
+   thing that used to be indistinguishable grey text is now scannable
+   at a glance, the same way the item swatches already were. */
+.sect-head .cat-ic {
+  width: 20px; height: 20px; flex: 0 0 20px; border-radius: 6px;
+  display: grid; place-items: center;
+  background: color-mix(in srgb, var(--cat) 18%, transparent);
+  color: var(--cat);
+}
+.sect-head .cat-ic svg { width: 12px; height: 12px; }
 .sect-head .ct {
   margin-left: auto; font-family: var(--mono); font-size: 10px;
-  letter-spacing: 0; opacity: .6;
+  font-weight: 500; letter-spacing: 0; color: var(--tx-3);
+  background: var(--bg-3); border-radius: 99px; padding: 1px 6px;
 }
 
 .cat-list { display: flex; flex-direction: column; gap: 1px; padding: 0 8px; }
@@ -356,17 +369,18 @@ svg { display: block; }
 /* ============================================================
    RIGHT PANEL
    ============================================================ */
-/* Five tabs have to fit a 330px rail without clipping the last one. */
+/* Six tabs have to fit the rail without clipping the last one — verified
+   against actual rendered widths, not eyeballed. */
 .tabs {
   display: flex; border-bottom: 1px solid var(--line); padding: 0 4px; flex: 0 0 auto;
   overflow-x: auto; scrollbar-width: none;
 }
 .tabs::-webkit-scrollbar { display: none; }
 .tab {
-  padding: 11px 7px; font-size: 11.5px; font-weight: 550; color: var(--tx-3);
+  padding: 11px 6px; font-size: 11px; font-weight: 550; color: var(--tx-3);
   white-space: nowrap; flex: 0 0 auto;
   border-bottom: 2px solid transparent; margin-bottom: -1px; transition: .12s;
-  display: flex; align-items: center; gap: 5px;
+  display: flex; align-items: center; gap: 4px;
 }
 .tab:hover { color: var(--tx-2); }
 .tab.active { color: var(--tx); border-bottom-color: var(--accent); }
@@ -477,6 +491,10 @@ select.inp { appearance: none; background-image: linear-gradient(45deg, transpar
 .pill.available { background: rgba(34, 197, 94, .16); color: var(--ok); }
 .pill.held { background: rgba(245, 158, 11, .16); color: var(--warn); }
 .pill.sold { background: var(--accent-soft); color: var(--accent); }
+
+.legend-row { display: flex; flex-wrap: wrap; gap: 5px 10px; margin-top: 8px; }
+.lg-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; color: var(--tx-2); }
+.lg-chip i { width: 9px; height: 9px; border-radius: 3px; flex: 0 0 auto; }
 
 /* ---------- safety ---------- */
 .issue {
@@ -722,7 +740,7 @@ kbd {
 .scope-bar .crumb-sep { color: var(--line-2); }
 
 @media (max-width: 1200px) {
-  :root { --left-w: 232px; --right-w: 290px; }
+  :root { --left-w: 232px; --right-w: 320px; }
 }
 @media (max-width: 900px) {
   .panel.left .panel-scroll { display: none; }

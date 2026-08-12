@@ -82,7 +82,7 @@
 
   function updateCursor() {
     if (!svg) return;
-    svg.classList.toggle('tool-draw', ['draw', 'poly', 'line', 'marker', 'text'].includes(S.tool));
+    svg.classList.toggle('tool-draw', ['draw', 'poly', 'line', 'marker', 'text', 'fill'].includes(S.tool));
     svg.classList.toggle('tool-measure', S.tool === 'measure' || S.tool === 'calibrate');
     svg.classList.toggle('tool-pan', S.tool === 'pan' || spaceHeld);
   }
@@ -184,6 +184,7 @@
     if (S.tool === 'text')    return placeText(w);
     if (S.tool === 'measure') return beginMeasure(ev, w);
     if (S.tool === 'calibrate') return beginCalibrate(ev, w);
+    if (S.tool === 'fill') return beginFillDrag(ev, w);
 
     /* --- select / move ---
        Resolve through hitAt rather than the DOM target: the topmost SVG
@@ -292,6 +293,17 @@
     S.draft = { type: 'line', x1: w.x, y1: w.y, x2: w.x, y2: w.y, calibrate: true };
   }
 
+  /* Fill-region: drag a box over a traced venue drawing (or empty floor)
+     and hand the region to the UI, which asks for booth size / aisle /
+     type before calling FP.interact.fillRegion. Drawing the box is the
+     same gesture as any other rect tool; only what happens on release
+     differs. */
+  function beginFillDrag(ev, w) {
+    const p = snapPt(w);
+    S.drag = { kind: 'fill', x1: p.x, y1: p.y };
+    S.draft = { type: 'rect', rect: { x: p.x, y: p.y, w: 0, h: 0 } };
+  }
+
   function polyClick(w, ev) {
     const p = snapPt(w);
     if (!S.draft || S.draft.type !== 'poly') {
@@ -329,9 +341,15 @@
     FP.emit('edit-text', el.id);
   }
 
-  /** Drawing tools stay armed while Alt is held, otherwise drop to select. */
-  function afterCreate(keep = false) {
-    if (!keep) setTool('select');
+  /**
+   * Placement tools stay armed after each placement by default, so you
+   * can drop a whole row of booths (or walls, or power drops) without
+   * re-clicking the tool every time. Click Select, press Escape, or arm
+   * a different kind to stop. Holding Alt while you release places just
+   * one and drops back to Select, for the odd one-off placement.
+   */
+  function afterCreate(oneShot = false) {
+    if (oneShot) setTool('select');
     else R().draw();
   }
 
@@ -456,6 +474,12 @@
         S.draft = { type: 'line', x1: d.x1, y1: d.y1, x2: p.x, y2: p.y, calibrate: true };
         break;
       }
+
+      case 'fill': {
+        const p = snapPt(w);
+        S.draft = { type: 'rect', rect: { x: d.x1, y: d.y1, w: p.x - d.x1, h: p.y - d.y1 } };
+        break;
+      }
     }
 
     R().draw();
@@ -548,6 +572,19 @@
         FP.emit('calibrate-line', { x: line.x1, y: line.y1, drawn: len });
         break;
       }
+
+      case 'fill': {
+        const box = S.draft ? G.normalizeRect(S.draft.rect) : null;
+        S.draft = null;
+        if (!box || box.w < 5 || box.h < 5) {
+          FP.toast?.('Drag a larger area to fill', true);
+          break;
+        }
+        /* The UI asks for booth size / aisle / type, then calls
+           FP.interact.fillRegion — same handoff pattern as calibrate-line. */
+        FP.emit('fill-region', box);
+        break;
+      }
     }
 
     R().draw();
@@ -600,6 +637,7 @@
     p: () => setTool('poly', 'dead-space-poly'),
     m: () => setTool('measure'),
     h: () => setTool('pan'),
+    u: () => setTool('fill'),
   };
 
   function onKeyDown(ev) {

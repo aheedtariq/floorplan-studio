@@ -103,6 +103,8 @@
       icon: '<path d="M3 8v8M21 8v8M3 12h18"/><path d="m7 9-3 3 3 3M17 9l3 3-3 3"/>' },
     { id: 'measure', tool: 'measure', key: 'M', name: 'Measure (does not draw)',
       icon: '<path d="M2 12 12 2l10 10-10 10z"/><path d="M8 8l2 2M12 6l2 2M6 12l2 2"/>' },
+    { id: 'fill', tool: 'fill', key: 'U', name: 'Fill area with booths',
+      icon: '<rect x="3" y="3" width="8" height="8" rx="1"/><rect x="13" y="3" width="8" height="8" rx="1"/><rect x="3" y="13" width="8" height="8" rx="1"/><rect x="13" y="13" width="8" height="8" rx="1"/>' },
   ];
 
   function renderRail() {
@@ -131,6 +133,12 @@
      a planner laying out booths does not want to scroll past utilities
      every time. */
   const collapsed = new Set(FP.prefs.catalogCollapsed || []);
+  /* Separate from `collapsed`: categories that default CLOSED but the
+     user chose to open. Two sets because a category's resting state
+     depends on its own defaultOpen flag — "the user closed this" and
+     "the user opened this" are different facts when defaults differ
+     per category. */
+  const userToggled = new Set(FP.prefs.catalogOpened || []);
 
   function renderCatalog() {
     const q = catalogQuery.trim().toLowerCase();
@@ -140,11 +148,20 @@
     $('catalog').innerHTML = C.categories.map((cat) => {
       const list = kinds.filter((k) => k.cat === cat.id);
       if (!list.length) return '';
-      /* A search always expands, so nothing hides behind a collapsed header. */
-      const open = !!q || !collapsed.has(cat.id);
+      /* A search always expands, so nothing hides behind a collapsed
+         header. Otherwise: an explicit user choice (collapsed set) wins;
+         failing that, the category's own defaultOpen decides what a
+         first-time visitor sees — a handful of groups open, the rest
+         tucked away, rather than nine categories all sprawled out. */
+      const open = q ? true
+        : collapsed.has(cat.id) ? false
+        : userToggled.has(cat.id) ? true
+        : cat.defaultOpen !== false;
       return `<section class="sect${open ? '' : ' closed'}">
-        <button class="sect-head" data-toggle="${cat.id}" aria-expanded="${open}">
+        <button class="sect-head" data-toggle="${cat.id}" aria-expanded="${open}"
+          style="--cat:${cat.color || 'var(--tx-3)'}">
           <svg class="chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>
+          <span class="cat-ic">${iconSvg(cat.icon || '')}</span>
           <span>${esc(cat.name)}</span>
           <span class="ct">${list.length}</span>
         </button>
@@ -544,6 +561,18 @@
       <div class="stat"><b>${Math.round(st.utilization * 100)}%</b><span>Floor used</span></div>
     </div>`;
 
+    /* Colour by any property instead of highlighting booths by hand —
+       this is the panel that replaces the felt pen on the working plans. */
+    const mode = C.colorMode(S.colorBy || 'status');
+    h += `<div class="grp">
+      <h4 class="grp-title">Colour booths by</h4>
+      <select class="inp" id="colorByMode">
+        ${C.colorModes.map((m) =>
+          `<option value="${m.id}"${m.id === mode.id ? ' selected' : ''}>${esc(m.name)}</option>`).join('')}
+      </select>
+      <div class="legend-row" id="colorByLegend">${colorByLegendHtml(mode)}</div>
+    </div>`;
+
     h += `<div class="list-tools">
       ${input({ id: 'boothSearch', value: S.filter || '', placeholder: 'Filter by number or exhibitor' })}
     </div>`;
@@ -556,6 +585,13 @@
       if (!list.length) h += `<div class="empty">Nothing matches that filter.</div>`;
     }
     pane.innerHTML = h;
+
+    $('colorByMode')?.addEventListener('change', (ev) => {
+      S.colorBy = ev.target.value;
+      FP.setPref('colorBy', S.colorBy);
+      $('colorByLegend').innerHTML = colorByLegendHtml(C.colorMode(S.colorBy));
+      R().draw();
+    });
 
     const search = $('boothSearch');
     if (search) {
@@ -580,6 +616,28 @@
         R().fit();
       });
     });
+  }
+
+  /** Legend chips for whichever colour-by mode is active. */
+  function colorByLegendHtml(mode) {
+    const chip = (color, label) =>
+      `<span class="lg-chip"><i style="background:${color}"></i>${esc(label)}</span>`;
+
+    if (mode.id === 'status') {
+      return C.statuses.map((s) => chip(s.color, s.name)).join('');
+    }
+    if (mode.buckets) {
+      return mode.buckets.map((b) => chip(b.color, b.name)).join('');
+    }
+    if (mode.values) {
+      return Object.entries(mode.values).map(([key, color]) => {
+        const label = mode.id === 'type' ? C.spaceType(key).name
+          : key === 'yes' ? 'Submitted' : key === 'no' ? 'Not submitted'
+          : key.charAt(0).toUpperCase() + key.slice(1);
+        return chip(color, label);
+      }).join('');
+    }
+    return '';
   }
 
   function boothRow(s) {
@@ -976,62 +1034,104 @@
     const spaces = FP.spaces();
     if (!spaces.length) return FP.toast('No spaces to number', true);
     FP.modal({
-      title: 'Auto-number spaces',
-      body: `<p class="helptext">Renumbers ${spaces.length} spaces by position, sweeping the
-        floor row by row. Existing numbers are replaced.</p>
-        <div class="row2">
-          ${field('Prefix', input({ id: 'anPrefix', value: '', placeholder: 'e.g. A' }))}
-          ${field('Start at', numInput('anStart', 101))}
+      title: 'Number spaces',
+      body: `<p class="helptext">Renumbers ${spaces.length} spaces. Existing numbers are replaced.</p>
+        ${field('Method', select('anMethod', 'aisle', [
+          ['aisle', 'Aisle numbering — hundreds = aisle, odd/even by side'],
+          ['reading', 'Reading order — simple sweep'],
+        ]))}
+
+        <div id="anAisleFields">
+          <div class="row2">
+            ${field('First aisle', numInput('aaStart', 1))}
+            ${field('Increment', numInput('aaStep', 2))}
+          </div>
+          ${field('Even numbers on', select('aaSide', 'far', [
+            ['far', 'Far side of each aisle'],
+            ['near', 'Near side of each aisle'],
+          ]))}
+          <p class="helptext" style="margin-top:6px">Two rows facing each other across
+            an aisle share one hundred-block — e.g. 200/202/204 opposite 201/203/205.
+            Rows that only back onto each other (no aisle between them) get separate
+            blocks. This matches how the floor is numbered on-site.</p>
         </div>
-        <div class="row2">
-          ${field('Increment', numInput('anStep', 1))}
-          ${field('Row tolerance', numInput('anTol', 5, unit()))}
-        </div>
-        ${field('Sweep', select('anOrder', 'row', [
-          ['row', 'Rows, left to right'],
-          ['boustro', 'Rows, serpentine'],
-          ['col', 'Columns, top to bottom'],
-        ]))}`,
+
+        <div id="anReadingFields" style="display:none">
+          <div class="row2">
+            ${field('Prefix', input({ id: 'anPrefix', value: '', placeholder: 'e.g. A' }))}
+            ${field('Start at', numInput('anStart', 101))}
+          </div>
+          <div class="row2">
+            ${field('Increment', numInput('anStep', 1))}
+            ${field('Row tolerance', numInput('anTol', 5, unit()))}
+          </div>
+          ${field('Sweep', select('anOrder', 'row', [
+            ['row', 'Rows, left to right'],
+            ['boustro', 'Rows, serpentine'],
+            ['col', 'Columns, top to bottom'],
+          ]))}
+        </div>`,
       foot: `<button class="btn ghost" data-no>Cancel</button>
              <button class="btn primary" data-yes>Renumber</button>`,
       onMount: (body, foot) => {
+        const methodSel = body.querySelector('#anMethod');
+        const syncMethod = () => {
+          const aisle = methodSel.value === 'aisle';
+          body.querySelector('#anAisleFields').style.display = aisle ? '' : 'none';
+          body.querySelector('#anReadingFields').style.display = aisle ? 'none' : '';
+        };
+        methodSel.addEventListener('change', syncMethod);
+        syncMethod();
+
         foot.querySelector('[data-no]').onclick = FP.closeModal;
         foot.querySelector('[data-yes]').onclick = () => {
-          const prefix = body.querySelector('#anPrefix').value;
-          const start = parseInt(body.querySelector('#anStart').value, 10) || 1;
-          const inc = parseInt(body.querySelector('#anStep').value, 10) || 1;
-          const tol = Number(body.querySelector('#anTol').value) || 5;
-          const order = body.querySelector('#anOrder').value;
+          let count;
 
-          const rows = [];
-          spaces.map((s) => ({ s, b: G.bbox(s) }))
-            .sort((a, b) => a.b.y - b.b.y)
-            .forEach((item) => {
-              const row = rows.find((r) => Math.abs(r.y - item.b.y) <= tol);
-              if (row) row.items.push(item);
-              else rows.push({ y: item.b.y, items: [item] });
+          if (methodSel.value === 'aisle') {
+            count = FP.interact.aisleNumber({
+              startAisle: parseInt(body.querySelector('#aaStart').value, 10) || 1,
+              step: parseInt(body.querySelector('#aaStep').value, 10) || 2,
+              evenSide: body.querySelector('#aaSide').value,
             });
-
-          let ordered = [];
-          if (order === 'col') {
-            ordered = spaces.map((s) => ({ s, b: G.bbox(s) }))
-              .sort((a, b) => a.b.x - b.b.x || a.b.y - b.b.y);
           } else {
-            rows.forEach((r, i) => {
-              r.items.sort((a, b) => a.b.x - b.b.x);
-              if (order === 'boustro' && i % 2) r.items.reverse();
-              ordered.push(...r.items);
-            });
+            const prefix = body.querySelector('#anPrefix').value;
+            const start = parseInt(body.querySelector('#anStart').value, 10) || 1;
+            const inc = parseInt(body.querySelector('#anStep').value, 10) || 1;
+            const tol = Number(body.querySelector('#anTol').value) || 5;
+            const order = body.querySelector('#anOrder').value;
+
+            const rows = [];
+            spaces.map((s) => ({ s, b: G.bbox(s) }))
+              .sort((a, b) => a.b.y - b.b.y)
+              .forEach((item) => {
+                const row = rows.find((r) => Math.abs(r.y - item.b.y) <= tol);
+                if (row) row.items.push(item);
+                else rows.push({ y: item.b.y, items: [item] });
+              });
+
+            let ordered = [];
+            if (order === 'col') {
+              ordered = spaces.map((s) => ({ s, b: G.bbox(s) }))
+                .sort((a, b) => a.b.x - b.b.x || a.b.y - b.b.y);
+            } else {
+              rows.forEach((r, i) => {
+                r.items.sort((a, b) => a.b.x - b.b.x);
+                if (order === 'boustro' && i % 2) r.items.reverse();
+                ordered.push(...r.items);
+              });
+            }
+
+            FP.snapshot();
+            ordered.forEach((item, i) => { item.s.props.number = `${prefix}${start + i * inc}`; });
+            FP.plan.nextSpaceNo = start + ordered.length * inc;
+            FP.changed();
+            count = ordered.length;
           }
 
-          FP.snapshot();
-          ordered.forEach((item, i) => { item.s.props.number = `${prefix}${start + i * inc}`; });
-          FP.plan.nextSpaceNo = start + ordered.length * inc;
-          FP.changed();
           FP.closeModal();
           renderAll();
           R().draw();
-          FP.toast(`Renumbered ${ordered.length} spaces`);
+          FP.toast(`Renumbered ${count} space${count === 1 ? '' : 's'}`);
         };
       },
     });
@@ -1093,6 +1193,47 @@
     }
     FP.setTool('calibrate');
     FP.toast('Drag across a dimension you know the real length of');
+  }
+
+  function fillRegionDialog(region) {
+    const rows = Math.max(1, Math.floor((region.h + 10) / 30));
+    const cols = Math.max(1, Math.floor(region.w / 10));
+    FP.modal({
+      title: 'Fill area with booths',
+      body: `<p class="helptext">Lays booths into the dragged area on the standard
+        module — shoulder to shoulder along the run, back-to-back in pairs across
+        it, with an aisle after each pair. About ${cols * rows * 2} booths will fit
+        this area at the defaults below.</p>
+        <div class="row2">
+          ${field('Booth width', numInput('frW', 10, unit()))}
+          ${field('Booth depth', numInput('frH', 10, unit()))}
+        </div>
+        <div class="row2">
+          ${field('Aisle width', numInput('frAisle', 10, unit()))}
+          ${field('Direction', select('frAxis', 'h', [['h', 'Rows run left–right'], ['v', 'Rows run top–bottom']]))}
+        </div>
+        ${field('Space type', select('frType', 'inline', C.spaceTypes.map((t) => [t.id, t.name])))}`,
+      foot: `<button class="btn ghost" data-no>Cancel</button>
+             <button class="btn primary" data-yes>Fill</button>`,
+      onMount: (body, foot) => {
+        foot.querySelector('[data-no]').onclick = FP.closeModal;
+        foot.querySelector('[data-yes]').onclick = () => {
+          const v = (id) => Number(body.querySelector(`#${id}`).value);
+          const made = FP.interact.fillRegion(region, {
+            boothW: v('frW') || 10, boothH: v('frH') || 10,
+            aisle: v('frAisle') || 10,
+            axis: body.querySelector('#frAxis').value,
+            spaceType: body.querySelector('#frType').value,
+          });
+          FP.closeModal();
+          /* Stays armed, like every other placement tool — drag another
+             region straight away without re-clicking Fill. */
+          renderAll();
+          R().draw();
+          FP.toast(made.length ? `${made.length} spaces created` : 'Area too small for that booth size');
+        };
+      },
+    });
   }
 
   function calibrationDialog({ x, y, drawn }) {
@@ -1432,7 +1573,8 @@
           ['Ctrl 0', 'Fit'],
         ])}
         ${group('While drawing', [
-          ['⇧', 'Square / 45° constrain'], ['Alt', 'Ignore snap · keep tool armed'],
+          ['⇧', 'Square / 45° constrain'], ['Alt (while dragging)', 'Ignore snap'],
+          ['Alt (on release)', 'Place one, then switch to Select'],
           ['Enter', 'Finish polygon'], ['Backspace', 'Remove last point'],
           ['Esc', 'Cancel'], ['Double-click', 'Open booth interior'],
         ])}
@@ -1542,8 +1684,16 @@
       const t = e.target.closest('[data-toggle]');
       if (!t) return;
       const id = t.dataset.toggle;
-      collapsed.has(id) ? collapsed.delete(id) : collapsed.add(id);
-      FP.setPref('catalogCollapsed', [...collapsed]);
+      const cat = C.categories.find((c) => c.id === id);
+      const nowOpen = t.getAttribute('aria-expanded') !== 'true';
+
+      if (cat?.defaultOpen === false) {
+        nowOpen ? userToggled.add(id) : userToggled.delete(id);
+        FP.setPref('catalogOpened', [...userToggled]);
+      } else {
+        nowOpen ? collapsed.delete(id) : collapsed.add(id);
+        FP.setPref('catalogCollapsed', [...collapsed]);
+      }
       renderCatalog();
     });
 
@@ -1737,7 +1887,8 @@
         No electrical distribution yet.<br/>
         Place a panel from the <b>Electrical distribution</b> group, then add
         distros and drops that reference it by ID.
-      </div>`;
+      </div>${busGenHtml()}`;
+      wireBusGen(pane);
       return;
     }
 
@@ -1816,6 +1967,9 @@
         ${runs.map(runRow).join('')}
       </div>` : ''}
 
+      ${busReachHtml()}
+      ${busGenHtml()}
+
       <div class="grp">
         <h4 class="grp-title">Exports</h4>
         <button class="row-btn" data-elec-export="electrical">
@@ -1839,6 +1993,74 @@
 
     pane.querySelectorAll('[data-elec-export]').forEach((b) =>
       b.addEventListener('click', () => FP.exporters.run(b.dataset.elecExport)));
+
+    wireBusGen(pane);
+    pane.querySelectorAll('[data-bus-goto]').forEach((row) =>
+      row.addEventListener('click', () => {
+        const el = FP.get(row.dataset.busGoto);
+        if (!el) return;
+        FP.select([el.id]);
+        R().centerOn(G.bbox(el));
+      }));
+  }
+
+  /** Booths that ordered power but sit further than half the bus module away. */
+  function busReachHtml() {
+    if (!FP.interact?.busReach) return '';
+    const module = FP.interact.BUS_MODULE || 30;
+    const out = FP.interact.busReach().filter((r) => r.distance > module / 2 + 0.01);
+    if (!out.length) return '';
+    return `<div class="grp">
+      <h4 class="grp-title">Booths beyond bus reach</h4>
+      <p class="helptext">More than ${G.fmtLen(module / 2, FP.plan.unit)} from any bus —
+        feeding these would cross an aisle.</p>
+      ${out.map((r) => `<div class="ckt over" data-bus-goto="${r.space.id}">
+        <span class="c-id">${esc(r.space.props.number || '—')}</span>
+        <span class="c-where">${esc(r.space.props.exhibitor || 'Unassigned')}</span>
+        <span class="c-amps">${G.fmtLen(r.distance, FP.plan.unit)}</span>
+      </div>`).join('')}
+    </div>`;
+  }
+
+  function busGenHtml() {
+    return `<div class="grp">
+      <h4 class="grp-title">Electrical buses</h4>
+      <p class="helptext">Lays feeder runs on the standard module — 10 ft booth,
+        10 ft aisle, 10 ft booth — so every booth backs onto one and no drop
+        has to cross an aisle.</p>
+      <div class="row2">
+        <div class="field"><label>Direction</label>
+          <select class="inp" id="busAxis">
+            <option value="h">Horizontal</option>
+            <option value="v">Vertical</option>
+          </select></div>
+        <div class="field"><label>Spacing</label>
+          <div class="unit-inp"><input class="inp num" id="busSpacing" type="number"
+            value="${FP.interact?.BUS_MODULE || 30}" min="10" step="5"/>
+            <span class="u">${esc(FP.plan.unit)}</span></div></div>
+      </div>
+      <div class="row2">
+        <div class="field"><label>Offset from edge</label>
+          <div class="unit-inp"><input class="inp num" id="busOffset" type="number"
+            value="15" min="0" step="5"/><span class="u">${esc(FP.plan.unit)}</span></div></div>
+        <div class="field"><label>Fed from</label>
+          <input class="inp" id="busPanel" value="MDP-1"/></div>
+      </div>
+      <button class="mini" id="btnGenBuses" style="width:100%">Generate buses</button>
+    </div>`;
+  }
+
+  function wireBusGen(pane) {
+    pane.querySelector('#btnGenBuses')?.addEventListener('click', () => {
+      const made = FP.interact.generateBuses({
+        axis: pane.querySelector('#busAxis').value,
+        spacing: Number(pane.querySelector('#busSpacing').value) || 30,
+        offset: Number(pane.querySelector('#busOffset').value) || 15,
+        panelId: pane.querySelector('#busPanel').value.trim() || 'MDP-1',
+      }).length;
+      renderAll();
+      FP.toast(made ? `${made} bus run${made === 1 ? '' : 's'} generated` : 'Nothing to generate — check the hall size');
+    });
   }
 
   /* ============================================================
@@ -1893,6 +2115,7 @@
 
     FP.on('show-help', helpModal);
     FP.on('calibrate-line', calibrationDialog);
+    FP.on('fill-region', fillRegionDialog);
 
     FP.on('edit-text', (id) => {
       const el = FP.get(id);

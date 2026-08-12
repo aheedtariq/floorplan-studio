@@ -149,16 +149,23 @@
     { id: 'annotate',  name: 'Annotations',     visible: true, locked: false },
   ];
 
+  /* color + icon give each catalog section its own visual identity in the
+     sidebar, instead of every group reading as the same grey text label.
+     defaultOpen controls what a first-time user sees expanded — the
+     groups reached constantly (spaces, structure, safety) stay open;
+     the rest start collapsed so the sidebar isn't a wall of categories
+     on first load. Anyone who expands a group has that choice remembered
+     via FP.prefs, this only governs the very first visit. */
   const categories = [
-    { id: 'spaces',    name: 'Booth spaces' },
-    { id: 'structure', name: 'Structure' },
-    { id: 'safety',    name: 'Life safety' },
-    { id: 'zones',     name: 'Zones' },
-    { id: 'amenities', name: 'Amenities & services' },
-    { id: 'contents',  name: 'Booth contents' },
-    { id: 'utilities', name: 'Utilities' },
-    { id: 'electrical',name: 'Electrical distribution' },
-    { id: 'annotate',  name: 'Annotation' },
+    { id: 'spaces',    name: 'Booth spaces',          color: '#4f7cff', icon: ic.booth,  defaultOpen: true },
+    { id: 'structure', name: 'Structure',              color: '#64748b', icon: ic.wall,   defaultOpen: true },
+    { id: 'safety',    name: 'Life safety',            color: '#ef4444', icon: ic.fire,   defaultOpen: true },
+    { id: 'zones',     name: 'Zones',                  color: '#a855f7', icon: ic.zone,   defaultOpen: false },
+    { id: 'amenities', name: 'Amenities & services',   color: '#f97316', icon: ic.stage,  defaultOpen: false },
+    { id: 'contents',  name: 'Booth contents',         color: '#94a3b8', icon: ic.table,  defaultOpen: true },
+    { id: 'utilities', name: 'Utilities',               color: '#facc15', icon: ic.power,  defaultOpen: false },
+    { id: 'electrical',name: 'Electrical distribution', color: '#f59e0b', icon: ic.panel,  defaultOpen: false },
+    { id: 'annotate',  name: 'Annotation',             color: '#0ea5e9', icon: ic.text,   defaultOpen: false },
   ];
 
   /* ------------------------------------------------------------
