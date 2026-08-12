@@ -886,6 +886,64 @@
     return spaces.length;
   };
 
+  /**
+   * Fill a region with booths on the module.
+   *
+   * This is the payoff of importing a venue drawing: calibrate the image,
+   * drag a box over a block of booths on it, and the block is laid out at
+   * true scale instead of being traced rectangle by rectangle.
+   *
+   * The layout is the standard module — booths back-to-back in pairs with
+   * an aisle between each pair — so it lands on the same grid the floor is
+   * actually built to, whatever venue the drawing came from. Nothing here
+   * knows or cares which hall it is.
+   *
+   * @param {object} region  world-space { x, y, w, h }
+   * @param {object} opts
+   *   boothW, boothH  footprint
+   *   aisle           gap between facing rows
+   *   axis            'h' rows run left-to-right, 'v' top-to-bottom
+   *   spaceType
+   * @returns {Array} the created elements
+   */
+  I.fillRegion = (region, { boothW = 10, boothH = 10, aisle = 10,
+                            axis = 'h', spaceType = 'inline' } = {}) => {
+    const r = G.normalizeRect(region);
+    if (r.w < boothW || r.h < boothH) return [];
+
+    /* Along the run, booths sit shoulder to shoulder. Across it, they go
+       back-to-back in pairs, then an aisle. */
+    const runLen = axis === 'h' ? r.w : r.h;
+    const depth = axis === 'h' ? r.h : r.w;
+    const along = axis === 'h' ? boothW : boothH;
+    const across = axis === 'h' ? boothH : boothW;
+
+    const perRow = Math.floor(runLen / along);
+    if (perRow < 1) return [];
+
+    /* One "band" is two back-to-back rows plus the aisle that follows. */
+    const band = across * 2 + aisle;
+    const bands = Math.floor((depth + aisle) / band);
+    if (bands < 1) return [];
+
+    const els = [];
+    for (let b = 0; b < bands; b += 1) {
+      for (let side = 0; side < 2; side += 1) {
+        const offset = b * band + side * across;
+        for (let i = 0; i < perRow; i += 1) {
+          const geom = axis === 'h'
+            ? { x: r.x + i * along, y: r.y + offset, w: boothW, h: boothH, rot: 0 }
+            : { x: r.x + offset, y: r.y + i * along, w: boothW, h: boothH, rot: 0 };
+          const el = FP.makeElement('space', geom, null);
+          el.props.spaceType = spaceType;
+          els.push(el);
+        }
+      }
+    }
+    if (els.length) FP.addElements(els);
+    return els;
+  };
+
   /* ============================================================
      Electrical buses.
 
