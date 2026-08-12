@@ -31,7 +31,7 @@ body.portal {
   border-radius: var(--r-lg); padding: 32px 28px;
 }
 .p-signin h1 { font-size: 19px; margin: 0 0 6px; letter-spacing: -.01em; }
-.p-signin p { font-size: 12.5px; color: var(--tx-2); line-height: 1.6; margin: 0 0 20px; }
+.p-signin p { font-size: 13px; color: var(--tx-2); line-height: 1.6; margin: 0 0 20px; }
 .p-signin .inp { text-align: center; }
 .p-signin .btn { width: 100%; justify-content: center; margin-top: 10px; height: 36px; }
 
@@ -47,13 +47,13 @@ body.portal {
 }
 .p-hero-meta { flex: 1; min-width: 180px; }
 .p-hero-meta h1 { font-size: 17px; margin: 0 0 3px; letter-spacing: -.01em; }
-.p-hero-meta p { margin: 0; font-size: 12.5px; color: var(--tx-3); }
+.p-hero-meta p { margin: 0; font-size: 13px; color: var(--tx-3); }
 
 .p-facts { display: flex; gap: 22px; flex-wrap: wrap; margin-top: 16px;
            border-top: 1px solid var(--line); padding-top: 14px; }
 .p-fact span { display: block; font-size: 10px; color: var(--tx-3);
                text-transform: uppercase; letter-spacing: .06em; margin-bottom: 3px; }
-.p-fact b { font-size: 13.5px; font-weight: 600; }
+.p-fact b { font-size: 14px; font-weight: 600; }
 
 /* deadline urgency reads at a glance */
 .p-deadline { margin-left: auto; text-align: right; }
@@ -87,13 +87,13 @@ body.portal {
 }
 .p-finding.error { border-left-color: var(--err); }
 .p-finding.warning { border-left-color: var(--warn); }
-.p-finding b { display: block; font-size: 12.5px; margin-bottom: 2px; }
-.p-finding span { font-size: 11.5px; color: var(--tx-3); line-height: 1.5; }
+.p-finding b { display: block; font-size: 13px; margin-bottom: 2px; }
+.p-finding span { font-size: 12px; color: var(--tx-3); line-height: 1.5; }
 
 .p-clear {
   display: flex; align-items: center; gap: 10px;
   padding: 14px; border-radius: var(--r-md);
-  background: rgba(34, 197, 94, .1); color: var(--ok); font-size: 12.5px; font-weight: 550;
+  background: rgba(34, 197, 94, .1); color: var(--ok); font-size: 13px; font-weight: 550;
 }
 .p-clear svg { width: 18px; height: 18px; flex: 0 0 18px;
                fill: none; stroke: currentColor; stroke-width: 2;
@@ -107,7 +107,7 @@ body.portal {
   display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
   box-shadow: var(--shadow);
 }
-.p-submit .status { flex: 1; min-width: 160px; font-size: 12.5px; color: var(--tx-2); }
+.p-submit .status { flex: 1; min-width: 160px; font-size: 13px; color: var(--tx-2); }
 .p-submit .btn { height: 36px; padding: 0 20px; }
 .p-submit .btn:disabled { opacity: .45; pointer-events: none; }
 
@@ -120,7 +120,7 @@ body.portal {
 .p-frozen {
   background: rgba(239, 68, 68, .1); border: 1px solid rgba(239, 68, 68, .3);
   color: var(--err); border-radius: var(--r-md); padding: 12px 14px;
-  font-size: 12.5px; line-height: 1.55; margin-bottom: 16px;
+  font-size: 13px; line-height: 1.55; margin-bottom: 16px;
 }
 
 .p-empty { text-align: center; padding: 60px 20px; color: var(--tx-3); font-size: 13px; line-height: 1.7; }
@@ -131,7 +131,7 @@ body.portal {
   font-size: 11px; font-weight: 650; letter-spacing: .07em; text-transform: uppercase;
   color: var(--tx-3); margin: 0 0 3px;
 }
-.o-blurb { font-size: 11.5px; color: var(--tx-3); margin: 0 0 10px; line-height: 1.5; }
+.o-blurb { font-size: 12px; color: var(--tx-3); margin: 0 0 10px; line-height: 1.5; }
 
 .o-item {
   display: grid; grid-template-columns: 1fr 140px 108px;
@@ -143,21 +143,21 @@ body.portal {
 .o-item.picked { background: var(--accent-soft); border-color: var(--accent); }
 
 .o-info { min-width: 0; }
-.o-info b { display: block; font-size: 12.5px; font-weight: 570; }
+.o-info b { display: block; font-size: 13px; font-weight: 570; }
 /* direct children only — the SKU badge lives inside the <b> and must
    stay inline, or it stretches into a full-width bar */
 .o-info > span { display: block; font-size: 11px; color: var(--tx-3); line-height: 1.45; }
-.o-info .o-spec { font-family: var(--mono); font-size: 10.5px; color: var(--tx-2); margin-top: 2px; }
+.o-info .o-spec { font-family: var(--mono); font-size: 11px; color: var(--tx-2); margin-top: 2px; }
 .o-sku {
   display: inline-block;
-  font-family: var(--mono); font-size: 9.5px; font-weight: 600;
+  font-family: var(--mono); font-size: 9px; font-weight: 600;
   background: var(--bg-4); color: var(--tx-3);
   padding: 1px 5px; border-radius: 4px; vertical-align: middle;
   margin-left: 4px;
 }
 
-.o-price { text-align: right; font-size: 12.5px; }
-.o-price .o-unit { font-size: 10.5px; color: var(--tx-3); }
+.o-price { text-align: right; font-size: 13px; }
+.o-price .o-unit { font-size: 11px; color: var(--tx-3); }
 /* a missing price is a quote, never free */
 .o-quote { font-size: 11px; color: var(--tx-3); font-style: italic; }
 
@@ -177,7 +177,7 @@ body.portal {
   border-top: 1px solid var(--line); padding-top: 14px; margin-top: 4px;
 }
 .o-total b { font-size: 13px; }
-.o-total span { font-size: 11.5px; color: var(--tx-3); }
+.o-total span { font-size: 12px; color: var(--tx-3); }
 .o-sum { font-family: var(--mono); font-size: 18px; font-weight: 700; }
 
 @media (max-width: 640px) {
@@ -187,7 +187,7 @@ body.portal {
 
 /* repeated findings collapse to one line with a count */
 .p-count {
-  font-family: var(--mono); font-size: 10.5px; font-weight: 700;
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
   background: var(--bg-4); color: var(--tx-2);
   padding: 1px 6px; border-radius: 99px; margin-left: 4px;
 }
