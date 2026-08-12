@@ -676,7 +676,7 @@
         if (S.draft) { S.draft = null; R().draw(); }
         else if (S.tool !== 'select') setTool('select');
         else if (S.scope.type === 'booth') FP.exitScope();
-        else FP.select([]);
+        else { FP.select([]); R().draw(); }
         return;
 
       case 'Enter':

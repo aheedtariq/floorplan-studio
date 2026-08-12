@@ -386,7 +386,7 @@
   const statusDefs = [
     { id: 'available',  name: 'Available',    color: '#64748b', complete: false, order: 1 },
     { id: 'held',       name: 'On hold',      color: '#f59e0b', complete: false, order: 2 },
-    { id: 'sold',       name: 'Sold',         color: '#4f7cff', complete: false, order: 3 },
+    { id: 'sold',       name: 'Sold',         color: '#6366f1', complete: false, order: 3 },
     { id: 'awaiting',   name: 'Awaiting info',color: '#f97316', complete: false, order: 4 },
     { id: 'submitted',  name: 'Submitted',    color: '#06b6d4', complete: false, order: 5 },
     { id: 'approved',   name: 'Approved',     color: '#22c55e', complete: true,  order: 6 },

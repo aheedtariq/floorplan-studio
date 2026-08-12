@@ -772,7 +772,7 @@
         ${field('Units', select('planUnit', p.unit, [['ft', 'Feet'], ['m', 'Metres']]))}
       </div>
       <div class="kv"><span>Floor area</span><span>${esc(G.fmtArea(st.hall, unit()))}</span></div>
-      <div class="kv"><span>Sold / sellable</span><span>${esc(G.fmtArea(st.sellable, unit()))}</span></div>
+      <div class="kv"><span>Sellable</span><span>${esc(G.fmtArea(st.sellable, unit()))}</span></div>
       <div class="kv"><span>Dead space</span><span>${esc(G.fmtArea(st.dead, unit()))}</span></div>
       <div class="kv"><span>Utilisation</span><span>${Math.round(st.utilization * 100)}%</span></div>
     </div>`;
