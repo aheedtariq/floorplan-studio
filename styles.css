@@ -440,7 +440,7 @@ select.inp { appearance: none; background-image: linear-gradient(45deg, transpar
 .seg button.on { background: var(--bg); color: var(--tx); box-shadow: 0 1px 2px rgba(0,0,0,.2); }
 .seg button.on[data-status="available"] { color: var(--ok); }
 .seg button.on[data-status="held"] { color: var(--warn); }
-.seg button.on[data-status="sold"] { color: var(--accent); }
+.seg button.on[data-status="sold"] { color: #6366f1; }
 
 .check { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: 13px; color: var(--tx-2); cursor: pointer; }
 .check input { accent-color: var(--accent); width: 14px; height: 14px; }
