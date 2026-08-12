@@ -480,7 +480,13 @@
     const module = rule.params.module ?? 30;
     const limit = rule.params.maxDistance ?? module / 2;
 
-    const buses = ctx.hall.filter((e) => ctx.cfg.flag(e.kind, 'cableRun'));
+    /* Only runs explicitly marked as a distribution bus count — not every
+       cable run. A panel-to-distro backbone feeder is not something a
+       booth is meant to reach directly (the last-mile connection is
+       implicit, referenced by panelId rather than drawn), and treating
+       every feeder as a bus produced false positives on exactly that
+       radial-distribution pattern. */
+    const buses = ctx.hall.filter((e) => ctx.cfg.flag(e.kind, 'cableRun') && e.props.isBus);
     if (!buses.length) return [];
 
     const out = [];

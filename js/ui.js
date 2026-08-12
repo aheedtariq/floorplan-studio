@@ -1623,6 +1623,102 @@
      the rules engine uses, so the schedule can never disagree with the
      warnings shown in the Safety tab.
      ============================================================ */
+  /* ============================================================
+     Drape — the material takeoff.
+
+     Replaces counting runs off the drawing by hand. The panel and
+     upright counts come straight from FP.drape.takeoff(), which reads
+     the same geometry the plan draws, so the order can never disagree
+     with what is actually on the floor.
+     ============================================================ */
+  function renderDrape() {
+    const pane = $('tab-drape');
+    const p = FP.plan;
+    const t = FP.drape.takeoff(p);
+
+    const groupRow = (g) => `<div class="board">
+      <div class="board-head">
+        <span class="b-id" style="text-transform:capitalize">${esc(g.color)} · ${g.height} ft</span>
+        <span class="b-meta">${esc(FP.drape.describe(g, t.unit))}</span>
+        <span class="b-load">${esc(G.fmtLen(g.length, t.unit))}</span>
+      </div>
+      <div class="board-sub">${g.sections} panel${g.sections === 1 ? '' : 's'}
+        (${g.sectionWidth} ft ea.) · ${g.uprights} upright${g.uprights === 1 ? '' : 's'}
+        &amp; base${g.uprights === 1 ? '' : 's'} · ${g.runs} run${g.runs === 1 ? '' : 's'}</div>
+    </div>`;
+
+    pane.innerHTML = `
+      <div class="stat-grid">
+        <div class="stat"><b>${Math.round(t.totalLength)}</b><span>Linear ${t.unit}</span></div>
+        <div class="stat"><b>${t.totalPanels}</b><span>Panels</span></div>
+        <div class="stat"><b>${t.totalUprights}</b><span>Uprights</span></div>
+        <div class="stat"><b>${t.groups.length}</b><span>Colour / height</span></div>
+      </div>
+
+      <div class="grp">
+        <h4 class="grp-title">Generate from the floor plan</h4>
+        <p class="helptext">Lays a back wall along every row and side rails between
+          touching neighbours — back-to-back rows share one wall rather than
+          double-ordering it. Re-running replaces only what it generated;
+          anything drawn by hand is left alone.</p>
+        <div class="row2">
+          <div class="field"><label>Back wall height</label>
+            <select class="inp" id="dgBackH">
+              <option value="8" selected>8 ft</option><option value="10">10 ft</option>
+              <option value="12">12 ft</option><option value="16">16 ft</option>
+            </select></div>
+          <div class="field"><label>Side rail height</label>
+            <select class="inp" id="dgRailH">
+              <option value="3" selected>3 ft</option><option value="8">8 ft</option>
+            </select></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Colour</label>
+            <select class="inp" id="dgColor">
+              <option value="black" selected>Black</option><option value="blue">Blue</option>
+              <option value="white">White</option><option value="grey">Grey</option>
+              <option value="red">Red</option></select></div>
+          <div class="field"><label>Section width</label>
+            <div class="unit-inp"><input class="inp num" id="dgSection" type="number" value="10" min="1" step="1"/>
+              <span class="u">${esc(t.unit)}</span></div></div>
+        </div>
+        <label class="check"><input type="checkbox" id="dgRails" checked/> Include side rails between booths</label>
+        <button class="mini" id="btnGenDrape" style="width:100%;margin-top:8px">
+          Generate pipe &amp; drape
+        </button>
+      </div>
+
+      ${t.groups.length ? `<div class="grp">
+        <h4 class="grp-title">Material takeoff</h4>
+        ${t.groups.map(groupRow).join('')}
+      </div>
+      <div class="grp">
+        <button class="row-btn" id="btnDrapeCsv">
+          ${iconSvg('<path d="M12 3v12m0-12 4 4m-4-4-4 4"/><path d="M4 17v3h16v-3"/>')}
+          Drape order sheet (.csv)
+        </button>
+      </div>` : `<div class="empty">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4"
+          stroke-linecap="round" stroke-linejoin="round">${C.kind('drape').icon}</svg>
+        No pipe &amp; drape on this plan yet.<br/>Generate it from the booth
+        layout, or draw runs from the <b>Structure</b> group.
+      </div>`}`;
+
+    pane.querySelector('#btnGenDrape').onclick = () => {
+      const count = FP.drape.generate({
+        backHeight: pane.querySelector('#dgBackH').value,
+        railHeight: pane.querySelector('#dgRailH').value,
+        color: pane.querySelector('#dgColor').value,
+        sectionWidth: Number(pane.querySelector('#dgSection').value) || 10,
+        sideRails: pane.querySelector('#dgRails').checked,
+      }).length;
+      renderAll();
+      FP.toast(`${count} drape run${count === 1 ? '' : 's'} generated`);
+    };
+
+    pane.querySelector('#btnDrapeCsv')?.addEventListener('click', () => FP.exporters.run('drape'));
+  }
+
   function renderElectrical() {
     const pane = $('tab-power');
     const E = FP.rules.electrical;
@@ -1753,6 +1849,7 @@
     else if (activeTab === 'booths') renderBooths();
     else if (activeTab === 'safety') renderSafety();
     else if (activeTab === 'power') renderElectrical();
+    else if (activeTab === 'drape') renderDrape();
     else if (activeTab === 'plan') renderPlan();
   }
 

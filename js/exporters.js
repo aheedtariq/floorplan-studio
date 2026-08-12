@@ -167,6 +167,7 @@
     const issues = S.issues || [];
     const counts = FP.rules.counts(issues);
     const spaces = FP.spaces().slice().sort(byNumber);
+    const drapeTakeoff = FP.drape.takeoff(p);
 
     const legendKinds = [...new Set(p.elements.map((e) => e.kind))]
       .map((id) => C.kind(id))
@@ -250,6 +251,27 @@ ${spaces.map((s) => {
 }).join('')}
 </tbody></table>
 
+${drapeTakeoff.groups.length ? `<h2>Pipe &amp; drape takeoff</h2>
+<table><thead><tr>
+  <th>Height</th><th>Colour</th><th>Length</th><th>Panels</th><th>Uprights &amp; bases</th><th>Runs</th>
+</tr></thead><tbody>
+${drapeTakeoff.groups.map((g) => `<tr>
+    <td class="num">${g.height} ft</td>
+    <td style="text-transform:capitalize">${esc(g.color)}</td>
+    <td class="num">${esc(G.fmtLen(g.length, p.unit))}</td>
+    <td class="num">${g.sections}</td>
+    <td class="num">${g.uprights}</td>
+    <td class="num">${g.runs}</td>
+  </tr>`).join('')}
+  <tr style="font-weight:700;border-top:1.5px solid #131a26">
+    <td colspan="2">Total</td>
+    <td class="num">${esc(G.fmtLen(drapeTakeoff.totalLength, p.unit))}</td>
+    <td class="num">${drapeTakeoff.totalPanels}</td>
+    <td class="num">${drapeTakeoff.totalUprights}</td>
+    <td></td>
+  </tr>
+</tbody></table>` : ''}
+
 ${issues.length ? `<h2>Outstanding checks â€” ${counts.error} error${counts.error === 1 ? '' : 's'}, ${counts.warning} warning${counts.warning === 1 ? '' : 's'}</h2>
 ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> â€” ${esc(i.detail)}</div>`).join('')}`
 : '<h2>Checks</h2><div class="issue">All active rules pass.</div>'}
@@ -300,6 +322,56 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> â
     const s = String(v ?? '');
     return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
   };
+
+  /* ============================================================
+     Drape order sheet
+
+     Replaces the handwritten counts in the margin of a working plan â€”
+     "8 BLACK DRAPE = 83", "3 BLACK DRAPE = 205" â€” with a sheet the drape
+     contractor can price directly. One row per run, one totals row per
+     colour/height, computed by FP.drape.takeoff() from the same geometry
+     the plan draws.
+     ============================================================ */
+  function exportDrape() {
+    const p = FP.plan;
+    const t = FP.drape.takeoff(p);
+    if (!t.groups.length) return FP.toast('No pipe & drape on this plan', true);
+
+    const rows = [[
+      'Height (ft)', 'Colour', 'Role', `Length (${t.unit})`, `Sections (@ width)`,
+      `X1 (${t.unit})`, `Y1 (${t.unit})`, `X2 (${t.unit})`, `Y2 (${t.unit})`, 'Source',
+    ]];
+
+    FP.drape.runs(p)
+      .slice()
+      .sort((a, b) => (Number(b.props.drapeHeight) - Number(a.props.drapeHeight))
+        || String(a.props.drapeColor).localeCompare(String(b.props.drapeColor)))
+      .forEach((r) => {
+        const len = G.length(r);
+        const sw = Number(r.props.sectionWidth) || 10;
+        rows.push([
+          r.props.drapeHeight, r.props.drapeColor,
+          FP.drape.roleName(r.props.drapeRole),
+          G.round(len, 1), `${Math.max(1, Math.ceil(len / sw - 1e-9))} @ ${sw}`,
+          G.round(r.geometry.x1, 2), G.round(r.geometry.y1, 2),
+          G.round(r.geometry.x2, 2), G.round(r.geometry.y2, 2),
+          r.props.derived ? 'Generated' : 'Drawn',
+        ]);
+      });
+
+    rows.push([]);
+    rows.push(['Height (ft)', 'Colour', `Total ${t.unit}`, 'Panels', 'Uprights & bases', 'Runs']);
+    t.groups.forEach((g) => {
+      rows.push([g.height, g.color, Math.round(g.length), g.sections, g.uprights, g.runs]);
+    });
+    rows.push([]);
+    rows.push(['TOTAL', '', Math.round(t.totalLength), t.totalPanels, t.totalUprights, '']);
+
+    const csv = rows.map((r) => r.map(cell).join(',')).join('\r\n');
+    download(new Blob([`ï»¿${csv}`], { type: 'text/csv;charset=utf-8' }),
+      `${safeName()}-drape-${stamp()}.csv`);
+    FP.toast('Drape order sheet exported');
+  }
 
   /* ============================================================
      Electrical schedule
@@ -564,6 +636,7 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> â
         case 'json': return exportJson();
         case 'import': return importPlan();
         case 'electrical': return exportElectrical();
+        case 'drape': return exportDrape();
         case 'workorders': return exportWorkOrders();
         case 'publish': return publishDialog();
       }
@@ -573,6 +646,7 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> â
     exportCsv,
     exportJson,
     exportElectrical,
+    exportDrape,
     exportWorkOrders,
   };
 })(window);

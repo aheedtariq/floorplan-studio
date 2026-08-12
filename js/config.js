@@ -56,6 +56,7 @@
     stool:   '<circle cx="12" cy="10" r="5"/><path d="M12 15v6M9 21h6"/>',
     monitor: '<rect x="3" y="5" width="18" height="11" rx="1.5"/><path d="M12 16v3M8 19h8"/>',
     shelf:   '<path d="M4 8h16M4 14h16M4 6v12M20 6v12"/>',
+    drape:   '<path d="M4 5h16M6 5v14M18 5v14"/><path d="M8 5c0 5-1 9 0 14M12 5c0 5-1 9 0 14M16 5c0 5-1 9 0 14"/>',
   };
   FP.ICONS = ic;
 
@@ -181,7 +182,40 @@
     /* ---- structure ---- */
     { id: 'wall', name: 'Wall / partition', cat: 'structure', layer: 'structure', shape: 'line', scope: ['hall', 'booth'],
       thickness: 0.75, fill: '#8b95a8', stroke: '#5c667a', opacity: .95, icon: ic.wall,
-      flags: { blocking: true }, fields: [F.label, F.height] },
+      /* Not `blocking`: a booth legitimately backs onto a perimeter or
+         partition wall, and the wall's own line thickness made that
+         normal, touching placement register as an overlap — every booth
+         against a hall wall would report "placed on a blocking element". */
+      flags: {}, fields: [F.label, F.height] },
+    /* Pipe & drape — what the floor is actually built from.
+       Height is the thing that matters commercially: an 8 ft back wall
+       and a 3 ft side rail are different line items, ordered and priced
+       separately, and on the working plans they are distinguished by
+       line colour. */
+    { id: 'drape', name: 'Pipe & drape', cat: 'structure', layer: 'structure',
+      shape: 'line', scope: ['hall', 'booth'], thickness: 0.5,
+      fill: '#1e293b', stroke: '#1e293b', opacity: .95, icon: ic.drape,
+      /* Deliberately NOT `blocking` — that flag means "a booth may not
+         touch this" (dead space, columns), and a back wall is meant to
+         run flush along a booth's edge. Flagging it blocking made every
+         generated back wall fire "booth placed on blocking element"
+         against the very booth it belongs to. */
+      flags: { drape: true },
+      fields: [
+        { key: 'drapeHeight', label: 'Drape height', type: 'select', default: '8',
+          options: [['3', "3 ft side rail"], ['8', "8 ft back wall"],
+                    ['10', "10 ft"], ['12', "12 ft"], ['16', "16 ft masking"]] },
+        { key: 'drapeColor', label: 'Colour', type: 'select', default: 'black',
+          options: [['black', 'Black'], ['blue', 'Blue'], ['white', 'White'],
+                    ['grey', 'Grey'], ['red', 'Red']] },
+        { key: 'drapeRole', label: 'Function', type: 'select', default: 'backwall',
+          options: [['backwall', 'Back wall'], ['siderail', 'Side rail'],
+                    ['masking', 'Masking / boneyard'], ['stage', 'Stage surround']] },
+        { key: 'sectionWidth', label: 'Section width', type: 'number', unit: 'len', default: 10,
+          help: 'Crossbar span — drives the panel and upright counts' },
+        F.label,
+      ] },
+
     { id: 'column', name: 'Column / pillar', cat: 'structure', layer: 'structure', shape: 'rect', scope: ['hall'],
       size: [2.5, 2.5], fill: '#6b7688', stroke: '#414b5c', opacity: .9, icon: ic.column,
       flags: { blocking: true, obstruction: true }, fields: [F.label] },
@@ -306,7 +340,11 @@
       fill: '#f59e0b', stroke: '#f59e0b', opacity: .85, icon: ic.run,
       flags: { electrical: true, cableRun: true },
       fields: [F.circuitId, F.panelId, F.gauge, { ...F.amps, default: 100 },
-               F.voltage, F.phase, F.method, F.label] },
+               F.voltage, F.phase, F.method,
+               { key: 'isBus', label: 'Distribution bus', type: 'bool', default: false,
+                 help: 'On the 30 ft strip-bus module — booths are expected to reach this. '
+                     + 'Leave off for a panel-to-distro backbone feeder.' },
+               F.label] },
 
     { id: 'generator', name: 'Generator', cat: 'electrical', layer: 'electrical',
       shape: 'rect', scope: ['hall'], size: [16, 8],

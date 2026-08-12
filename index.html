@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Floorplan Studio — Source One Events</title>
-<link rel="stylesheet" href="styles.css?v=38" />
+<link rel="stylesheet" href="styles.css?v=41" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%234f7cff'/><g fill='none' stroke='white' stroke-width='8'><rect x='22' y='22' width='24' height='24'/><rect x='54' y='22' width='24' height='24'/><rect x='22' y='54' width='56' height='24'/></g></svg>" />
 </head>
 <body>
@@ -91,6 +91,7 @@
           <button data-export="json">Plan file (.json)</button>
           <button data-export="csv">Booth manifest (.csv)</button>
           <button data-export="electrical">Electrical schedule (.csv)</button>
+          <button data-export="drape">Drape order sheet (.csv)</button>
           <button data-export="workorders">Booth work orders</button>
           <div class="menu-sep"></div>
           <button data-export="publish">Publish public directory…</button>
@@ -173,6 +174,7 @@
         <button class="tab" data-tab="booths">Booths</button>
         <button class="tab" data-tab="safety">Safety<span class="badge" id="safetyBadge" hidden>0</span></button>
         <button class="tab" data-tab="power">Power</button>
+        <button class="tab" data-tab="drape">Drape</button>
         <button class="tab" data-tab="plan">Plan</button>
       </div>
       <div class="panel-scroll">
@@ -180,6 +182,7 @@
         <div class="tabpane" id="tab-booths"></div>
         <div class="tabpane" id="tab-safety"></div>
         <div class="tabpane" id="tab-power"></div>
+        <div class="tabpane" id="tab-drape"></div>
         <div class="tabpane" id="tab-plan"></div>
       </div>
     </aside>
@@ -203,20 +206,21 @@
 <input type="file" id="filePicker" hidden />
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
-<script src="js/geometry.js?v=38"></script>
-<script src="js/config.js?v=38"></script>
-<script src="js/state.js?v=38"></script>
-<script src="js/backend.js?v=38"></script>
-<script src="js/store-supabase.js?v=38"></script>
-<script src="js/rules.js?v=38"></script>
-<script src="js/render.js?v=38"></script>
-<script src="js/interactions.js?v=38"></script>
-<script src="js/ui.js?v=38"></script>
-<script src="js/admin.js?v=38"></script>
-<script src="js/publish.js?v=38"></script>
-<script src="js/exporters.js?v=38"></script>
-<script src="js/samples.js?v=38"></script>
-<script src="js/pcma.js?v=38"></script>
-<script src="js/main.js?v=38"></script>
+<script src="js/geometry.js?v=41"></script>
+<script src="js/config.js?v=41"></script>
+<script src="js/state.js?v=41"></script>
+<script src="js/backend.js?v=41"></script>
+<script src="js/store-supabase.js?v=41"></script>
+<script src="js/rules.js?v=41"></script>
+<script src="js/render.js?v=41"></script>
+<script src="js/interactions.js?v=41"></script>
+<script src="js/ui.js?v=41"></script>
+<script src="js/admin.js?v=41"></script>
+<script src="js/publish.js?v=41"></script>
+<script src="js/drape.js?v=41"></script>
+<script src="js/exporters.js?v=41"></script>
+<script src="js/samples.js?v=41"></script>
+<script src="js/pcma.js?v=41"></script>
+<script src="js/main.js?v=41"></script>
 </body>
 </html>

@@ -983,7 +983,7 @@
       const el = FP.makeElement('electrical-run', geom, null);
       Object.assign(el.props, {
         circuitId: `BUS-${n}`, panelId, gauge, amps,
-        voltage: '208', method: 'floor',
+        voltage: '208', method: 'floor', isBus: true,
         label: `Bus ${n} — ${spacing} ft module`,
       });
       els.push(el);
@@ -998,8 +998,10 @@
    * module is, by definition, on the wrong side of an aisle.
    */
   I.busReach = () => {
+    /* Same isBus distinction as the bus-reach rule — a backbone feeder is
+       not a bus a booth is expected to reach directly. */
     const buses = FP.plan.elements.filter(
-      (e) => C.flag(e.kind, 'cableRun') && !e.parentId);
+      (e) => C.flag(e.kind, 'cableRun') && e.props.isBus && !e.parentId);
     if (!buses.length) return [];
     return FP.spaces().map((sp) => {
       let best = Infinity;
