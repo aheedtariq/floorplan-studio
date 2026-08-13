@@ -303,6 +303,12 @@ svg { display: block; }
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .cat-item .sz { font-family: var(--mono); font-size: 9px; color: var(--tx-3); }
+.cat-item .on-plan {
+  flex: 0 0 auto; min-width: 16px; height: 16px; padding: 0 4px; border-radius: 99px;
+  display: grid; place-items: center; font-size: 9px; font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: color-mix(in srgb, var(--k) 22%, transparent); color: var(--k);
+}
 
 .row-btn {
   display: flex; align-items: center; gap: 9px; width: 100%;

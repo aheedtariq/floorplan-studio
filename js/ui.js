@@ -145,9 +145,16 @@
     const kinds = C.kindsForScope(S.scope.type).filter((k) =>
       !q || k.name.toLowerCase().includes(q) || k.id.includes(q));
 
+    /* How many of each kind are actually on the plan right now — the
+       catalog is a palette, but a bare list of tool types tells you
+       nothing about your own document. A live count does. */
+    const placed = {};
+    for (const el of FP.inScope()) placed[el.kind] = (placed[el.kind] || 0) + 1;
+
     $('catalog').innerHTML = C.categories.map((cat) => {
       const list = kinds.filter((k) => k.cat === cat.id);
       if (!list.length) return '';
+      const catCount = list.reduce((sum, k) => sum + (placed[k.id] || 0), 0);
       /* A search always expands, so nothing hides behind a collapsed
          header. Otherwise: an explicit user choice (collapsed set) wins;
          failing that, the category's own defaultOpen decides what a
@@ -163,14 +170,14 @@
           <svg class="chev" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>
           <span class="cat-ic">${iconSvg(cat.icon || '')}</span>
           <span>${esc(cat.name)}</span>
-          <span class="ct">${list.length}</span>
+          <span class="ct" title="${catCount} placed on this plan">${catCount}</span>
         </button>
-        <div class="cat-list">${list.map(catItem).join('')}</div>
+        <div class="cat-list">${list.map((k) => catItem(k, placed[k.id] || 0)).join('')}</div>
       </section>`;
     }).join('') || `<div class="empty">No elements match “${esc(catalogQuery)}”.</div>`;
   }
 
-  function catItem(k) {
+  function catItem(k, count = 0) {
     const armed = S.armedKind === k.id && !S.armedSize;
     const size = k.shape === 'rect' && k.size ? `${k.size[0]}×${k.size[1]}`
                : k.shape === 'line' ? 'drag'
@@ -178,9 +185,10 @@
     /* The kind's colour rides in as a custom property so the swatch can
        tint its own background and keep the glyph legible against it. */
     return `<button class="cat-item${armed ? ' armed' : ''}" data-kind="${k.id}"
-      title="${esc(k.name)}" style="--k:${k.fill}">
+      title="${esc(k.name)}${count ? ` — ${count} on this plan` : ''}" style="--k:${k.fill}">
       <span class="swatch">${iconSvg(k.icon || '')}</span>
       <span class="nm">${esc(k.name)}</span>
+      ${count ? `<span class="on-plan">${count}</span>` : ''}
       ${size ? `<span class="sz">${esc(size)}</span>` : ''}
     </button>`;
   }
@@ -2098,7 +2106,7 @@
     let paneTimer = null;
     const schedulePane = () => {
       clearTimeout(paneTimer);
-      paneTimer = setTimeout(() => { renderPane(); syncTopbar(); syncHud(); }, 60);
+      paneTimer = setTimeout(() => { renderPane(); renderCatalog(); syncTopbar(); syncHud(); }, 60);
     };
 
     FP.on('change', schedulePane);
