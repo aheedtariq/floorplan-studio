@@ -500,9 +500,6 @@ select.inp { appearance: none; background-image: linear-gradient(45deg, transpar
 .bitem .meta b { display: block; font-size: 12px; font-weight: 550; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .bitem .meta span { font-size: 11px; color: var(--tx-3); }
 .bitem .pill { font-size: 9px; font-weight: 650; padding: 2px 6px; border-radius: 99px; text-transform: uppercase; letter-spacing: .03em; }
-.pill.available { background: rgba(34, 197, 94, .16); color: var(--ok); }
-.pill.held { background: rgba(245, 158, 11, .16); color: var(--warn); }
-.pill.sold { background: var(--accent-soft); color: var(--accent); }
 
 .legend-row { display: flex; flex-wrap: wrap; gap: 5px 10px; margin-top: 8px; }
 .lg-chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--tx-2); }
