@@ -779,6 +779,28 @@
     const dark = 'var(--ink)';
     let out;
     if (isZone) {
+      /* A named pavilion reads as a solid colour banner across its own top
+         edge on a real show floor plan ("ITALIAN — 18 BTHS"), not a faint
+         corner note — the banner IS the zone's identity at a glance.
+         Other zone-like kinds (aisle, keep-clear, rigging) stay as plain
+         corner labels since they aren't sellable groupings with a count. */
+      if (el.kind === 'zone') {
+        const bh = G.clamp(16 / zoom, 1, box.h * 0.35);
+        if (bh * zoom >= 10) {
+          const count = FP.spaces().filter((s) => {
+            const c = G.center(s);
+            return c.x >= box.x && c.x <= box.x + box.w && c.y >= box.y && c.y <= box.y + box.h;
+          }).length;
+          const label = `${title.toUpperCase()}${count ? ` — ${count} BTH${count === 1 ? '' : 'S'}` : ''}`;
+          const bfs = G.clamp(bh * 0.5, 0.8, 3.2);
+          return `<rect x="${n(box.x)}" y="${n(box.y)}" width="${n(box.w)}" height="${n(bh)}"
+              fill="${el.props.color || k.fill}" fill-opacity=".85" pointer-events="none"/>
+            <text x="${n(box.x + box.w / 2)}" y="${n(box.y + bh / 2 + bfs * 0.34)}"
+              font-size="${n(bfs)}" fill="#fff" text-anchor="middle" font-weight="700"
+              letter-spacing="${n(bfs * 0.04)}" font-family="var(--font)" pointer-events="none"
+              >${esc(label)}</text>`;
+        }
+      }
       const zfs = G.clamp(11 / zoom, 0.8, 3.6);
       out = `<text x="${n(box.x + zfs * 0.6)}" y="${n(box.y + zfs * 1.15)}"
           font-size="${n(zfs)}" fill="var(--ink-2)" text-anchor="start" font-weight="600"
