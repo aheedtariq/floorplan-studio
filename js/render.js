@@ -1166,7 +1166,7 @@
   const SWATCH_VARS = [
     '--paper:#ffffff', '--ink:#131a26', '--ink-2:#5a6779',
     '--tx:#131a26', '--tx-2:#5a6779', '--tx-3:#8b96a8',
-    '--line:#dde3ec', '--line-2:#c6cfdd', '--accent:#4f7cff',
+    '--line:#dde3ec', '--line-2:#c6cfdd', '--accent:#7c5cfc',
     '--font:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif',
   ].join(';');
 })(window);

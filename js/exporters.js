@@ -22,7 +22,7 @@
     --ink:#131a26; --ink-2:#5a6779; --ink-3:#8b96a8;
     --tx:#131a26; --tx-2:#5a6779; --tx-3:#8b96a8;
     --line:#dde3ec; --line-2:#c6cfdd;
-    --accent:#4f7cff; --grid-minor:rgba(20,30,50,.07); --grid-major:rgba(20,30,50,.14);
+    --accent:#7c5cfc; --grid-minor:rgba(20,30,50,.07); --grid-major:rgba(20,30,50,.14);
     --font:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,Helvetica,Arial,sans-serif;
     --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
   `.replace(/\s+/g, ' ').trim();

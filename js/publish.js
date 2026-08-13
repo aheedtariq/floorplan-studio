@@ -47,7 +47,7 @@
          it never reaches the public document in any form, not even as
          a colour. */
       props.assigned = !!(el.props.exhibitor || '').trim();
-      props.color = props.assigned ? '#4f7cff' : '#94a3b8';
+      props.color = props.assigned ? '#7c5cfc' : '#94a3b8';
     }
     /* Nothing in the viewer is editable, so everything is locked. This
        also stops the shared renderer from drawing resize handles. */

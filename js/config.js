@@ -124,7 +124,7 @@
       ] },
 
     { id: 'tier', name: 'Price tier', from: 'tier',
-      values: { premium: '#4f7cff', standard: '#94a3b8', discount: '#22c55e' } },
+      values: { premium: '#7c5cfc', standard: '#94a3b8', discount: '#22c55e' } },
 
     { id: 'type', name: 'Space type', from: 'spaceType',
       values: { inline: '#94a3b8', corner: '#06b6d4', peninsula: '#f59e0b', island: '#a855f7' } },
@@ -157,7 +157,7 @@
      on first load. Anyone who expands a group has that choice remembered
      via FP.prefs, this only governs the very first visit. */
   const categories = [
-    { id: 'spaces',    name: 'Booth spaces',          color: '#4f7cff', icon: ic.booth,  defaultOpen: true },
+    { id: 'spaces',    name: 'Booth spaces',          color: '#7c5cfc', icon: ic.booth,  defaultOpen: true },
     { id: 'structure', name: 'Structure',              color: '#64748b', icon: ic.wall,   defaultOpen: true },
     { id: 'safety',    name: 'Life safety',            color: '#ef4444', icon: ic.fire,   defaultOpen: true },
     { id: 'zones',     name: 'Zones',                  color: '#a855f7', icon: ic.zone,   defaultOpen: false },
@@ -178,7 +178,7 @@
   const kindDefs = [
     /* ---- sellable space ---- */
     { id: 'space', name: 'Booth space', cat: 'spaces', layer: 'spaces', shape: 'rect', scope: ['hall'],
-      size: [10, 10], fill: '#4f7cff', stroke: '#2c56cc', opacity: .22, icon: ic.booth,
+      size: [10, 10], fill: '#7c5cfc', stroke: '#5a3fd6', opacity: .22, icon: ic.booth,
       flags: { sellable: true, snapChild: true },
       fields: [F.number, { key: 'spaceType', label: 'Type', type: 'select', default: 'inline',
                  options: [['inline', 'Inline'], ['corner', 'Corner'], ['peninsula', 'Peninsula'], ['island', 'Island']] },
@@ -386,7 +386,7 @@
   const statusDefs = [
     { id: 'available',  name: 'Available',    color: '#64748b', complete: false, order: 1 },
     { id: 'held',       name: 'On hold',      color: '#f59e0b', complete: false, order: 2 },
-    { id: 'sold',       name: 'Sold',         color: '#6366f1', complete: false, order: 3 },
+    { id: 'sold',       name: 'Sold',         color: '#3b82f6', complete: false, order: 3 },
     { id: 'awaiting',   name: 'Awaiting info',color: '#f97316', complete: false, order: 4 },
     { id: 'submitted',  name: 'Submitted',    color: '#06b6d4', complete: false, order: 5 },
     { id: 'approved',   name: 'Approved',     color: '#22c55e', complete: true,  order: 6 },
@@ -473,7 +473,7 @@
     rules: ruleDefs,
     presets: presetDefs,
     colorModes,
-    palette: ['#4f7cff', '#22c55e', '#f59e0b', '#ef4444', '#a855f7',
+    palette: ['#7c5cfc', '#22c55e', '#f59e0b', '#ef4444', '#a855f7',
               '#14b8a6', '#f97316', '#06b6d4', '#ec4899', '#64748b'],
     _index: {},
   };
