@@ -1055,8 +1055,12 @@
 
     /* --- hall paper + grid --- */
     if (!scoped) {
+      /* The hall's own perimeter is structure, not a UI divider — on a
+         real drawing the exterior wall reads as a solid dark band, not a
+         thin grey rule. A plain 2px --line-2 outline left the whole hall
+         looking like open space with no building around it. */
       out += `<rect x="0" y="0" width="${n(plan.width)}" height="${n(plan.height)}"
-                fill="var(--paper)" stroke="var(--line-2)" stroke-width="2"
+                fill="var(--paper)" stroke="var(--ink)" stroke-width="5"
                 vector-effect="non-scaling-stroke"/>`;
       if (st.showGrid) {
         out += `<rect x="0" y="0" width="${n(plan.width)}" height="${n(plan.height)}"

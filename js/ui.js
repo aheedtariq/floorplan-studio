@@ -689,9 +689,11 @@
       </div>`).join('');
     }
 
-    h += `<div class="grp" style="margin-top:18px"><h4 class="grp-title">Active rules</h4>
-      <div class="helptext">Rules are records, not code. Turn them off or change their
-      thresholds per show — the same set runs in the exhibitor portal later.</div>
+    h += `<div class="grp" style="margin-top:18px"><h4 class="grp-title">Rule settings</h4>
+      <div class="helptext">This is configuration, not a live report — the dropdown sets what
+      a rule becomes <i>if</i> it's ever broken (error / warning / just a note). It doesn't mean
+      anything is broken now; check the pass/fail summary above for that. Turn a rule off, or
+      change its thresholds, per show — the same set runs in the exhibitor portal later.</div>
       ${FP.rules.records().map(ruleRow).join('')}
       <button class="mini" id="btnResetRules" style="width:100%;margin-top:8px">Reset to defaults</button>
     </div>`;
@@ -737,7 +739,8 @@
       <input type="checkbox" data-rule="${r.id}" ${r.enabled ? 'checked' : ''}
         style="accent-color:var(--accent);margin-top:3px"/>
       <span class="nm" style="flex:1 1 120px">${esc(r.name)}</span>
-      <select class="inp" data-rule="${r.id}" style="width:88px;padding:3px 6px;font-size:11px">
+      <select class="inp" data-rule="${r.id}" title="Severity if this rule is ever broken — not its current status"
+        style="width:88px;padding:3px 6px;font-size:11px">
         ${['error', 'warning', 'info'].map((s) =>
           `<option value="${s}"${r.severity === s ? ' selected' : ''}>${s}</option>`).join('')}
       </select>
