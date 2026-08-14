@@ -1216,12 +1216,30 @@
           R().draw();
           FP.toast('Image placed — now calibrate it against a known dimension');
           startCalibration();
+          archivePlanPhoto(file);
         };
         img.src = reader.result;
       };
       reader.readAsDataURL(file);
     };
     picker.click();
+  }
+
+  /* Every venue photo imported into a cloud plan is also archived to the
+     plan's photo library in storage (visible on the dashboard), so the
+     original shot survives after the underlay is removed. Fire-and-forget:
+     a failed archive must never block the tracing workflow. */
+  async function archivePlanPhoto(file) {
+    try {
+      const sb = FP.auth?.client?.();
+      if (!sb || !FP.auth.signedIn() || FP.storeId?.() !== 'supabase' || !FP.plan?.id) return;
+      const { data: show } = await sb.from('show')
+        .select('client_id').eq('id', FP.plan.id).maybeSingle();
+      const folder = `${show?.client_id || 'internal'}/${FP.plan.id}`;
+      const path = `${folder}/${Date.now()}-${file.name.replace(/[^\w.\-]+/g, '_')}`;
+      const { error } = await sb.storage.from('plan-photos').upload(path, file);
+      if (!error) FP.toast('Photo saved to this plan’s library');
+    } catch { /* archive is best-effort */ }
   }
 
   /* ============================================================
@@ -1627,7 +1645,9 @@
           ['Esc', 'Cancel'], ['Double-click', 'Open booth interior'],
         ])}
       </div>`,
-      foot: `<button class="btn primary" data-close>Got it</button>`,
+      foot: `<a class="btn ghost" href="guide.html" target="_blank" rel="noopener"
+               style="text-decoration:none">Open the user guide</a>
+             <button class="btn primary" data-close>Got it</button>`,
       onMount: (_b, foot) => { foot.querySelector('[data-close]').onclick = FP.closeModal; },
     });
   }

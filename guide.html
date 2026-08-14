@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>User Guide — Floorplan Studio · Source One Events</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,650;14..32,700&display=swap" />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%237c5cfc'/><g fill='none' stroke='white' stroke-width='8'><rect x='22' y='22' width='24' height='24'/><rect x='54' y='22' width='24' height='24'/><rect x='22' y='54' width='56' height='24'/></g></svg>" />
+<style>
+  :root {
+    --accent: #7c5cfc; --accent-soft: rgba(124,92,252,.12);
+    --bg: #f7f8fa; --card: #ffffff; --line: #e2e6ee;
+    --tx: #131a26; --tx-2: #5a6779; --tx-3: #5f6b82;
+    --ok: #15803d; --warn: #b45309; --err: #b91c1c;
+    --r: 12px;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+  body {
+    margin: 0; background: var(--bg); color: var(--tx);
+    font: 15px/1.65 "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 20px 80px; display: flex; gap: 40px; }
+  main { flex: 1; min-width: 0; max-width: 720px; }
+
+  /* ---------- header ---------- */
+  header {
+    max-width: 1060px; margin: 0 auto; padding: 40px 20px 28px;
+    display: flex; align-items: center; gap: 14px;
+  }
+  header svg { width: 44px; height: 44px; border-radius: 11px; flex-shrink: 0; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: -.02em; }
+  header p { margin: 2px 0 0; font-size: 13px; color: var(--tx-3); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+
+  /* ---------- toc ---------- */
+  nav.toc {
+    width: 230px; flex-shrink: 0; align-self: flex-start;
+    position: sticky; top: 24px; font-size: 13px;
+    border-left: 2px solid var(--line); padding-left: 16px;
+  }
+  nav.toc b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .07em; color: var(--tx-3); margin-bottom: 10px; }
+  nav.toc a { display: block; color: var(--tx-2); text-decoration: none; padding: 3.5px 0; }
+  nav.toc a:hover { color: var(--accent); }
+  @media (max-width: 900px) { nav.toc { display: none; } }
+
+  /* ---------- sections ---------- */
+  section {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--r);
+    padding: 28px 32px; margin-bottom: 22px;
+  }
+  h2 { font-size: 19px; font-weight: 700; letter-spacing: -.015em; margin: 0 0 6px; }
+  h2 .no { color: var(--accent); margin-right: 8px; }
+  h3 { font-size: 15px; font-weight: 650; margin: 26px 0 8px; }
+  p, li { color: var(--tx-2); }
+  strong, b { color: var(--tx); font-weight: 600; }
+  ul, ol { padding-left: 22px; margin: 8px 0; }
+  li { margin: 5px 0; }
+  a { color: var(--accent); }
+
+  kbd {
+    font: 600 11.5px/1 ui-monospace, "SF Mono", Menlo, monospace;
+    background: var(--bg); border: 1px solid var(--line); border-bottom-width: 2px;
+    border-radius: 5px; padding: 3px 6px; color: var(--tx); white-space: nowrap;
+  }
+  .ui { /* an on-screen control being named */
+    font-weight: 600; color: var(--tx);
+    background: var(--accent-soft); border-radius: 5px; padding: 1px 6px;
+  }
+
+  .callout {
+    display: flex; gap: 10px; border-radius: 9px; padding: 12px 14px;
+    font-size: 13.5px; margin: 14px 0; border: 1px solid;
+  }
+  .callout.tip  { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+  .callout.warn { background: #fffbeb; border-color: #fde68a; color: #92400e; }
+  .callout.sec  { background: #eef2ff; border-color: #c7d2fe; color: #3730a3; }
+  .callout b { color: inherit; }
+
+  .steps { counter-reset: st; margin: 14px 0; padding: 0; list-style: none; }
+  .steps > li {
+    counter-increment: st; position: relative; padding: 0 0 14px 44px; margin: 0;
+  }
+  .steps > li::before {
+    content: counter(st); position: absolute; left: 0; top: 0;
+    width: 28px; height: 28px; border-radius: 99px;
+    background: var(--accent); color: #fff; font-weight: 700; font-size: 13px;
+    display: grid; place-items: center;
+  }
+  .steps > li:not(:last-child)::after {
+    content: ""; position: absolute; left: 13.5px; top: 32px; bottom: 2px;
+    width: 1.5px; background: var(--line);
+  }
+
+  table { border-collapse: collapse; width: 100%; font-size: 13.5px; margin: 12px 0; }
+  th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--tx-3); }
+  td:first-child { font-weight: 600; color: var(--tx); white-space: nowrap; }
+
+  .pill { display: inline-block; font-size: 11px; font-weight: 700; border-radius: 99px; padding: 2px 9px; }
+  .pill.staff  { background: var(--accent-soft); color: var(--accent); }
+  .pill.client { background: #ecfdf5; color: var(--ok); }
+
+  @media print {
+    body { background: #fff; }
+    nav.toc { display: none; }
+    section { border: none; padding: 0 0 10px; margin-bottom: 6px; }
+    header { padding-top: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <svg viewBox="0 0 100 100" aria-hidden="true">
+    <rect width="100" height="100" rx="20" fill="#7c5cfc"/>
+    <g fill="none" stroke="#fff" stroke-width="8">
+      <rect x="22" y="22" width="24" height="24"/>
+      <rect x="54" y="22" width="24" height="24"/>
+      <rect x="22" y="54" width="56" height="24"/>
+    </g>
+  </svg>
+  <div>
+    <h1>Floorplan Studio — User Guide</h1>
+    <p>Source One Events · internal manual</p>
+  </div>
+</header>
+
+<div class="wrap">
+<main>
+
+<!-- ==================================================== -->
+<section id="overview">
+  <h2><span class="no">1</span>What this system is</h2>
+  <p>Floorplan Studio is Source One's own tool for turning a venue into a sellable,
+  buildable floor plan — and for letting each client see and shape their event
+  before a single crate ships. It is one system with four faces:</p>
+  <table>
+    <tr><th>Surface</th><th>Who uses it</th><th>What it does</th></tr>
+    <tr><td>Sign-in page</td><td>Everyone</td><td><code>/login.html</code>. The front door — email + password, or an emailed one-time link.</td></tr>
+    <tr><td>Dashboard</td><td>Our team + clients</td><td><code>/home.html</code>. Where you land after signing in: every plan you're allowed to see as a card, new-plan button, client links, and each plan's photo library.</td></tr>
+    <tr><td>The Studio</td><td>Our team + clients</td><td>The editor itself. Draw the hall, lay out booths, place rentals, run safety checks, export paperwork.</td></tr>
+    <tr><td>3D preview</td><td>Everyone</td><td>The <span class="ui">3D</span> button in the top bar. The live plan, stood up as a model you can orbit — drape at real heights, furniture at true size.</td></tr>
+    <tr><td>Exhibitor portal</td><td>Exhibitors</td><td><code>/portal.html</code>. An exhibitor signs in with an emailed link and manages just their booth.</td></tr>
+    <tr><td>Public directory</td><td>Attendees</td><td><code>/viewer.html</code>. A read-only, searchable floor plan you publish when the show is ready.</td></tr>
+  </table>
+  <p>Everything runs from the same live database. When anyone moves a table, every
+  other view — including the client's — is looking at the new truth.</p>
+</section>
+
+<!-- ==================================================== -->
+<section id="signin">
+  <h2><span class="no">2</span>Signing in, and your dashboard</h2>
+  <ol class="steps">
+    <li>Go to <b>/login.html</b> and enter your email and password — or click <span class="ui">Email me a one-time sign-in link</span> for a passwordless login.</li>
+    <li>You land on the <b>dashboard</b>: every plan you're allowed to see, as cards. The first visit shows a short getting-started panel; reopen it any time with the <span class="ui">Getting started</span> button up top.</li>
+    <li>Each card shows the booth count and hall size, plus (for staff) whether it's <b>internal</b> or assigned to a <b>client</b>. From a card you can <span class="ui">Open plan</span> in the Studio, view its <span class="ui">Photos</span>, assign it to a client, or generate a <span class="ui">Client link</span>.</li>
+    <li><span class="ui">New plan</span> (staff) creates a fresh hall and drops you straight into the Studio. The brand logo in the Studio's top-left always brings you back to the dashboard.</li>
+  </ol>
+  <p>Access is decided by your <b>role</b>, and the database — not the app — enforces it:</p>
+  <table>
+    <tr><th>Role</th><th>Side</th><th>Can do</th></tr>
+    <tr><td>Admin</td><td><span class="pill staff">STAFF</span></td><td>Everything, including the Admin panel: clients, logins, team roles.</td></tr>
+    <tr><td>Planner</td><td><span class="pill staff">STAFF</span></td><td>Create and edit any plan; manage clients.</td></tr>
+    <tr><td>Sales</td><td><span class="pill staff">STAFF</span></td><td>Read every plan, plus exhibitor records.</td></tr>
+    <tr><td>Crew</td><td><span class="pill staff">STAFF</span></td><td>Read-only view of the whole floor — what the build crew works from.</td></tr>
+    <tr><td>Client</td><td><span class="pill client">CLIENT</span></td><td>Sees and edits <b>only the plans assigned to their company</b>. Nothing else exists for them.</td></tr>
+    <tr><td>Exhibitor</td><td><span class="pill client">CLIENT</span></td><td>Sees only their own booth, through the portal.</td></tr>
+  </table>
+</section>
+
+<!-- ==================================================== -->
+<section id="tour">
+  <h2><span class="no">3</span>Finding your way around the Studio</h2>
+  <h3>Top bar</h3>
+  <ul>
+    <li><b>Plan name</b> — click it and type to rename. <b>Saved / Unsaved</b> shows sync state beside it.</li>
+    <li><b>Undo / redo, zoom, fit</b> — or <kbd>Ctrl Z</kbd>, scroll wheel, and <kbd>F</kbd>.</li>
+    <li><b>Grid · Snap · Labels</b> — three toggles (<kbd>G</kbd> / <kbd>S</kbd> / <kbd>L</kbd>). Leave snap on; everything lands on clean 5&nbsp;ft increments.</li>
+    <li><span class="ui">Local / your name</span> — sign-in and cloud sync. <span class="ui">Plans</span> — open, create, import. <span class="ui">Export</span> — every output format. <span class="ui">3D</span> — the walkthrough. Then theme and help.</li>
+  </ul>
+  <h3>Left panel — what you can place</h3>
+  <ul>
+    <li><b>Tool rail</b> (icon strip): select, pan, booth, wall, dead space, fire exit, aisle, text, measure, fill-area.</li>
+    <li><b>Quick booths</b>: one click arms a standard footprint (10×10, 10×20, 20×20…), then drag it onto the plan. It stays armed so you can place a whole run without re-clicking.</li>
+    <li><b>Catalog</b>: every element type, grouped — booth spaces, structure, life safety, zones, amenities, booth contents, <b>Source One rentals</b>, utilities, electrical, annotation. The small colored badge on a row is a <b>live count</b> of how many are on this plan.</li>
+    <li><b>Bulk tools</b>: generate whole booth rows/blocks, auto-number booths, and <span class="ui">Import reference image…</span> — the photo-to-plan workflow (section 4).</li>
+  </ul>
+  <h3>Right panel — information about things</h3>
+  <ul>
+    <li><b>Properties</b> — whatever is selected: position, size, rotation, colors, and the fields that matter for that thing (booth number, drape height, table throw color, breaker size…).</li>
+    <li><b>Booths</b> — the sellable inventory as a list: numbers, sizes, statuses, exhibitor assignments.</li>
+    <li><b>Safety</b> — the rules engine's findings (section 9). Red items are errors; amber are warnings. Click one to jump to it.</li>
+    <li><b>Power</b> — panels, distros, circuits, and per-booth load.</li>
+    <li><b>Drape</b> — the pipe-and-drape takeoff, computed per run.</li>
+    <li><b>Plan</b> — hall size, grid, dates (including the <b>freeze date</b> — section 8), and the reference-image controls.</li>
+  </ul>
+  <p>Double-click any booth to step <b>inside</b> it and furnish just that footprint; the
+  scope bar at the top of the canvas takes you back out.</p>
+</section>
+
+<!-- ==================================================== -->
+<section id="photos">
+  <h2><span class="no">4</span>From venue photos to a working floor plan</h2>
+  <p>This is the core field workflow: walk the venue, shoot it, and trace it into a
+  clean digital plan the same day.</p>
+
+  <h3>What to photograph on site</h3>
+  <ul>
+    <li><b>Best source: the posted floor plan.</b> Every hall has a framed floor plan or fire-evacuation placard on the wall. Photograph <b>that</b>, not the room.</li>
+    <li><b>Straight on, square in frame.</b> Stand directly in front of it. If the photo looks like a parallelogram, the trace will be skewed — retake it.</li>
+    <li><b>Whole sheet, no glare.</b> Step back until the full sheet is in frame; angle slightly if lights reflect.</li>
+    <li><b>Record one real measurement.</b> You will need a known length to scale the image. A standard double door is <b>6&nbsp;ft</b>; a column bay is usually a round number; or pace out one wall and write it down.</li>
+    <li><b>No placard?</b> Shoot the whole floor from a balcony or mezzanine, as high and centred as possible.</li>
+  </ul>
+  <div class="callout tip"><span>💡</span><div><b>PDFs work too.</b> If the venue emails a PDF plan, screenshot the page and import the screenshot.</div></div>
+
+  <h3>Turning the photo into a plan</h3>
+  <ol class="steps">
+    <li>In the Studio, open <span class="ui">Plans → New plan</span> and set the hall's rough width and height (you can correct it later).</li>
+    <li>Click <span class="ui">Import reference image…</span> in the left panel. Read the capture checklist, click <span class="ui">Choose photo…</span>, and pick your picture. It drops onto the canvas at 50% opacity.</li>
+    <li><b>Calibrate the scale.</b> The app immediately asks you to drag across something whose real length you know — that double door, a printed dimension, a wall you paced. Drag it, type the real length, <span class="ui">Apply scale</span>. The image resizes and locks. Everything you trace from now on comes out at true dimensions.</li>
+    <li><b>Trace the structure.</b> Use the <b>Wall</b> tool (<kbd>W</kbd>) along the perimeter and partitions, then place columns, doors, stairs, loading docks, and fire exits from the Structure and Life-safety groups right on top of their photo counterparts.</li>
+    <li><b>Mark what can't be sold.</b> Dead space (<kbd>D</kbd>), aisles (<kbd>A</kbd>), and keep-clear fire lanes.</li>
+    <li><b>Remove the photo.</b> Right panel → <span class="ui">Plan</span> tab → <span class="ui">Remove image</span>. The photo was scaffolding; what remains is a clean, white, fully editable plan.</li>
+  </ol>
+  <div class="callout tip"><span>📷</span><div><b>Where the photos go:</b> every photo you import into a cloud plan is automatically archived to that plan's <b>photo library</b> — open it from the plan's card on the dashboard (<span class="ui">Photos</span>). The original shot survives even after you remove the underlay, and you can upload extra site photos there directly.</div></div>
+  <div class="callout tip"><span>💡</span><div><b>The Schaumburg Convention Center plan in your cloud account was built exactly this way</b> — from a photographed paper plan to a 48-booth interactive layout. Open it to see the finished result.</div></div>
+
+  <h3>Then lay in the booths</h3>
+  <ol class="steps">
+    <li>Use <b>Quick booths</b> for one-offs, <span class="ui">Generate booth row / block…</span> for whole runs, or the <b>fill-area</b> tool (<kbd>U</kbd>) to flood a dragged region with booths on the standard 30&nbsp;ft module (booth–aisle–booth).</li>
+    <li>Run <span class="ui">Auto-number booths</span> — it numbers by aisle the way the industry reads them (hundreds digit = aisle, odd/even split per side).</li>
+    <li>Watch the <span class="ui">Safety</span> tab as you go; it re-checks every edit (section 9).</li>
+  </ol>
+</section>
+
+<!-- ==================================================== -->
+<section id="rentals">
+  <h2><span class="no">5</span>The Source One rentals catalog</h2>
+  <p>Everything we rent is in the catalog under <b>Source One rentals</b>, drawn to its
+  real footprint, so a floor plan doubles as an order sheet:</p>
+  <ul>
+    <li><b>Tables</b> — 6&nbsp;ft and 8&nbsp;ft banquet, 60&Prime; rounds, 30&Prime; cocktail high-tops, charging tables, coffee tables. Tables carry a <b>Table throw</b> color (black, royal blue, white, red, custom print) in Properties.</li>
+    <li><b>Seating &amp; lounge</b> — sofas, lounge chairs, branded cubes, bar stools.</li>
+    <li><b>Service pieces</b> — bars, registration counters, podiums, display cases, kiosks/workstations.</li>
+    <li><b>Staging &amp; structure</b> — 4×8 stage decks (16/24/32&nbsp;in heights), towers, entrance units, custom hardwall rooms, grid/slat wall.</li>
+    <li><b>Signage &amp; graphics</b> — banner stands, poster boards, LED posters, hanging &amp; circle signs.</li>
+    <li><b>Flooring</b> — carpet regions in any color.</li>
+  </ul>
+  <p>Click an item to arm it, then click or drag on the plan. It stays armed for
+  repeat placement — <kbd>Esc</kbd> or <kbd>V</kbd> returns to select. The badge next
+  to each catalog row counts how many are already on the plan, and the
+  <span class="ui">Export</span> menu turns the layout into paperwork: booth manifest,
+  electrical schedule, drape order sheet, and per-booth work orders, all CSV.</p>
+</section>
+
+<!-- ==================================================== -->
+<section id="threed">
+  <h2><span class="no">6</span>The 3D preview</h2>
+  <ol class="steps">
+    <li>Click <span class="ui">3D</span> in the top bar. The plan stands up into a model: drape rises to its actual ordered height, tables and sofas at true size, columns, stages, booth tiles colored by status with floating booth numbers.</li>
+    <li><b>Drag</b> to orbit · <b>scroll</b> to zoom · <b>right-drag</b> to pan.</li>
+    <li>It stays live — leave 3D open while someone (you or the client) edits, and the model updates with every change.</li>
+    <li><span class="ui">Back to plan</span> returns to the 2D editor.</li>
+  </ol>
+  <div class="callout tip"><span>💡</span><div><b>This is the closer.</b> When a client opens their plan and flips to 3D, they're standing in their event before we've loaded a truck. Encourage them to use it — it surfaces "actually, move the bar" conversations weeks early, while moving the bar is free.</div></div>
+</section>
+
+<!-- ==================================================== -->
+<section id="tenants">
+  <h2><span class="no">7</span>How multi-tenant works</h2>
+  <p>Every client company is a <b>tenant</b> — a sealed workspace inside the same system.</p>
+  <ul>
+    <li>Each plan (show) can be <b>assigned to exactly one client</b>. Unassigned plans are internal and invisible to every client.</li>
+    <li>A client login belongs to one company. When that person signs in, the system behaves as if their plans are the only plans that exist: their Plans list, their searches, their exports — all filtered to their company.</li>
+    <li><b>Both sides edit the same plan.</b> You and the client work on one live layout — there are no copies to reconcile. Their edits appear for you instantly, and vice versa.</li>
+    <li>After a show's <b>freeze date</b> (set in the Plan tab), client editing locks automatically — what's on the plan is what gets built. Staff can still edit.</li>
+  </ul>
+  <div class="callout sec"><span>🔒</span><div><b>Isolation is enforced by the database, not the interface.</b> Row-level security in Postgres decides what every request may touch, using the account's identity — so even someone bypassing the app entirely and talking to the API directly gets the same walls. Client A can never see, list, or modify anything of Client B's. This was verified with live cross-tenant attack tests before launch.</div></div>
+</section>
+
+<!-- ==================================================== -->
+<section id="admin">
+  <h2><span class="no">8</span>The Admin panel — clients, logins &amp; one-time links</h2>
+  <p><b>Where it is:</b> the <span class="ui">Admin</span> button on the dashboard —
+  or, inside the Studio, click your name in the top-right (the cloud button), then
+  <span class="ui">Team &amp; access…</span>. The panel has two tabs:
+  <b>Clients</b> and <b>Team &amp; access</b>. You need an Admin or Planner account
+  to see it.</p>
+  <div class="callout tip"><span>⚡</span><div><b>Shortcut:</b> the <span class="ui">Client link</span> button on any assigned plan's dashboard card generates the same one-time link without opening the Admin panel.</div></div>
+
+  <h3>Setting up a new client, start to finish</h3>
+  <ol class="steps">
+    <li><b>Add the company.</b> Clients tab → type the company name (contact email optional) → <span class="ui">Add client</span>.</li>
+    <li><b>Give them a plan.</b> Click the company to expand it. Under <b>Plans</b>, pick a plan from the dropdown and <span class="ui">Assign plan</span>. (Build the plan first — section 4 — or assign it later; you can also <span class="ui">Unassign</span> any time.)</li>
+    <li><b>Create their login.</b> Under <b>Client logins</b>, enter their name, email, and a password <b>you choose</b> (8+ characters) → <span class="ui">Create login</span>. Their account exists immediately — no confirmation emails, no waiting.</li>
+    <li><b>Generate the one-time link.</b> Click <span class="ui">One-time link</span> next to their name, then <span class="ui">Copy</span>. Send it however you like — email, text, Teams.</li>
+    <li><b>They click it and they're in.</b> The link signs them straight into their workspace, no password typed. For every visit after that they use their email and the password from step 3.</li>
+  </ol>
+
+  <h3>What a one-time link actually is</h3>
+  <ul>
+    <li>It is a <b>single-use</b> sign-in: the first click consumes it. Forwarded later, it's dead.</li>
+    <li>It expires on its own if never used, and generating a new one costs one click — so treat them as disposable.</li>
+    <li>Every link you issue, login you create, and password you set is written to the audit log with your name on it.</li>
+  </ul>
+  <div class="callout warn"><span>⚠️</span><div><b>The link is a key.</b> Send it directly to the person it's for, and never post one anywhere public. If a link goes astray, it's still single-use and time-limited — and you can reset the account's password from the same panel.</div></div>
+
+  <h3>Other controls</h3>
+  <ul>
+    <li><span class="ui">Set password</span> — reset any client's password on the spot (they forgot it, or someone left their company).</li>
+    <li><b>Team &amp; access tab</b> — every internal account, with a role dropdown and an Active toggle. New staff sign up themselves and appear here as Crew (read-only) until you promote them. The system refuses to remove the last active admin, so you can't lock yourself out.</li>
+  </ul>
+</section>
+
+<!-- ==================================================== -->
+<section id="clientside">
+  <h2><span class="no">9</span>What the client sees, and the safety net under everyone</h2>
+  <h3>The client's experience</h3>
+  <ul>
+    <li>They open your link and land in the same Studio you use — but containing only their company's plans.</li>
+    <li>They can move furniture, place rentals from the catalog, add notes, and flip to <span class="ui">3D</span> to walk their event.</li>
+    <li>They <b>cannot</b> see other clients, other plans, team accounts, or the Admin panel — those don't exist in their world.</li>
+    <li>On the freeze date their plan becomes read-only for them, so late-night surprises can't reach the build.</li>
+  </ul>
+  <h3>The rules engine (the Safety tab)</h3>
+  <p>Every edit — yours or the client's — is re-checked against the house rules:</p>
+  <ul>
+    <li><b>Errors (red):</b> overlapping booths, anything outside the hall, booths on dead space or obstructions, blocked fire exits / egress clearance (10&nbsp;ft default), missing exits.</li>
+    <li><b>Warnings (amber):</b> narrow aisles, height-limit breaches by space type, circuits over capacity, panels loaded past 80% of the breaker (NEC&nbsp;210.19), booths out of reach of an electrical bus, missing or duplicate booth numbers, voltage drop.</li>
+  </ul>
+  <p>So even with a client dragging things around unsupervised, the plan tells you —
+  loudly and specifically — the moment anything becomes unbuildable or unsafe.</p>
+</section>
+
+<!-- ==================================================== -->
+<section id="portalviewer">
+  <h2><span class="no">10</span>Exhibitor portal &amp; public directory</h2>
+  <ul>
+    <li><b>Exhibitor portal</b> (<code>/portal.html</code>): exhibitors sign in with an emailed link, see their booth on the real floor plan, submit their details, and order services. Link an exhibitor to a booth from the <span class="ui">Booths</span> tab, and their email address becomes their key.</li>
+    <li><b>Public directory</b> (<code>/viewer.html</code>): when a show is ready, use <span class="ui">Export → Publish public directory…</span>. Attendees get a searchable, read-only floor plan — with the same 3D preview — and nothing else.</li>
+  </ul>
+</section>
+
+<!-- ==================================================== -->
+<section id="saving">
+  <h2><span class="no">11</span>Saving, cloud &amp; exports</h2>
+  <ul>
+    <li><b>Signed out</b>, plans save to the browser you're using (the button reads <span class="ui">Local</span>). Fine for sketching; invisible to everyone else.</li>
+    <li><b>Signed in</b>, plans live in the cloud: every device, every teammate (per role), every client (per assignment) sees the same current version. Use the cloud panel's upload action to move a local sketch to the cloud.</li>
+    <li><b>Exports</b> (top bar): PNG / SVG / print-PDF of the drawing; plan file (.json) for backup or transfer; and the ops paperwork — booth manifest, electrical schedule, drape order sheet, booth work orders.</li>
+  </ul>
+</section>
+
+<!-- ==================================================== -->
+<section id="shortcuts">
+  <h2><span class="no">12</span>Keyboard shortcuts</h2>
+  <table>
+    <tr><th>Keys</th><th>Action</th></tr>
+    <tr><td><kbd>V</kbd> <kbd>B</kbd> <kbd>W</kbd> <kbd>D</kbd> <kbd>X</kbd> <kbd>A</kbd> <kbd>T</kbd> <kbd>M</kbd> <kbd>H</kbd> <kbd>U</kbd></td><td>Select · Booth · Wall · Dead space · Fire exit · Aisle · Text · Measure · Pan · Fill area</td></tr>
+    <tr><td><kbd>Ctrl Z</kbd> / <kbd>Ctrl ⇧ Z</kbd></td><td>Undo / redo</td></tr>
+    <tr><td><kbd>Ctrl D</kbd>, <kbd>Ctrl C</kbd>/<kbd>V</kbd>, <kbd>Del</kbd></td><td>Duplicate · copy/paste · delete</td></tr>
+    <tr><td><kbd>Arrows</kbd> / <kbd>⇧ Arrows</kbd></td><td>Nudge by grid / ×5</td></tr>
+    <tr><td><kbd>F</kbd> <kbd>G</kbd> <kbd>S</kbd> <kbd>L</kbd></td><td>Fit · grid · snap · labels</td></tr>
+    <tr><td><kbd>⇧</kbd> while drawing</td><td>Constrain square / 45°</td></tr>
+    <tr><td><kbd>Esc</kbd></td><td>Cancel tool / close dialog</td></tr>
+    <tr><td>Double-click a booth</td><td>Open its interior to furnish it</td></tr>
+    <tr><td><kbd>?</kbd></td><td>Full shortcut list in-app</td></tr>
+  </table>
+</section>
+
+<!-- ==================================================== -->
+<section id="faq">
+  <h2><span class="no">13</span>Troubleshooting</h2>
+  <table>
+    <tr><th>Symptom</th><th>Fix</th></tr>
+    <tr><td>Client says their link doesn't work</td><td>It was already used or expired — generate a fresh one from the Admin panel. Or just have them sign in with email + password.</td></tr>
+    <tr><td>Client can't see their plan</td><td>The plan isn't assigned to their company. Admin panel → their company → Assign plan.</td></tr>
+    <tr><td>Client can see but not edit</td><td>The show is past its freeze date (Plan tab), or their account was deactivated.</td></tr>
+    <tr><td>A plan is missing from my list</td><td>You're signed out (button says <span class="ui">Local</span>), or it was saved locally on another machine. Sign in; upload local plans to the cloud.</td></tr>
+    <tr><td>Traced walls come out the wrong size</td><td>Scale was calibrated against a bad reference. Plan tab → <span class="ui">Re-calibrate scale</span> with a longer known dimension.</td></tr>
+    <tr><td>3D won't load</td><td>It needs an internet connection the first time it opens in a session. Check the connection and click 3D again.</td></tr>
+    <tr><td>Sign-in email never arrived</td><td>Wait a minute and check spam. Repeated rapid requests are rate-limited — pause before retrying.</td></tr>
+  </table>
+</section>
+
+</main>
+
+<nav class="toc">
+  <b>Contents</b>
+  <a href="#overview">1 · What this is</a>
+  <a href="#signin">2 · Signing in &amp; roles</a>
+  <a href="#tour">3 · Studio tour</a>
+  <a href="#photos">4 · Photos → floor plan</a>
+  <a href="#rentals">5 · Rentals catalog</a>
+  <a href="#threed">6 · 3D preview</a>
+  <a href="#tenants">7 · Multi-tenant</a>
+  <a href="#admin">8 · Admin panel</a>
+  <a href="#clientside">9 · Client view &amp; safety</a>
+  <a href="#portalviewer">10 · Portal &amp; directory</a>
+  <a href="#saving">11 · Saving &amp; exports</a>
+  <a href="#shortcuts">12 · Shortcuts</a>
+  <a href="#faq">13 · Troubleshooting</a>
+</nav>
+</div>
+
+</body>
+</html>

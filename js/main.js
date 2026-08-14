@@ -23,7 +23,10 @@
        Never let a backend problem stop the editor from opening. */
     try {
       await FP.auth?.init?.();
-      if (FP.auth?.signedIn?.() && FP.prefs.store === 'supabase') {
+      /* A ?plan= deep link (from the dashboard) implies the cloud store,
+         whatever the stored preference says. */
+      const deepLink = new URLSearchParams(location.search).has('plan');
+      if (FP.auth?.signedIn?.() && (FP.prefs.store === 'supabase' || deepLink)) {
         FP.useStore('supabase');
       }
     } catch (e) {
@@ -38,6 +41,12 @@
     FP.render.fit();
     FP.renderAll();
 
+    /* dashboard hand-offs */
+    if (location.hash === '#admin') {
+      history.replaceState(null, '', location.pathname + location.search);
+      FP.adminModal?.();
+    }
+
     /* Autosave is debounced; make sure a pending write lands on exit. */
     window.addEventListener('beforeunload', () => {
       if (FP.state.dirty) FP.save();
@@ -47,8 +56,13 @@
   async function openInitialPlan() {
     let plan = null;
     try {
-      const lastId = FP.lastPlanId();
-      if (lastId) plan = await FP.store.get(lastId);
+      /* dashboard deep link wins over "whatever was open last" */
+      const wanted = new URLSearchParams(location.search).get('plan');
+      if (wanted) plan = await FP.store.get(wanted);
+      if (!plan) {
+        const lastId = FP.lastPlanId();
+        if (lastId) plan = await FP.store.get(lastId);
+      }
       if (!plan) plan = (await FP.store.list())[0] || null;
     } catch (e) {
       console.warn('Could not read saved plans', e);

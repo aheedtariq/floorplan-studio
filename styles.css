@@ -124,6 +124,8 @@ svg { display: block; }
 }
 
 .brand { display: flex; align-items: center; gap: 9px; padding-right: 6px; flex-shrink: 0; }
+a.brand { text-decoration: none; color: inherit; border-radius: var(--r-sm); }
+a.brand:hover .brand-title { color: var(--accent); }
 .brand-mark svg { width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; }
 .brand-title { font-weight: 650; font-size: 14px; letter-spacing: -.01em; line-height: 1.15; white-space: nowrap; }
 .brand-sub { font-size: 11px; color: var(--tx-3); letter-spacing: .04em; text-transform: uppercase; white-space: nowrap; }

@@ -265,7 +265,8 @@
         const res = await FP.auth.callFn('admin-clients', {
           action: 'login-link',
           email: btn.dataset.link,
-          redirect_to: location.origin + '/index.html',
+          /* clients land on the dashboard, not the raw editor */
+          redirect_to: location.origin + '/home.html',
         });
         if (res.error) return msg(res.error, true);
         const card = btn.closest('.client-card');
