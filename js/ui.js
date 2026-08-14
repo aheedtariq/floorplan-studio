@@ -2211,6 +2211,10 @@
     FP.on('scope', () => { renderScopeBar(); renderCatalog(); renderPane(); });
     FP.on('plan-loaded', renderAll);
     FP.on('saved', syncTopbar);
+    /* A failed save must never be silent — "Unsaved" alone reads as
+       "not saved YET", not "your changes are not reaching the cloud". */
+    FP.on('save-error', (e) => FP.toast(
+      `Could not save: ${e?.message || 'unknown error'}`, true));
     FP.on('painted', updateScaleBar);
 
     FP.on('cursor', (w) => {

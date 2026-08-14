@@ -158,8 +158,14 @@
 
       const doc = normalise(plan);
 
-      const { error: showErr } = await sb.from('show').upsert(showRow(doc));
-      if (showErr) throw new Error(showErr.message);
+      /* The show row is staff territory — clients hold element-level
+         rights only. Writing it from a client session dies on RLS and
+         took the whole save down with it, so their furniture moves
+         never reached the cloud. Elements are the client's edit. */
+      if (FP.auth.canEdit?.()) {
+        const { error: showErr } = await sb.from('show').upsert(showRow(doc));
+        if (showErr) throw new Error(showErr.message);
+      }
 
       const rows = doc.elements.map((el, i) => toRow(doc, el, i));
 
