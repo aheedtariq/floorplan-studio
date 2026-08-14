@@ -479,7 +479,7 @@
 
   /* ---------------- boot ---------------- */
   async function boot() {
-    document.documentElement.dataset.theme = FP.prefs?.theme || 'dark';
+    document.documentElement.dataset.theme = FP.prefs?.theme || 'light';
 
     $('pTheme').onclick = () => {
       const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';

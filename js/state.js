@@ -602,6 +602,14 @@
     try { localStorage.setItem(PREF_KEY, JSON.stringify(FP.prefs)); } catch {}
   };
 
+  /* Light is the product's default look. Sessions from before the switch
+     carry a saved 'dark' pref they never chose (dark was the old default),
+     so migrate once; the toggle still sticks afterwards. */
+  if (!FP.prefs.themeV2) {
+    FP.setPref('themeV2', 1);
+    FP.setPref('theme', 'light');
+  }
+
   /* ---------------- derived ---------------- */
   FP.stats = () => {
     const spaces = FP.spaces();

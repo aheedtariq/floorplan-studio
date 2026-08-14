@@ -195,7 +195,7 @@
            a circle sitting inside a visible square reads as a wireframe,
            not a floor plan. Those kinds get an invisible rect purely so
            they stay clickable. */
-        if (SELF_DRAWN.has(k.id)) {
+        if (SELF_DRAWN.has(k.symbol || k.id)) {
           out += `<rect x="${n(q.x)}" y="${n(q.y)}" width="${n(q.w)}" height="${n(q.h)}"
                     fill="transparent" stroke="none"/>`;
         } else {
@@ -343,13 +343,16 @@
     const wpx = box.w * zoom, hpx = box.h * zoom;
 
     const col = el.props.color || k.stroke;
-    const custom = ARCH[k.id];
+    /* `symbol` lets a rental kind borrow another kind's drawing — an 8 ft
+       banquet table draws exactly like the generic table, a bar like a
+       counter — without duplicating renderers. */
+    const custom = ARCH[k.symbol || k.id];
 
     /* Self-drawn kinds ARE the object, not decoration on top of one. The
        size gate below must never reach them: skipping a stool's circle
        would leave nothing on the plan at all, because the generic
        rectangle underneath was deliberately suppressed for it. */
-    if (custom && SELF_DRAWN.has(k.id)) return custom(el, box, col, zoom);
+    if (custom && SELF_DRAWN.has(k.symbol || k.id)) return custom(el, box, col, zoom);
 
     if (wpx < 22 || hpx < 14) return '';
     if (custom) return custom(el, box, col, zoom);
@@ -381,7 +384,8 @@
      rectangle underneath is suppressed. */
   const SELF_DRAWN = new Set(['chair', 'stool', 'table', 'counter', 'display',
                               'monitor', 'shelf', 'column',
-                              'electrical-panel', 'distro-box']);
+                              'electrical-panel', 'distro-box',
+                              'soft', 'cube', 'deck', 'case']);
 
   const ARCH = {
     /* ---- furniture, drawn the way a floor plan draws furniture ----
@@ -461,6 +465,75 @@
           `<line x1="${n(x1)}" y1="${n(y1)}" x2="${n(x2)}" y2="${n(y2)}"
             stroke="${col}" stroke-width="2" stroke-linecap="round"
             vector-effect="non-scaling-stroke"/>`).join('')}
+      </g>`;
+    },
+
+    /* Soft seating: radiused body, a back band along the long edge, and
+       arm blocks at the ends when there's room — the standard plan symbol
+       for a sofa. A 3×3 box reads as a lounge chair automatically. */
+    soft(el, b, col, zoom) {
+      const horiz = b.w >= b.h;
+      const t = Math.min(b.w, b.h) * 0.26;               /* back depth */
+      const rad = Math.min(b.w, b.h) * 0.22;
+      const arms = Math.max(b.w, b.h) * zoom > 40;
+      const armW = Math.min(b.w, b.h) * 0.22;
+      let back, arm1 = '', arm2 = '';
+      if (horiz) {
+        back = `<rect x="${n(b.x)}" y="${n(b.y)}" width="${n(b.w)}" height="${n(t)}"
+                  rx="${n(rad * 0.6)}" fill="${col}" fill-opacity=".5"/>`;
+        if (arms) {
+          arm1 = `<rect x="${n(b.x)}" y="${n(b.y)}" width="${n(armW)}" height="${n(b.h)}" rx="${n(rad * 0.6)}" fill="${col}" fill-opacity=".4"/>`;
+          arm2 = `<rect x="${n(b.x + b.w - armW)}" y="${n(b.y)}" width="${n(armW)}" height="${n(b.h)}" rx="${n(rad * 0.6)}" fill="${col}" fill-opacity=".4"/>`;
+        }
+      } else {
+        back = `<rect x="${n(b.x)}" y="${n(b.y)}" width="${n(t)}" height="${n(b.h)}"
+                  rx="${n(rad * 0.6)}" fill="${col}" fill-opacity=".5"/>`;
+        if (arms) {
+          arm1 = `<rect x="${n(b.x)}" y="${n(b.y)}" width="${n(b.w)}" height="${n(armW)}" rx="${n(rad * 0.6)}" fill="${col}" fill-opacity=".4"/>`;
+          arm2 = `<rect x="${n(b.x)}" y="${n(b.y + b.h - armW)}" width="${n(b.w)}" height="${n(armW)}" rx="${n(rad * 0.6)}" fill="${col}" fill-opacity=".4"/>`;
+        }
+      }
+      return `<g pointer-events="none">
+        <rect x="${n(b.x)}" y="${n(b.y)}" width="${n(b.w)}" height="${n(b.h)}"
+          rx="${n(rad)}" fill="${col}" fill-opacity=".22" stroke="${col}"
+          stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+        ${back}${arm1}${arm2}
+      </g>`;
+    },
+
+    /* Cubes and podiums: a filled radiused block, solid enough to read as
+       a standing object rather than a floor region. */
+    cube(el, b, col) {
+      const rad = Math.min(b.w, b.h) * 0.18;
+      return `<rect x="${n(b.x)}" y="${n(b.y)}" width="${n(b.w)}" height="${n(b.h)}"
+        rx="${n(rad)}" fill="${col}" fill-opacity=".38" stroke="${col}"
+        stroke-width="1.5" vector-effect="non-scaling-stroke" pointer-events="none"/>`;
+    },
+
+    /* A stage deck is the classic riser symbol: rectangle with an X. */
+    deck(el, b, col) {
+      return `<g pointer-events="none">
+        <rect x="${n(b.x)}" y="${n(b.y)}" width="${n(b.w)}" height="${n(b.h)}"
+          fill="${col}" fill-opacity=".18" stroke="${col}" stroke-width="1.6"
+          vector-effect="non-scaling-stroke"/>
+        <line x1="${n(b.x)}" y1="${n(b.y)}" x2="${n(b.x + b.w)}" y2="${n(b.y + b.h)}"
+          stroke="${col}" stroke-width="1" vector-effect="non-scaling-stroke" opacity=".6"/>
+        <line x1="${n(b.x + b.w)}" y1="${n(b.y)}" x2="${n(b.x)}" y2="${n(b.y + b.h)}"
+          stroke="${col}" stroke-width="1" vector-effect="non-scaling-stroke" opacity=".6"/>
+      </g>`;
+    },
+
+    /* A display case is glass: a double outline, hollow middle. */
+    case(el, b, col) {
+      const inset = Math.min(b.w, b.h) * 0.18;
+      return `<g pointer-events="none">
+        <rect x="${n(b.x)}" y="${n(b.y)}" width="${n(b.w)}" height="${n(b.h)}"
+          fill="${col}" fill-opacity=".1" stroke="${col}" stroke-width="1.5"
+          vector-effect="non-scaling-stroke"/>
+        <rect x="${n(b.x + inset)}" y="${n(b.y + inset)}"
+          width="${n(Math.max(b.w - inset * 2, 0.1))}" height="${n(Math.max(b.h - inset * 2, 0.1))}"
+          fill="none" stroke="${col}" stroke-width="1" opacity=".65"
+          vector-effect="non-scaling-stroke"/>
       </g>`;
     },
 

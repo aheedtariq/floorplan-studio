@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -7,8 +7,14 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,650;14..32,700&display=swap" />
-<link rel="stylesheet" href="styles.css?v=65" />
+<link rel="stylesheet" href="styles.css?v=66" />
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='18' fill='%237c5cfc'/><g fill='none' stroke='white' stroke-width='8'><rect x='22' y='22' width='24' height='24'/><rect x='54' y='22' width='24' height='24'/><rect x='22' y='54' width='56' height='24'/></g></svg>" />
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"
+} }
+</script>
 </head>
 <body>
 
@@ -102,6 +108,9 @@
           <button data-export="import">Import plan file…</button>
         </div>
       </div>
+      <button class="btn ghost" id="btn3D" title="3D walkthrough preview">
+        <svg viewBox="0 0 24 24"><path d="m12 3 8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12 4 7.5M12 12l8-4.5M12 12v9"/></svg> 3D
+      </button>
       <button class="tb" id="btnTheme" title="Toggle light / dark">
         <svg viewBox="0 0 24 24"><path d="M20 14a8 8 0 1 1-10-10 7 7 0 0 0 10 10Z"/></svg>
       </button>
@@ -209,21 +218,22 @@
 <input type="file" id="filePicker" hidden />
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
-<script src="js/geometry.js?v=65"></script>
-<script src="js/config.js?v=65"></script>
-<script src="js/state.js?v=65"></script>
-<script src="js/backend.js?v=65"></script>
-<script src="js/store-supabase.js?v=65"></script>
-<script src="js/rules.js?v=65"></script>
-<script src="js/render.js?v=65"></script>
-<script src="js/interactions.js?v=65"></script>
-<script src="js/ui.js?v=65"></script>
-<script src="js/admin.js?v=65"></script>
-<script src="js/publish.js?v=65"></script>
-<script src="js/drape.js?v=65"></script>
-<script src="js/exporters.js?v=65"></script>
-<script src="js/samples.js?v=65"></script>
-<script src="js/pcma.js?v=65"></script>
-<script src="js/main.js?v=65"></script>
+<script src="js/geometry.js?v=66"></script>
+<script src="js/config.js?v=66"></script>
+<script src="js/state.js?v=66"></script>
+<script src="js/backend.js?v=66"></script>
+<script src="js/store-supabase.js?v=66"></script>
+<script src="js/rules.js?v=66"></script>
+<script src="js/render.js?v=66"></script>
+<script src="js/interactions.js?v=66"></script>
+<script src="js/ui.js?v=66"></script>
+<script src="js/admin.js?v=66"></script>
+<script src="js/publish.js?v=66"></script>
+<script src="js/drape.js?v=66"></script>
+<script src="js/exporters.js?v=66"></script>
+<script src="js/samples.js?v=66"></script>
+<script src="js/pcma.js?v=66"></script>
+<script src="js/view3d.js?v=66"></script>
+<script src="js/main.js?v=66"></script>
 </body>
 </html>

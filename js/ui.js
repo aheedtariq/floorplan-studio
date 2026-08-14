@@ -1148,7 +1148,44 @@
     });
   }
 
+  /* ============================================================
+     Photo → plan.
+
+     Workers photograph venues on site; those photos become the template
+     a real plan is traced from. The guide below is the field manual for
+     what to shoot, shown every time so the photos arrive usable.
+     ============================================================ */
   function importUnderlay() {
+    FP.modal({
+      title: 'Import a venue photo or floor plan',
+      body: `
+        <p class="helptext">The image becomes a temporary template under the plan.
+          You scale it, trace the real walls and structure over it, then remove
+          the photo — leaving a clean, editable floor plan.</p>
+
+        <div class="grp">
+          <h4 class="grp-title">Taking the photo at the venue</h4>
+          <div class="kv"><span>1 · Best source</span><span style="font-family:var(--font)">The venue's posted floor plan or fire-evacuation placard — every hall has one</span></div>
+          <div class="kv"><span>2 · Straight on</span><span style="font-family:var(--font)">Face it square, whole sheet in frame, no angle, no glare</span></div>
+          <div class="kv"><span>3 · One known length</span><span style="font-family:var(--font)">Note a real measurement — a double door is 6 ft, or pace out one wall</span></div>
+          <div class="kv"><span>4 · No placard?</span><span style="font-family:var(--font)">Shoot the whole floor from a balcony or mezzanine, as high and centred as you can</span></div>
+        </div>
+
+        <p class="helptext">Angled shots skew the trace — if the photo looks like a
+          parallelogram, retake it. PDFs work too: screenshot the page first.</p>`,
+      foot: `<button class="btn ghost" data-no>Cancel</button>
+             <button class="btn primary" data-pick>Choose photo…</button>`,
+      onMount: (_b, foot) => {
+        foot.querySelector('[data-no]').onclick = FP.closeModal;
+        foot.querySelector('[data-pick]').onclick = () => {
+          FP.closeModal();
+          pickUnderlayFile();
+        };
+      },
+    });
+  }
+
+  function pickUnderlayFile() {
     const picker = $('filePicker');
     picker.accept = 'image/*';
     picker.value = '';

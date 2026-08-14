@@ -48,13 +48,32 @@
   A.isStaff = () => ['admin', 'planner', 'sales', 'crew'].includes(A.role());
   A.canEdit = () => ['admin', 'planner'].includes(A.role());
   A.isAdmin = () => A.role() === 'admin';
+  A.isClient = () => A.role() === 'client';
+  A.clientId = () => profile?.client_id || null;
+
+  /** Invoke an edge function with the caller's JWT; unwraps the server's
+      error message so the UI can show it verbatim. */
+  A.callFn = async (name, body) => {
+    const sb = A.client();
+    if (!sb) return { error: 'Not connected' };
+    const { data, error } = await sb.functions.invoke(name, { body });
+    if (error) {
+      let msg = error.message;
+      try {
+        const j = await error.context?.json?.();
+        if (j?.error) msg = j.error;
+      } catch { /* keep the transport message */ }
+      return { error: msg };
+    }
+    return data || {};
+  };
 
   async function loadProfile() {
     const sb = A.client();
     if (!sb || !session) { profile = null; return null; }
     const { data, error } = await sb
       .from('profile')
-      .select('id, email, full_name, role, active')
+      .select('id, email, full_name, role, active, client_id')
       .eq('id', session.user.id)
       .maybeSingle();
     if (error) console.warn('Could not read profile', error.message);
