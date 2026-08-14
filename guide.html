@@ -227,6 +227,16 @@
     <li><b>Remove the photo.</b> Right panel → <span class="ui">Plan</span> tab → <span class="ui">Remove image</span>. The photo was scaffolding; what remains is a clean, white, fully editable plan.</li>
   </ol>
   <div class="callout tip"><span>📷</span><div><b>Where the photos go:</b> every photo you import into a cloud plan is automatically archived to that plan's <b>photo library</b> — open it from the plan's card on the dashboard (<span class="ui">Photos</span>). The original shot survives even after you remove the underlay, and you can upload extra site photos there directly.</div></div>
+
+  <h3>Or: scan the room with an iPhone (LiDAR)</h3>
+  <p>On a LiDAR-equipped iPhone (12&nbsp;Pro or any newer Pro/Pro&nbsp;Max), you can skip
+  the photo-and-trace workflow entirely:</p>
+  <ol class="steps">
+    <li>Install any room scanner app built on Apple's <b>RoomPlan</b> (search the App Store for "RoomPlan scanner" — several are free). Walk the room following the app's on-screen guide.</li>
+    <li>Export the scan as <b>JSON</b> and get it to your Mac (AirDrop is fastest).</li>
+    <li>In the Studio: <span class="ui">Import reference image…</span> → <span class="ui">Import LiDAR scan (.json)…</span>. Walls, doors, and recognised furniture are rebuilt as real, editable plan elements at their true measured dimensions — no tracing, no scale calibration.</li>
+  </ol>
+  <div class="callout warn"><span>ℹ️</span><div><b>Why an app is needed:</b> Apple only exposes the LiDAR sensor to native apps, never to web pages — no website can read it directly. The scanner app does the capture; Floorplan Studio turns its export into your working plan.</div></div>
   <div class="callout tip"><span>💡</span><div><b>The Schaumburg Convention Center plan in your cloud account was built exactly this way</b> — from a photographed paper plan to a 48-booth interactive layout. Open it to see the finished result.</div></div>
 
   <h3>Then lay in the booths</h3>
@@ -296,23 +306,23 @@
   <ol class="steps">
     <li><b>Add the company.</b> Clients tab → type the company name (contact email optional) → <span class="ui">Add client</span>.</li>
     <li><b>Give them a plan.</b> Click the company to expand it. Under <b>Plans</b>, pick a plan from the dropdown and <span class="ui">Assign plan</span>. (Build the plan first — section 4 — or assign it later; you can also <span class="ui">Unassign</span> any time.)</li>
-    <li><b>Create their login.</b> Under <b>Client logins</b>, enter their name, email, and a password <b>you choose</b> (8+ characters) → <span class="ui">Create login</span>. Their account exists immediately — no confirmation emails, no waiting.</li>
-    <li><b>Generate the one-time link.</b> Click <span class="ui">One-time link</span> next to their name, then <span class="ui">Copy</span>. Send it however you like — email, text, Teams.</li>
-    <li><b>They click it and they're in.</b> The link signs them straight into their workspace, no password typed. For every visit after that they use their email and the password from step 3.</li>
+    <li><b>Copy their link.</b> Under <b>Client access</b>, every company has one <b>permanent link</b> — unique to them, never expires. <span class="ui">Copy link</span>.</li>
+    <li><b>Set their password.</b> Type a password <b>you choose</b> (8+ characters) → <span class="ui">Set password</span>. That's what activates the link; change it here any time.</li>
+    <li><b>Send them both.</b> Link + password, however you like — email, text, Teams. They open their link, see <i>their company's name</i>, enter the password, and land in their workspace. Same link, same password, every visit.</li>
   </ol>
 
-  <h3>What a one-time link actually is</h3>
+  <h3>How the client link works</h3>
   <ul>
-    <li>It is a <b>single-use</b> sign-in: the first click consumes it. Forwarded later, it's dead.</li>
-    <li>It expires on its own if never used, and generating a new one costs one click — so treat them as disposable.</li>
-    <li>Every link you issue, login you create, and password you set is written to the audit log with your name on it.</li>
+    <li>The link is <b>permanent and unique to that company</b> — it opens a sign-in page for them alone (no email to type, just their password).</li>
+    <li>The password is the lock: change it in the panel and the old one stops working immediately — the link itself never changes.</li>
+    <li>Every password you set is written to the audit log with your name on it.</li>
   </ul>
-  <div class="callout warn"><span>⚠️</span><div><b>The link is a key.</b> Send it directly to the person it's for, and never post one anywhere public. If a link goes astray, it's still single-use and time-limited — and you can reset the account's password from the same panel.</div></div>
+  <div class="callout warn"><span>⚠️</span><div><b>Link + password together are the key.</b> Send them directly to the client, ideally in separate messages, and never post either anywhere public. If a password leaks, change it in the panel — one click, and the leak is dead while the client's link keeps working with the new password.</div></div>
 
-  <h3>Other controls</h3>
+  <h3>Team &amp; access tab — your internal staff</h3>
   <ul>
-    <li><span class="ui">Set password</span> — reset any client's password on the spot (they forgot it, or someone left their company).</li>
-    <li><b>Team &amp; access tab</b> — every internal account, with a role dropdown and an Active toggle. New staff sign up themselves and appear here as Crew (read-only) until you promote them. The system refuses to remove the last active admin, so you can't lock yourself out.</li>
+    <li><b>Add a team member</b> (admins only): name, email, password, and role — the account works immediately, no invitations or confirmation emails.</li>
+    <li>Every internal account is listed with a role dropdown and an Active toggle. The system refuses to remove the last active admin, so you can't lock yourself out.</li>
   </ul>
 </section>
 

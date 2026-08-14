@@ -55,7 +55,7 @@
       sb.from('show').select('id, name, width, height, unit, client_id, freeze_date, published_at, created_at')
         .order('created_at', { ascending: false }),
       FP.auth.canEdit()
-        ? sb.from('client').select('id, name, active').order('name')
+        ? sb.from('client').select('id, name, portal_token, active').order('name')
         : Promise.resolve({ data: [] }),
       FP.auth.canEdit()
         ? sb.from('profile').select('id, email, full_name, client_id').eq('role', 'client')
@@ -153,7 +153,7 @@
           ['Build or open a plan', 'Click a card to open it in the Studio — or <b>New plan</b>, then trace the venue from a photo (Import reference image, scale it, trace the walls, remove the photo).'],
           ['Add the photos on site', 'Shoot the venue’s posted floor plan straight-on and note one real measurement. When you import a photo into a cloud plan, the original is saved to that plan’s photo library automatically.'],
           ['Lay out the show', 'Quick booths, booth rows, and the Source One rentals catalog — tables, lounges, bars, staging — all at real sizes. The Safety tab flags anything unbuildable.'],
-          ['Hand it to the client', 'Open <b>Admin</b> → add the client company, assign the plan, create their login (you pick the password), and send the one-time link. They see and edit only their own plans.'],
+          ['Hand it to the client', 'Open <b>Admin</b> → add the client company and assign the plan. Every client has one permanent link — set their access password and send them link + password. They see and edit only their own plans.'],
           ['Show it in 3D', 'The <b>3D</b> button stands the plan up as a walkthrough — the fastest way to get a client to say "move the bar now, not on load-in day."'],
         ]
       : [
@@ -178,57 +178,51 @@
     $('wClose').onclick = () => { FP.setPref('homeWelcomeSeen', 1); closeOverlay(); };
   }
 
-  /* ---------------- client link ---------------- */
+  /* ---------------- client link ----------------
+     One PERMANENT link per client company + a password staff set.
+     Setting the password creates the client's login behind the scenes
+     if it doesn't exist yet. */
   async function linkModal(clientId) {
-    const users = clientUsers.filter((u) => u.client_id === clientId);
     const client = clients.find((c) => c.id === clientId);
-    if (!users.length) {
-      overlay(`<div class="sheet box">
-        <h2>No login yet for ${esc(client?.name || 'this client')}</h2>
-        <p>Create their login first (email + password), then come back for the link.</p>
-        <div class="sheet-foot"><button class="btn ghost" id="bxCancel">Close</button>
-        <button class="btn primary" id="bxAdmin">Open Admin</button></div>
-      </div>`);
-      $('bxCancel').onclick = closeOverlay;
-      $('bxAdmin').onclick = () => { location.href = 'index.html#admin'; };
-      return;
-    }
+    if (!client) return;
+    const login = clientUsers.find((u) => u.client_id === clientId);
+    const link = `${location.origin}${location.pathname.replace(/home\.html$/, '')}login.html?c=${client.portal_token}`;
 
     overlay(`<div class="sheet box">
-      <h2>One-time sign-in link</h2>
-      <p>Signs <b>${esc(client?.name || '')}</b> straight into their workspace. Single use — generate a fresh one any time.</p>
-      <label>Send to</label>
-      <select class="inp" id="bxWho">
-        ${users.map((u) => `<option value="${esc(u.email)}">${esc(u.full_name || u.email)} — ${esc(u.email)}</option>`).join('')}
-      </select>
-      <div class="linkrow" id="bxOut" hidden>
-        <input class="inp" readonly aria-label="One-time link" />
+      <h2>Client access — ${esc(client.name)}</h2>
+      <p>Send the client this <b>permanent link</b> plus the password you set below.
+         The link opens a sign-in page for their company only.</p>
+      <label>Their link</label>
+      <div class="linkrow" style="margin-top:0">
+        <input class="inp" readonly value="${esc(link)}" aria-label="Client link" />
         <button class="mini" id="bxCopy">Copy</button>
       </div>
-      <div id="boxMsg"></div>
+      <label>${login ? 'Change their password' : 'Set their password (activates the link)'}</label>
+      <div class="linkrow" style="margin-top:0">
+        <input class="inp" id="bxPw" type="text" minlength="8" autocomplete="off"
+               placeholder="Access password (min 8 characters)" style="font:inherit" />
+        <button class="mini" id="bxSave">Save</button>
+      </div>
+      <div id="boxMsg">${login ? 'A password is already set — saving a new one replaces it.' : ''}</div>
       <div class="sheet-foot">
         <button class="btn ghost" id="bxCancel">Close</button>
-        <div class="grow"></div>
-        <button class="btn primary" id="bxGen">Generate link</button>
       </div>
     </div>`);
     $('bxCancel').onclick = closeOverlay;
-    $('bxGen').onclick = async () => {
-      boxMsg('Generating…');
-      const res = await FP.auth.callFn('admin-clients', {
-        action: 'login-link',
-        email: $('bxWho').value,
-        redirect_to: location.origin + location.pathname,
-      });
+    $('bxCopy').onclick = async () => {
+      try { await navigator.clipboard.writeText(link); boxMsg('Link copied.', 'ok'); }
+      catch { boxMsg('Select the link and press ⌘C.', 'err'); }
+    };
+    $('bxSave').onclick = async () => {
+      const password = ($('bxPw').value || '').trim();
+      if (password.length < 8) return boxMsg('Password needs at least 8 characters.', 'err');
+      boxMsg('Saving…');
+      const res = login
+        ? await FP.auth.callFn('admin-clients', { action: 'set-password', email: login.email, password })
+        : await FP.auth.callFn('admin-clients', { action: 'create-client-user', client_id: clientId, password });
       if (res.error) return boxMsg(res.error, 'err');
-      const out = $('bxOut');
-      out.hidden = false;
-      out.querySelector('input').value = res.link || '';
-      boxMsg('Ready — copy it and send it to the client.', 'ok');
-      $('bxCopy').onclick = async () => {
-        try { await navigator.clipboard.writeText(res.link || ''); boxMsg('Copied.', 'ok'); }
-        catch { out.querySelector('input').select(); boxMsg('Press ⌘C to copy.', 'ok'); }
-      };
+      boxMsg('Saved — send the client the link and this password.', 'ok');
+      await load();
     };
   }
 

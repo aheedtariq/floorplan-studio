@@ -15,6 +15,7 @@
     --tx: #131a26; --tx-2: #5a6779; --tx-3: #5f6b82; --err: #b91c1c;
   }
   * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body {
     margin: 0; min-height: 100vh; display: flex;
     font: 15px/1.6 "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -155,8 +156,36 @@
 
   const msg = (text, cls) => { const m = $('msg'); m.textContent = text; m.className = cls || ''; };
 
-  /* already signed in (or arriving via a one-time link)? go straight in */
+  /* already signed in? go straight in */
   sb.auth.getSession().then(({ data }) => { if (data?.session) location.replace(HOME); });
+
+  /* ---- client mode: a ?c=<token> link is one company's private door.
+     The token resolves to the company name (shown) and its login email
+     (used internally); the client only ever types their password. ---- */
+  let clientEmail = null;
+  const token = new URLSearchParams(location.search).get('c');
+  if (token) {
+    document.querySelector('.card h2').textContent = 'Loading…';
+    sb.rpc('portal_login_info', { tok: token }).then(({ data, error }) => {
+      const row = data && data[0];
+      if (error || !row) {
+        document.querySelector('.card h2').textContent = 'Sign in';
+        msg('This link isn’t valid any more — contact the Source One team.', 'err');
+        return;
+      }
+      clientEmail = row.login_email;
+      document.querySelector('.card h2').textContent = row.client_name;
+      document.querySelector('.card > p').textContent =
+        'Welcome — enter the access password Source One gave you.';
+      document.querySelector('label[for="email"]').hidden = true;
+      $('email').hidden = true;
+      $('email').required = false;
+      document.querySelector('.alt').hidden = true;
+      $('btnLink').hidden = true;
+      document.querySelector('.links').hidden = true;
+      $('password').focus();
+    });
+  }
 
   $('form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -164,10 +193,12 @@
     btn.disabled = true;
     msg('Signing in…');
     const { error } = await sb.auth.signInWithPassword({
-      email: $('email').value.trim(), password: $('password').value,
+      email: clientEmail || $('email').value.trim(),
+      password: $('password').value,
     });
     btn.disabled = false;
-    if (error) return msg(error.message, 'err');
+    if (error) return msg(
+      clientEmail ? 'That password isn’t right — check it and try again.' : error.message, 'err');
     location.replace(HOME);
   });
 

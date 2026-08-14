@@ -41,11 +41,16 @@
     FP.render.fit();
     FP.renderAll();
 
-    /* dashboard hand-offs */
-    if (location.hash === '#admin') {
+    /* dashboard hand-offs — checked at boot AND on hash changes, because
+       navigating to an already-open editor with #admin only fires
+       hashchange, and some hosts apply the fragment after load */
+    const maybeAdmin = () => {
+      if (location.hash !== '#admin') return;
       history.replaceState(null, '', location.pathname + location.search);
       FP.adminModal?.();
-    }
+    };
+    maybeAdmin();
+    window.addEventListener('hashchange', maybeAdmin);
 
     /* Autosave is debounced; make sure a pending write lands on exit. */
     window.addEventListener('beforeunload', () => {

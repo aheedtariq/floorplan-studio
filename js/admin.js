@@ -90,7 +90,7 @@
     const sb = FP.auth.client();
     if (!sb) return { error: 'Not connected' };
     const [cl, sh, pr] = await Promise.all([
-      sb.from('client').select('id, name, contact_name, contact_email, active, created_at')
+      sb.from('client').select('id, name, contact_name, contact_email, portal_token, active, created_at')
         .order('created_at', { ascending: true }),
       sb.from('show').select('id, name, client_id').order('created_at', { ascending: false }),
       /* Planner sessions cannot read other profiles (admin-only RLS);
@@ -115,6 +115,7 @@
       body.innerHTML = `<p class="helptext" style="color:var(--err)">${esc(error)}</p>`;
       return;
     }
+    paintClients._users = users;
 
     const open = paintClients._open || {};
 
@@ -169,25 +170,24 @@
         </div>
 
         <div class="grp">
-          <h4 class="grp-title">Client logins</h4>
-          ${roster.map((u) => `<div class="kv">
-              <span>${esc(u.full_name || u.email)}<br><small style="color:var(--tx-3)">${esc(u.email)}</small></span>
-              <span style="display:flex;gap:6px">
-                <button class="mini" data-link="${esc(u.email)}">One-time link</button>
-                <button class="mini" data-pass="${esc(u.email)}">Set password</button>
-              </span>
-            </div>`).join('') || '<p class="helptext" style="margin:0">No logins yet.</p>'}
-
-          <form class="adm-newrow" data-newuser="${esc(c.id)}" style="margin-top:8px">
-            <input class="inp" name="name" placeholder="Name" autocomplete="off" />
-            <input class="inp" name="email" placeholder="Email" type="email" required autocomplete="off" />
-            <input class="inp" name="password" placeholder="Password (min 8)" type="text"
-                   required minlength="8" autocomplete="off" />
-            <button class="mini" type="submit">Create login</button>
-          </form>
-          <div class="adm-linkout" data-linkout="${esc(c.id)}" hidden>
-            <input class="inp" readonly aria-label="One-time sign-in link" />
-            <button class="mini" data-copylink>Copy</button>
+          <h4 class="grp-title">Client access</h4>
+          <p class="helptext" style="margin:0 0 8px">Give the client this permanent link
+            and the password you set below. The link is theirs alone — it opens a
+            sign-in page for <b>${esc(c.name)}</b> only.</p>
+          <div class="adm-linkout">
+            <input class="inp" readonly aria-label="Client sign-in link"
+                   value="${esc(location.origin + '/login.html?c=' + (c.portal_token || ''))}" />
+            <button class="mini" data-copylink="${esc(c.id)}">Copy link</button>
+          </div>
+          <p class="helptext" style="margin:8px 0 4px">
+            ${roster.length
+              ? `Access password is set${roster[0].full_name ? ` for <b>${esc(roster[0].full_name)}</b>` : ''} — enter a new one below to change it.`
+              : 'No access password yet — set one to activate the link.'}
+          </p>
+          <div class="adm-newrow" style="margin:0">
+            <input class="inp" data-pw-for="${esc(c.id)}" placeholder="Access password (min 8 characters)"
+                   type="text" minlength="8" autocomplete="off" />
+            <button class="mini" data-setpw="${esc(c.id)}">${roster.length ? 'Change password' : 'Set password'}</button>
           </div>
         </div>
       </div>` : ''}
@@ -242,61 +242,37 @@
         await paintClients();
       }));
 
-    body.querySelectorAll('[data-newuser]').forEach((form) =>
-      form.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const f = new FormData(form);
-        msg('Creating login…');
-        const res = await FP.auth.callFn('admin-clients', {
-          action: 'create-client-user',
-          client_id: form.dataset.newuser,
-          email: String(f.get('email') || '').trim(),
-          password: String(f.get('password') || ''),
-          full_name: String(f.get('name') || '').trim() || null,
-        });
-        if (res.error) return msg(res.error, true);
-        msg('Login created — you can now issue a one-time link.');
-        await paintClients();
-      }));
-
-    body.querySelectorAll('[data-link]').forEach((btn) =>
+    body.querySelectorAll('[data-copylink]').forEach((btn) =>
       btn.addEventListener('click', async () => {
-        msg('Generating one-time link…');
-        const res = await FP.auth.callFn('admin-clients', {
-          action: 'login-link',
-          email: btn.dataset.link,
-          /* clients land on the dashboard, not the raw editor */
-          redirect_to: location.origin + '/home.html',
-        });
-        if (res.error) return msg(res.error, true);
-        const card = btn.closest('.client-card');
-        const out = card?.querySelector('[data-linkout]');
-        if (out) {
-          out.hidden = false;
-          out.querySelector('input').value = res.link || '';
-          out.querySelector('[data-copylink]').onclick = async () => {
-            try {
-              await navigator.clipboard.writeText(res.link || '');
-              msg('Link copied — send it to the client. It signs them in once.');
-            } catch {
-              out.querySelector('input').select();
-              msg('Press ⌘C to copy the selected link.');
-            }
-          };
+        const input = btn.closest('.adm-linkout')?.querySelector('input');
+        try {
+          await navigator.clipboard.writeText(input?.value || '');
+          msg('Link copied — send it to the client with their password.');
+        } catch {
+          input?.select();
+          msg('Press ⌘C to copy the selected link.');
         }
-        msg('One-time link ready below — it signs the client straight in.');
       }));
 
-    body.querySelectorAll('[data-pass]').forEach((btn) =>
+    /* One control does the whole job: sets the client's access password,
+       creating their login behind the scenes if it doesn't exist yet. */
+    body.querySelectorAll('[data-setpw]').forEach((btn) =>
       btn.addEventListener('click', async () => {
-        const password = prompt(`New password for ${btn.dataset.pass} (min 8 characters):`);
-        if (password == null) return;
-        msg('Setting password…');
-        const res = await FP.auth.callFn('admin-clients', {
-          action: 'set-password', email: btn.dataset.pass, password,
-        });
+        const cid = btn.dataset.setpw;
+        const input = body.querySelector(`[data-pw-for="${CSS.escape(cid)}"]`);
+        const password = (input?.value || '').trim();
+        if (password.length < 8) return msg('Password needs at least 8 characters.', true);
+
+        const existing = (paintClients._users || []).find((u) => u.client_id === cid);
+        msg('Saving password…');
+        const res = existing
+          ? await FP.auth.callFn('admin-clients', {
+              action: 'set-password', email: existing.email, password })
+          : await FP.auth.callFn('admin-clients', {
+              action: 'create-client-user', client_id: cid, password });
         if (res.error) return msg(res.error, true);
-        msg('Password updated.');
+        msg('Password saved — the client link is live. Send link + password.');
+        await paintClients();
       }));
 
     void clients;
@@ -370,6 +346,25 @@
       <div id="teamList">${rows.map((p) => rowHtml(p, meId, activeAdmins)).join('')}</div>
 
       <div class="grp" style="margin-top:16px">
+        <h4 class="grp-title">Add a team member</h4>
+        <p class="helptext" style="margin:0 0 8px">Creates the account instantly with the
+          email, password, and role you set — no invitation emails involved. Client
+          access is handled on the Clients tab, not here.</p>
+        <form id="newStaff" class="adm-newrow" style="flex-wrap:wrap">
+          <input class="inp" name="name" placeholder="Name" autocomplete="off" style="flex:1 1 130px" />
+          <input class="inp" name="email" placeholder="Email" type="email" required
+                 autocomplete="off" style="flex:1 1 170px" />
+          <input class="inp" name="password" placeholder="Password (min 8)" type="text"
+                 required minlength="8" autocomplete="off" style="flex:1 1 150px" />
+          <select class="inp" name="role" style="flex:0 1 110px">
+            ${ROLES.filter(([v]) => !['exhibitor', 'client'].includes(v))
+              .map(([v, label]) => `<option value="${v}"${v === 'crew' ? ' selected' : ''}>${esc(label)}</option>`).join('')}
+          </select>
+          <button class="btn primary" type="submit" style="flex:0 0 auto">Create account</button>
+        </form>
+      </div>
+
+      <div class="grp">
         <h4 class="grp-title">What each role can do</h4>
         ${ROLES.map(([, label, note]) =>
           `<div class="kv"><span>${esc(label)}</span><span style="font-family:var(--font)">${esc(note)}</span></div>`).join('')}
@@ -382,6 +377,22 @@
 
   function wireTeam() {
     const sb = FP.auth.client();
+
+    document.getElementById('newStaff')?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const f = new FormData(e.target);
+      msg('Creating account…');
+      const res = await FP.auth.callFn('admin-clients', {
+        action: 'create-staff-user',
+        email: String(f.get('email') || '').trim(),
+        password: String(f.get('password') || ''),
+        full_name: String(f.get('name') || '').trim() || null,
+        role: String(f.get('role') || 'crew'),
+      });
+      if (res.error) return msg(res.error, true);
+      msg('Account created — they can sign in right away.');
+      await paintTeam();
+    });
 
     document.querySelectorAll('[data-role-for]').forEach((sel) =>
       sel.addEventListener('change', async () => {

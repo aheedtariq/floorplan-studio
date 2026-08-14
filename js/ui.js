@@ -1172,17 +1172,53 @@
         </div>
 
         <p class="helptext">Angled shots skew the trace — if the photo looks like a
-          parallelogram, retake it. PDFs work too: screenshot the page first.</p>`,
+          parallelogram, retake it. PDFs work too: screenshot the page first.</p>
+
+        <div class="grp">
+          <h4 class="grp-title">Or: scan the room with an iPhone (LiDAR)</h4>
+          <p class="helptext" style="margin:0 0 6px">On a LiDAR iPhone (12 Pro or newer
+            Pro/Max), scan the room with any RoomPlan-based scanner app and export the
+            scan as <b>JSON</b>. Import it here and the walls, doors, and furniture are
+            rebuilt as real plan elements at true dimensions — no tracing, no scaling.</p>
+          <button class="mini" data-lidar style="width:100%">Import LiDAR scan (.json)…</button>
+        </div>`,
       foot: `<button class="btn ghost" data-no>Cancel</button>
              <button class="btn primary" data-pick>Choose photo…</button>`,
-      onMount: (_b, foot) => {
+      onMount: (body, foot) => {
         foot.querySelector('[data-no]').onclick = FP.closeModal;
         foot.querySelector('[data-pick]').onclick = () => {
           FP.closeModal();
           pickUnderlayFile();
         };
+        body.querySelector('[data-lidar]').onclick = () => {
+          FP.closeModal();
+          pickLidarFile();
+        };
       },
     });
+  }
+
+  function pickLidarFile() {
+    const picker = $('filePicker');
+    picker.accept = '.json,application/json';
+    picker.value = '';
+    picker.onchange = () => {
+      const file = picker.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        const made = FP.importRoomPlan(reader.result);
+        if (made.error) return FP.toast(made.error, true);
+        renderAll();
+        R().fit();
+        R().draw();
+        FP.toast(`Scan imported — ${made.walls} walls, ${made.doors} doors, `
+               + `${made.objects} furniture pieces at true size`);
+        archivePlanPhoto(file);
+      };
+      reader.readAsText(file);
+    };
+    picker.click();
   }
 
   function pickUnderlayFile() {
