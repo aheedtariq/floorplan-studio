@@ -149,7 +149,9 @@
   const sb = supabase.createClient(
     'https://bvbjjawpmdfpkmasrcpk.supabase.co',
     'sb_publishable_phh-vhvlqPg8YGEjuxIorw_hgn7bnAX',
-    { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
+    { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true,
+              /* see backend.js — a wedged tab must never freeze sign-in */
+              lock: async (_name, _timeout, fn) => await fn() } });
 
   const $ = (id) => document.getElementById(id);
   /* absolute: the host serves clean URLs, so pathname may be /login or

@@ -30,7 +30,14 @@
     if (!A.available()) return null;
     if (!client) {
       client = root.supabase.createClient(CONFIG.url, CONFIG.key, {
-        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+        auth: {
+          persistSession: true, autoRefreshToken: true, detectSessionInUrl: true,
+          /* No cross-tab web lock: a single wedged tab holding
+             navigator.locks freezes auth in EVERY other tab of the app,
+             which reads as "stuck on Loading". Tabs refreshing tokens
+             independently is harmless; a frozen product is not. */
+          lock: async (_name, _timeout, fn) => await fn(),
+        },
       });
     }
     return client;
