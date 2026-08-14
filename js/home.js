@@ -186,7 +186,7 @@
     const client = clients.find((c) => c.id === clientId);
     if (!client) return;
     const login = clientUsers.find((u) => u.client_id === clientId);
-    const link = `${location.origin}${location.pathname.replace(/home\.html$/, '')}login.html?c=${client.portal_token}`;
+    const link = `${location.origin}/login.html?c=${client.portal_token}`;
 
     overlay(`<div class="sheet box">
       <h2>Client access — ${esc(client.name)}</h2>

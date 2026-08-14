@@ -152,7 +152,9 @@
     { auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true } });
 
   const $ = (id) => document.getElementById(id);
-  const HOME = location.origin + location.pathname.replace(/login\.html$/, 'home.html');
+  /* absolute: the host serves clean URLs, so pathname may be /login or
+     /login.html — never derive one page's path from another's */
+  const HOME = location.origin + '/home.html';
 
   const msg = (text, cls) => { const m = $('msg'); m.textContent = text; m.className = cls || ''; };
 
@@ -166,9 +168,16 @@
   const token = new URLSearchParams(location.search).get('c');
   if (token) {
     document.querySelector('.card h2').textContent = 'Loading…';
-    sb.rpc('portal_login_info', { tok: token }).then(({ data, error }) => {
+    /* plain fetch, not sb.rpc — the supabase client can stall behind a
+       stale session refresh, and this lookup needs no auth at all */
+    fetch('https://bvbjjawpmdfpkmasrcpk.supabase.co/rest/v1/rpc/portal_login_info', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json',
+                 apikey: 'sb_publishable_phh-vhvlqPg8YGEjuxIorw_hgn7bnAX' },
+      body: JSON.stringify({ tok: token }),
+    }).then((r) => (r.ok ? r.json() : null)).catch(() => null).then((data) => {
       const row = data && data[0];
-      if (error || !row) {
+      if (!row) {
         document.querySelector('.card h2').textContent = 'Sign in';
         msg('This link isn’t valid any more — contact the Source One team.', 'err');
         return;
