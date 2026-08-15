@@ -698,14 +698,16 @@
     overlay.innerHTML = `
       <div class="v3d-top">
         <b>3D preview</b>
-        <span class="v3d-hint">Click to select · drag an object to move it · R rotates ·
-          arm a catalog item and click the floor to place it · drag floor to orbit</span>
+        <span class="v3d-hint">Scroll zooms to your cursor · double-click flies there ·
+          click selects · drag an object moves it · R rotates · drag floor to orbit</span>
+        <button class="btn ghost" id="v3dFit">Fit floor</button>
         <button class="btn ghost" id="v3dClose">Back to plan</button>
       </div>`;
     const stage = document.getElementById('stage')
                || document.getElementById('vStage') || document.body;
     stage.appendChild(overlay);
     overlay.querySelector('#v3dClose').onclick = close;
+    overlay.querySelector('#v3dFit').onclick = () => flyFit();
   }
 
   /* Which edge is a booth's back? Booths stand back-to-back, so the
@@ -1142,6 +1144,30 @@
   let selBox = null, drag = null;
   let ray, ptr, floorPlane;
 
+  /* ---- smooth camera flights: double-click, Fit floor, frame() ---- */
+  let fly = null;
+  const ease = (t) => 1 - Math.pow(1 - t, 3);
+
+  function flyTo(toTarget, toPos) {
+    fly = {
+      t: 0,
+      fromT: controls.target.clone(),
+      fromP: camera.position.clone(),
+      toT: toTarget, toP: toPos,
+    };
+  }
+
+  function flyPoint(x, z, dist) {
+    flyTo(new THREE.Vector3(x, 2, z),
+          new THREE.Vector3(x + dist * 0.45, dist * 0.5, z + dist * 0.9));
+  }
+
+  function flyFit() {
+    const W = FP.plan.width, H = FP.plan.height, R = Math.max(W, H);
+    flyTo(new THREE.Vector3(W / 2, 0, H / 2),
+          new THREE.Vector3(W / 2 - R * 0.55, R * 0.62, H / 2 + R * 0.85));
+  }
+
   function pick(ev) {
     const r = renderer.domElement.getBoundingClientRect();
     ptr.set(((ev.clientX - r.left) / r.width) * 2 - 1,
@@ -1185,6 +1211,7 @@
   }
 
   function onDown(ev) {
+    fly = null;                        /* user takes over from any flight */
     if (ev.button !== 0) return;
     const hit = pick(ev);
 
@@ -1277,6 +1304,10 @@
     c.addEventListener('pointermove', onMove);
     c.addEventListener('pointerup', onUp);
     c.addEventListener('pointerleave', onUp);
+    c.addEventListener('dblclick', (ev) => {
+      const hit = pick(ev);
+      if (hit.point) flyPoint(hit.point.x, hit.point.z, hit.obj ? 22 : 45);
+    });
     document.addEventListener('keydown', onKey);
     FP.on?.('select', () => { if (opened) highlight(); });
   }
@@ -1344,6 +1375,13 @@
       controls.enableDamping = true;
       controls.dampingFactor = 0.08;
       controls.maxPolarAngle = Math.PI * 0.49;
+      /* look-around ergonomics: the wheel zooms toward the cursor, the
+         floor stays underfoot while panning, and you can get close */
+      controls.zoomToCursor = true;
+      controls.zoomSpeed = 1.3;
+      controls.panSpeed = 1.2;
+      controls.screenSpacePanning = false;
+      controls.minDistance = 4;
 
       /* the model follows every edit, so 3D can stay open while the
          other side moves furniture */
@@ -1355,6 +1393,7 @@
     const R = Math.max(W, H);
     camera.position.set(W / 2 - R * 0.55, R * 0.62, H / 2 + R * 0.85);
     controls.target.set(W / 2, 0, H / 2);
+    controls.maxDistance = R * 3;
     const sun = scene.userData.sun;
     sun.position.set(W / 2 - R * 0.4, R * 0.9, H / 2 - R * 0.3);
     sun.shadow.camera.left = -R; sun.shadow.camera.right = R;
@@ -1379,6 +1418,13 @@
   function loop() {
     if (!opened) return;
     raf = requestAnimationFrame(loop);
+    if (fly) {
+      fly.t += 1 / 40;
+      const k = ease(Math.min(fly.t, 1));
+      controls.target.lerpVectors(fly.fromT, fly.toT, k);
+      camera.position.lerpVectors(fly.fromP, fly.toP, k);
+      if (fly.t >= 1) fly = null;
+    }
     controls.update();
     renderer.render(scene, camera);
   }
@@ -1393,11 +1439,10 @@
   FP.view3d = {
     open, close,
     toggle: () => (opened ? close() : open()),
-    /** Aim the camera at a plan point — used for zoom-to-selection. */
+    /** Fly the camera to a plan point — used for zoom-to-selection. */
     frame(x, z, dist = 40) {
       if (!camera || !controls) return;
-      controls.target.set(x, 2, z);
-      camera.position.set(x + dist * 0.45, dist * 0.5, z + dist * 0.9);
+      flyPoint(x, z, dist);
     },
   };
 
