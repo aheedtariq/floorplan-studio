@@ -264,15 +264,18 @@
       if (g.h > g.w * 1.3) lbl.rotation.z = Math.PI / 2;
       lbl.position.y = 0.1;
       grp.add(lbl);
-      const pole = cyl(0.08, 0.08, 9, chromeMat(), 10);
-      pole.position.y = 4.5;
-      grp.add(pole);
-      const face = new THREE.MeshBasicMaterial({ map: restroomSignTexture() });
-      const side = mat(0x14497a, { rough: .5 });
-      const panel = new THREE.Mesh(new THREE.BoxGeometry(4.4, 2.2, 0.22),
-        [side, side, side, side, face, face]);
-      panel.position.y = 10.1;
-      grp.add(panel);
+      /* the pole sign is opt-in — the floor stencil is the default look */
+      if (el.props?.poleSign) {
+        const pole = cyl(0.08, 0.08, 9, chromeMat(), 10);
+        pole.position.y = 4.5;
+        grp.add(pole);
+        const face = new THREE.MeshBasicMaterial({ map: restroomSignTexture() });
+        const side = mat(0x14497a, { rough: .5 });
+        const panel = new THREE.Mesh(new THREE.BoxGeometry(4.4, 2.2, 0.22),
+          [side, side, side, side, face, face]);
+        panel.position.y = 10.1;
+        grp.add(panel);
+      }
       return grp;
     },
 
