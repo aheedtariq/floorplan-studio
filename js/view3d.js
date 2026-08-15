@@ -778,6 +778,7 @@
         <button class="mini" data-vrot="45">↻ 45°</button>
         <button class="mini" data-vrot="90">↻ 90°</button>
         <button class="mini" data-vrot="0">Reset</button>
+        <button class="mini danger" id="v3dDel">Delete</button>
       </div>
       <div class="v3d-nav">
         <button class="v3d-navbtn" id="v3dZoomIn" title="Zoom in — hold to keep zooming (or press +)">+</button>
@@ -794,6 +795,11 @@
         e.stopPropagation();
         rotateSel(Number(b.dataset.vrot));
       }));
+    overlay.querySelector('#v3dDel').addEventListener('click', (e) => {
+      e.stopPropagation();
+      const n = FP.removeSelected();
+      if (n) FP.toast?.(`Deleted ${n} item${n === 1 ? '' : 's'} — Ctrl+Z brings it back`);
+    });
 
     /* press-and-hold zoom: the wheel is fiddly on trackpads, so the
        buttons dolly continuously for as long as they're held */
@@ -1183,6 +1189,19 @@
             run.rotation.y = (deg * Math.PI) / 180;
             grp.add(run);
           }
+
+          /* booth ID sign on the back drape — exhibitor name + number,
+             facing the open aisle side, like the real placard */
+          const sign = boothSign(el.props?.exhibitor, el.props?.number,
+                                 back === 'n' || back === 's' ? g.w : g.h);
+          if (sign) {
+            const sy = 6.9, inset = 0.18;   /* just under the 8 ft top */
+            if (back === 'n') sign.position.set(0, sy, -g.h / 2 + inset);
+            else if (back === 's') { sign.position.set(0, sy, g.h / 2 - inset); sign.rotation.y = Math.PI; }
+            else if (back === 'w') { sign.position.set(-g.w / 2 + inset, sy, 0); sign.rotation.y = Math.PI / 2; }
+            else { sign.position.set(g.w / 2 - inset, sy, 0); sign.rotation.y = -Math.PI / 2; }
+            grp.add(sign);
+          }
         }
 
         grp.position.set(g.x + g.w / 2, 0, g.y + g.h / 2);
@@ -1260,6 +1279,52 @@
     }
 
     scene.add(model);
+  }
+
+  /* Booth ID sign — the small white placard on the back drape naming
+     the exhibitor and booth number. Unlit material so it stays readable
+     from any angle, exactly like a printed card under show lighting. */
+  function boothSign(exhibitor, number, wallLen) {
+    const name = String(exhibitor || '').trim();
+    const num = String(number || '').trim();
+    if (!name && !num) return null;
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 128;
+    const x = c.getContext('2d');
+    if (!x) return null;
+    x.fillStyle = '#f7f6f2';
+    x.fillRect(0, 0, 512, 128);
+    x.strokeStyle = '#c9c9c2';
+    x.lineWidth = 4;
+    x.strokeRect(2, 2, 508, 124);
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    x.fillStyle = '#1c2333';
+    if (name) {
+      let size = 44;
+      x.font = `700 ${size}px Inter, sans-serif`;
+      while (size > 20 && x.measureText(name.toUpperCase()).width > 472) {
+        size -= 2;
+        x.font = `700 ${size}px Inter, sans-serif`;
+      }
+      x.fillText(name.toUpperCase(), 256, num ? 46 : 64);
+      if (num) {
+        x.fillStyle = '#5a6172';
+        x.font = '600 30px Inter, sans-serif';
+        x.fillText(`BOOTH ${num}`, 256, 98);
+      }
+    } else {
+      x.font = '700 46px Inter, sans-serif';
+      x.fillText(`BOOTH ${num}`, 256, 64);
+    }
+    const tex = new THREE.CanvasTexture(c);
+    tex.anisotropy = 4;
+    tex.colorSpace = THREE.SRGBColorSpace;
+    const w = Math.max(2.5, Math.min(5, wallLen * 0.45));
+    return new THREE.Mesh(
+      new THREE.PlaneGeometry(w, w / 4),
+      new THREE.MeshBasicMaterial({ map: tex, side: THREE.DoubleSide }),
+    );
   }
 
   function numberSprite(text) {
@@ -1405,6 +1470,8 @@
     if (!opened || !el || el.shape !== 'rect') { bar.hidden = true; return; }
     bar.hidden = false;
     bar.querySelector('b').textContent = FP.config.kind(el.kind).name;
+    /* locked structure is view-only — no delete offer on it */
+    bar.querySelector('#v3dDel').hidden = !!FP.isLocked?.(el);
   }
 
   const SNAP = 0.5;

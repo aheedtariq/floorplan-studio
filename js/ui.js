@@ -252,6 +252,47 @@
     }
   }
 
+  /* A floating Duplicate/Delete bar whenever something deletable is
+     selected. The Arrange group in the panel does the same jobs, but a
+     click on the floor deserves an answer right where it happened. */
+  function ensureSelChip() {
+    let chip = $('selChip');
+    if (!chip) {
+      chip = document.createElement('div');
+      chip.id = 'selChip';
+      chip.className = 'sel-chip';
+      chip.hidden = true;
+      ($('stage') || document.body).appendChild(chip);
+      chip.innerHTML = `
+        <b></b>
+        <button class="mini" data-sc="dup">Duplicate</button>
+        <button class="mini danger" data-sc="del">Delete</button>`;
+      chip.querySelector('[data-sc="dup"]').onclick = () => {
+        FP.duplicateSelected();
+        R().draw();
+      };
+      chip.querySelector('[data-sc="del"]').onclick = () => {
+        const n = FP.removeSelected();
+        if (n) FP.toast(`Deleted ${n} item${n === 1 ? '' : 's'} — Ctrl+Z brings it back`);
+        R().draw();
+      };
+    }
+    return chip;
+  }
+
+  function syncSelChip() {
+    const chip = ensureSelChip();
+    const sel = FP.selected();
+    /* locked structure never offers Delete — clicking it is inspection */
+    const deletable = sel.filter((e) => !FP.isLocked(e));
+    chip.hidden = !deletable.length;
+    if (deletable.length) {
+      chip.querySelector('b').textContent = sel.length === 1
+        ? C.kind(sel[0].kind).name
+        : `${sel.length} selected`;
+    }
+  }
+
   /* ============================================================
      Inspector — Properties
      ============================================================ */
@@ -2375,7 +2416,8 @@
     };
 
     FP.on('change', schedulePane);
-    FP.on('select', () => { renderPane(); syncHud(); });
+    FP.on('change', syncSelChip);
+    FP.on('select', () => { renderPane(); syncHud(); syncSelChip(); });
     FP.on('tool', () => { renderRail(); renderPresets(); renderCatalog(); syncHud(); syncToggles(); });
     FP.on('scope', () => { renderScopeBar(); renderCatalog(); renderPane(); });
     FP.on('plan-loaded', renderAll);
