@@ -767,8 +767,8 @@
       <div class="v3d-top">
         <b>3D preview</b>
         <span class="v3d-hint">Drag the floor to slide the view · right-drag to orbit ·
-          scroll zooms to your cursor · double-click flies there ·
-          drag an object to move it</span>
+          scroll or +/− zooms · double-click flies there ·
+          360° circles the booth you selected</span>
         <button class="btn ghost" id="v3dFit">Fit floor</button>
         <button class="btn ghost" id="v3dClose">Back to plan</button>
       </div>
@@ -778,6 +778,11 @@
         <button class="mini" data-vrot="45">↻ 45°</button>
         <button class="mini" data-vrot="90">↻ 90°</button>
         <button class="mini" data-vrot="0">Reset</button>
+      </div>
+      <div class="v3d-nav">
+        <button class="v3d-navbtn" id="v3dZoomIn" title="Zoom in — hold to keep zooming (or press +)">+</button>
+        <button class="v3d-navbtn" id="v3dZoomOut" title="Zoom out — hold to keep zooming (or press −)">−</button>
+        <button class="v3d-navbtn v3d-orbit" id="v3dOrbit" title="Circle 360° around the selected booth">360°</button>
       </div>`;
     const stage = document.getElementById('stage')
                || document.getElementById('vStage') || document.body;
@@ -789,6 +794,25 @@
         e.stopPropagation();
         rotateSel(Number(b.dataset.vrot));
       }));
+
+    /* press-and-hold zoom: the wheel is fiddly on trackpads, so the
+       buttons dolly continuously for as long as they're held */
+    const hold = (btn, dir) => {
+      const start = (e) => {
+        e.preventDefault(); e.stopPropagation();
+        fly = null;
+        applyZoom(dir, 0.18);          /* a tap is one solid step… */
+        zoomHold = dir;                /* …holding keeps gliding */
+      };
+      const stop = () => { if (zoomHold === dir) zoomHold = 0; };
+      btn.addEventListener('pointerdown', start);
+      btn.addEventListener('pointerup', stop);
+      btn.addEventListener('pointerleave', stop);
+      btn.addEventListener('pointercancel', stop);
+    };
+    hold(overlay.querySelector('#v3dZoomIn'), 1);
+    hold(overlay.querySelector('#v3dZoomOut'), -1);
+    overlay.querySelector('#v3dOrbit').onclick = toggleOrbit;
   }
 
   /** Turn the selected rect by a step; 0 resets. Shared by the 3D
@@ -1274,7 +1298,46 @@
 
   /* ---- smooth camera flights: double-click, Fit floor, frame() ---- */
   let fly = null;
+  let zoomHold = 0;                    /* -1 out, +1 in, applied per frame */
+  let orbiting = false;                /* 360° auto-orbit toggle */
   const ease = (t) => 1 - Math.pow(1 - t, 3);
+
+  /* Dolly toward/away from the target by a steady per-frame step.
+     Distance-proportional, so it feels the same speed up close and far
+     out, and clamped so you can neither tunnel through the floor nor
+     drift off into space. */
+  function applyZoom(dir, step = 0.035) {
+    if (!camera || !controls) return;
+    const off = camera.position.clone().sub(controls.target);
+    const d = off.length();
+    const nd = Math.max(controls.minDistance,
+                Math.min(controls.maxDistance, d * (1 - dir * step)));
+    camera.position.copy(controls.target).add(off.multiplyScalar(nd / d));
+  }
+
+  function stopOrbit() {
+    if (!orbiting) return;
+    orbiting = false;
+    if (controls) controls.autoRotate = false;
+    overlay?.querySelector('#v3dOrbit')?.classList.remove('on');
+  }
+
+  /* One click = circle the room. With a booth selected the camera first
+     flies to it, then keeps circling until you press again or grab the
+     view yourself. */
+  function toggleOrbit() {
+    if (orbiting) return stopOrbit();
+    orbiting = true;
+    controls.autoRotateSpeed = 3.5;    /* ~17s per full lap */
+    overlay.querySelector('#v3dOrbit').classList.add('on');
+    const el = (FP.plan.elements || []).find((e) => e.id === FP.state.selection?.[0]);
+    if (el && el.shape === 'rect') {
+      const g = el.geometry;
+      flyPoint(g.x + (g.w || 0) / 2, g.y + (g.h || 0) / 2,
+               Math.max(g.w || 0, g.h || 0) * 1.6 + 12);
+    }
+    FP.toast?.('Circling — press 360° again, or drag, to stop');
+  }
 
   function flyTo(toTarget, toPos) {
     fly = {
@@ -1358,6 +1421,7 @@
        overlay's own buttons */
     if (ev.target !== renderer.domElement) return;
     fly = null;                        /* user takes over from any flight */
+    stopOrbit();                       /* …and from the 360° lap */
     if (ev.button !== 0) return;
     const hit = pick(ev);
 
@@ -1460,6 +1524,16 @@
       if (hit.point) flyPoint(hit.point.x, hit.point.z, hit.obj ? 22 : 45);
     });
     document.addEventListener('keydown', onKey);
+    /* hold + / − to glide in and out, matching the on-screen buttons */
+    document.addEventListener('keydown', (ev) => {
+      if (!opened) return;
+      if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '')) return;
+      if (ev.key === '+' || ev.key === '=') zoomHold = 1;
+      else if (ev.key === '-' || ev.key === '_') zoomHold = -1;
+    });
+    document.addEventListener('keyup', (ev) => {
+      if (['+', '=', '-', '_'].includes(ev.key)) zoomHold = 0;
+    });
     FP.on?.('select', () => { if (opened) highlight(); });
   }
 
@@ -1529,7 +1603,7 @@
       /* look-around ergonomics: the wheel zooms toward the cursor, the
          floor stays underfoot while panning, and you can get close */
       controls.zoomToCursor = true;
-      controls.zoomSpeed = 1.3;
+      controls.zoomSpeed = 2;
       controls.panSpeed = 1.2;
       controls.screenSpacePanning = false;
       controls.minDistance = 4;
@@ -1587,6 +1661,10 @@
       camera.position.lerpVectors(fly.fromP, fly.toP, k);
       if (fly.t >= 1) fly = null;
     }
+    if (zoomHold) applyZoom(zoomHold);
+    /* auto-orbit waits for a flight to land, so flying to a booth and
+       circling it read as two clean moves instead of a corkscrew */
+    controls.autoRotate = orbiting && !fly;
     controls.update();
     renderer.render(scene, camera);
   }
