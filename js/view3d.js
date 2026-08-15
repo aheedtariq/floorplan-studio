@@ -185,7 +185,97 @@
     return grp;
   }
 
+  /* Painted floor text for the areas that ARE flat in real life — a
+     loading dock or a fire lane is a region, not an object, so it gets
+     its name on the slab the way venues stencil them. */
+  function floorLabel(text, maxW, maxD) {
+    const c = document.createElement('canvas');
+    c.width = 1024; c.height = 256;
+    const x = c.getContext('2d');
+    let size = 150;
+    x.font = `700 ${size}px Inter, sans-serif`;
+    while (size > 40 && x.measureText(text).width > 940) {
+      size -= 10;
+      x.font = `700 ${size}px Inter, sans-serif`;
+    }
+    x.textAlign = 'center';
+    x.textBaseline = 'middle';
+    x.fillStyle = 'rgba(19,26,38,.72)';
+    x.fillText(text, 512, 128);
+    const tex = new THREE.CanvasTexture(c);
+    tex.anisotropy = 8;
+    const aspect = 4;
+    const w = Math.max(Math.min(maxW * 0.92, maxD * 0.92 * aspect), 3);
+    const plane = new THREE.Mesh(
+      new THREE.PlaneGeometry(w, w / aspect),
+      new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false }));
+    plane.rotation.x = -Math.PI / 2;
+    return plane;
+  }
+
+  /* Area kinds that stay flat get stencilled names; an element's own
+     label always wins over the stock wording. */
+  const FLAT_LABELS = {
+    registration: 'REGISTRATION', food: 'FOOD & BEVERAGE', lounge: 'LOUNGE',
+    restroom: 'RESTROOMS', storage: 'STORAGE', 'av-booth': 'AV / PRODUCTION',
+    'fire-lane': 'FIRE LANE · KEEP CLEAR', 'first-aid': 'FIRST AID',
+    'dead-space': 'NO BUILD', 'dead-space-poly': 'NO BUILD',
+    zone: 'ZONE', carpet: '', 'rigging-zone': 'RIGGING',
+  };
+
   const BUILDERS = {
+    stairs(el, g) {
+      /* a staircase is steps, not a ramp-shaped box */
+      const grp = new THREE.Group();
+      const along = g.w >= g.h;
+      const n = 6, rise = 3 / n;
+      const stepMat = mat(0x9aa2ae, { rough: .8 });
+      const runLen = along ? g.w : g.h;
+      const depth = runLen / n;
+      for (let i = 0; i < n; i++) {
+        const s = box(along ? depth : g.w, rise * (i + 1), along ? g.h : depth, stepMat);
+        const off = -runLen / 2 + depth * (i + 0.5);
+        s.position.set(along ? off : 0, (rise * (i + 1)) / 2, along ? 0 : off);
+        grp.add(s);
+      }
+      return grp;
+    },
+
+    'loading-dock'(el, g) {
+      const grp = new THREE.Group();
+      const plat = box(g.w, 0.45, g.h, mat(0x8f97a3, { rough: .9 }));
+      plat.position.y = 0.225;
+      grp.add(plat);
+      /* rubber dock bumpers along the outer edge */
+      const nB = Math.max(2, Math.floor(g.w / 4));
+      for (let i = 0; i < nB; i++) {
+        const b = box(1, 0.35, 0.35, mat(0x22242b, { rough: .95 }));
+        b.position.set(-g.w / 2 + (g.w / nB) * (i + 0.5), 0.28, -g.h / 2 + 0.2);
+        grp.add(b);
+      }
+      const lbl = floorLabel(String(el.props?.label || 'LOADING DOCK').toUpperCase(), g.w, g.h);
+      lbl.position.y = 0.48;
+      grp.add(lbl);
+      return grp;
+    },
+
+    'fire-exit'(el, g) {
+      const grp = new THREE.Group();
+      const w = Math.max(g.w, g.h), d = Math.min(g.w, g.h);
+      const pad = box(g.w, 0.12, g.h, mat(0xd93a3a, { rough: .8 }));
+      pad.position.y = 0.06;
+      grp.add(pad);
+      const lbl = floorLabel('FIRE EXIT', g.w, g.h);
+      lbl.position.y = 0.15;
+      grp.add(lbl);
+      /* illuminated EXIT box where the door head would be */
+      const sign = box(Math.min(w * 0.45, 3), 0.9, 0.3,
+        mat(0x0e5c2f, { emissive: 0x16a34a, rough: .4 }));
+      sign.position.y = 7.5;
+      grp.add(sign);
+      void d;
+      return grp;
+    },
     sofa: (el, g) => softSeat(el, g),
     'lounge-chair': (el, g) => softSeat(el, g),
 
@@ -845,6 +935,19 @@
       if (!flat) mesh.castShadow = mesh.receiveShadow = true;
       mesh.userData.elId = el.id;
       model.add(mesh);
+
+      /* areas that stay flat carry their name on the slab */
+      if (el.kind in FLAT_LABELS) {
+        const text = String(el.props?.label || FLAT_LABELS[el.kind] || '')
+          .trim().toUpperCase();
+        if (text && Math.min(g.w, g.h) >= 3.5) {
+          const vertical = g.h > g.w * 1.3;
+          const lbl = floorLabel(text, vertical ? g.h : g.w, vertical ? g.w : g.h);
+          if (vertical) lbl.rotation.z = Math.PI / 2;
+          lbl.position.set(g.x + g.w / 2, h + 0.05, g.y + g.h / 2);
+          model.add(lbl);
+        }
+      }
 
       /* booth number floats above sold/held tiles */
       if (el.kind === 'space' && el.props?.number) {
