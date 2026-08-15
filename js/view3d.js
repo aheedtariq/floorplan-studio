@@ -843,9 +843,10 @@
       new THREE.PlaneGeometry(lenFt, 2),
       new THREE.MeshBasicMaterial({ map: rulerTexture(lenFt), transparent: true, depthWrite: false }));
     /* the ruler lives OUTSIDE the wall line, like a site survey strip —
-       the show floor itself stays clean */
-    [[W, W / 2, -2.1, 0], [W, W / 2, H + 2.1, Math.PI],
-     [H, -2.1, H / 2, -Math.PI / 2], [H, W + 2.1, H / 2, Math.PI / 2]]
+       the show floor itself stays clean. Every side is oriented so the
+       numbers read upright from INSIDE the hall. */
+    [[W, W / 2, -2.1, 0], [W, W / 2, H + 2.1, 0],
+     [H, -2.1, H / 2, Math.PI / 2], [H, W + 2.1, H / 2, -Math.PI / 2]]
       .forEach(([len, px2, pz, rz]) => {
         const strip = rulerStrip(len);
         strip.rotation.set(-Math.PI / 2, 0, 0);
