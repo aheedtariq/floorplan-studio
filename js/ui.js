@@ -1253,6 +1253,15 @@
         <p class="helptext">Angled shots skew the trace — if the photo looks like a
           parallelogram, retake it. PDFs work too: screenshot the page first.</p>
 
+        ${FP.auth?.canEdit?.() ? `
+        <div class="grp">
+          <h4 class="grp-title">Or: convert it automatically with AI</h4>
+          <p class="helptext" style="margin:0 0 6px">Skip the tracing — Claude reads the
+            photo and draws the plan for you: walls, doors, numbered booths, and zones
+            arrive as real, editable elements you fine-tune instead of redraw.</p>
+          <button class="mini" data-ai style="width:100%">Convert photo with AI…</button>
+        </div>` : ''}
+
         <div class="grp">
           <h4 class="grp-title">Or: scan the room with an iPhone (LiDAR)</h4>
           <p class="helptext" style="margin:0 0 6px">On a LiDAR iPhone (12 Pro or newer
@@ -1272,6 +1281,72 @@
         body.querySelector('[data-lidar]').onclick = () => {
           FP.closeModal();
           pickLidarFile();
+        };
+        const ai = body.querySelector('[data-ai]');
+        if (ai) ai.onclick = () => {
+          FP.closeModal();
+          pickAiFile();
+        };
+      },
+    });
+  }
+
+  /* ------------------------------------------------------------
+     AI conversion — photo in, editable plan out.
+
+     The picker feeds a confirmation modal rather than converting
+     immediately: the one thing that meaningfully improves the result
+     is a known hall width, so we ask for it while the upload is still
+     a click away. The conversion itself runs in photoplan.js.
+     ------------------------------------------------------------ */
+  function pickAiFile() {
+    const picker = $('filePicker');
+    picker.accept = 'image/*';
+    picker.value = '';
+    picker.onchange = () => {
+      const file = picker.files[0];
+      if (file) aiConvertModal(file);
+    };
+    picker.click();
+  }
+
+  function aiConvertModal(file) {
+    FP.modal({
+      title: 'Convert photo with AI',
+      body: `
+        <p class="helptext">Claude reads <b>${esc(file.name)}</b> and draws the plan
+          as real, editable elements — walls, doors, numbered booths, zones. Review
+          and fine-tune afterwards; one undo removes the whole import.</p>
+        <div class="field"><label>Hall width in feet (optional — locks the scale)</label>
+          <input class="inp num" id="aiWidthHint" type="number" min="10" step="5" placeholder="e.g. 200"/></div>
+        <p class="helptext" id="aiStatus" style="min-height:18px;margin-top:8px"></p>`,
+      foot: `<button class="btn ghost" data-no>Cancel</button>
+             <button class="btn primary" data-go>Convert</button>`,
+      onMount: (body, foot) => {
+        const status = body.querySelector('#aiStatus');
+        const go = foot.querySelector('[data-go]');
+        foot.querySelector('[data-no]').onclick = FP.closeModal;
+        go.onclick = async () => {
+          const widthHint = Number(body.querySelector('#aiWidthHint').value) || 0;
+          go.disabled = true;
+          go.textContent = 'Converting…';
+          const made = await FP.photoplan.convert(file, {
+            widthHint,
+            onStatus: (m) => { status.textContent = m; },
+          });
+          if (made.error) {
+            go.disabled = false;
+            go.textContent = 'Convert';
+            status.textContent = '';
+            return FP.toast(made.error, true);
+          }
+          FP.closeModal();
+          renderAll();
+          R().fit();
+          R().draw();
+          FP.toast(`AI plan imported — ${made.booths} booths, ${made.walls} walls, `
+                 + `${made.doors} doors, ${made.zones} zones. Check the scale, then tweak away.`);
+          archivePlanPhoto(file);
         };
       },
     });
