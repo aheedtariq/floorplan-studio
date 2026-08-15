@@ -813,6 +813,45 @@
       model.add(curb);
     });
 
+    /* footage marks along every edge — a printed ruler (ticks every
+       5 ft, numbers every 10) so an exhibitor can read exactly where
+       their footprint starts against the wall */
+    function rulerTexture(lenFt) {
+      const px = Math.min(8192, Math.max(2048, Math.round(lenFt * 16)));
+      const c = document.createElement('canvas');
+      c.width = px; c.height = 96;
+      const x = c.getContext('2d');
+      const ppf = px / lenFt;
+      x.strokeStyle = 'rgba(19,26,38,.5)';
+      x.fillStyle = 'rgba(19,26,38,.62)';
+      x.lineWidth = 2;
+      x.font = '600 42px Inter, sans-serif';
+      x.textAlign = 'center';
+      for (let f = 0; f <= lenFt; f += 5) {
+        const major = f % 10 === 0;
+        x.beginPath();
+        x.moveTo(f * ppf, 96);
+        x.lineTo(f * ppf, 96 - (major ? 38 : 20));
+        x.stroke();
+        if (major && f > 0 && f < lenFt) x.fillText(String(f), f * ppf, 42);
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.anisotropy = 8;
+      return t;
+    }
+    const rulerStrip = (lenFt) => new THREE.Mesh(
+      new THREE.PlaneGeometry(lenFt, 2),
+      new THREE.MeshBasicMaterial({ map: rulerTexture(lenFt), transparent: true, depthWrite: false }));
+    [[W, W / 2, 1.2, 0], [W, W / 2, H - 1.2, Math.PI],
+     [H, 1.2, H / 2, -Math.PI / 2], [H, W - 1.2, H / 2, Math.PI / 2]]
+      .forEach(([len, px2, pz, rz]) => {
+        const strip = rulerStrip(len);
+        strip.rotation.set(-Math.PI / 2, 0, 0);
+        strip.rotation.z = rz;
+        strip.position.set(px2, 0.045, pz);
+        model.add(strip);
+      });
+
     /* Booth framing is inferred only when the plan carries no real
        drape elements — explicit drape (a traced plan like Schaumburg)
        always wins over the standard-build guess. */
