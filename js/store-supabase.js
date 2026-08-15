@@ -167,7 +167,16 @@
         if (showErr) throw new Error(showErr.message);
       }
 
-      const rows = doc.elements.map((el, i) => toRow(doc, el, i));
+      /* Clients write only the rentals they arrange; the structure the
+         floor is built from is upserted by staff sessions alone. This
+         mirrors the element_client_write RLS boundary, so a client
+         save never trips over rows it was never allowed to touch. */
+      const isClient = FP.auth.isClient?.();
+      const editable = (el) =>
+        el.layer === 'contents' || ['carpet', 'turf', 'hanging-sign'].includes(el.kind);
+      const writable = doc.elements.filter((el) => !isClient || editable(el));
+
+      const rows = writable.map((el, i) => toRow(doc, el, i));
 
       /* Parents must exist before children, or the parent_id FK fails. */
       const parents = rows.filter((r) => !r.parent_id);
@@ -180,11 +189,16 @@
 
       /* Remove anything deleted since the last save. Diffing against the
          stored ids keeps the delete bounded — a `not.in` filter carrying
-         every current id would blow past URL length on a real floor. */
+         every current id would blow past URL length on a real floor.
+         Client sessions diff only against rows they may write, so the
+         structure they can't touch is never flagged stale. */
       const { data: existing } = await sb
-        .from('element').select('id').eq('show_id', doc.id);
+        .from('element').select('id, layer, kind').eq('show_id', doc.id);
       const keep = new Set(rows.map((r) => r.id));
-      const stale = (existing || []).map((r) => r.id).filter((id) => !keep.has(id));
+      const stale = (existing || [])
+        .filter((r) => !isClient || editable(r))
+        .map((r) => r.id)
+        .filter((id) => !keep.has(id));
       if (stale.length) {
         const { error } = await sb.from('element').delete().in('id', stale);
         if (error) console.warn('Could not prune deleted elements', error.message);

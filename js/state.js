@@ -190,9 +190,17 @@
 
   FP.selectAll = () => FP.select(FP.inScope().filter((e) => !FP.isLocked(e)).map((e) => e.id));
 
+  /* What a client session may rearrange: the rentals and decor they're
+     choosing — never the structure, booths, safety or power the floor
+     is built from. Staff sessions are unaffected. The same boundary is
+     enforced again by RLS, so this is presentation, not the security. */
+  const CLIENT_EDITABLE = (el) =>
+    el.layer === 'contents' || ['carpet', 'turf', 'hanging-sign'].includes(el.kind);
+
   FP.isLocked = (el) => {
     const L = FP.plan.layers[el.layer];
-    return !!(el.props?.locked || !L || L.locked || !L.visible);
+    if (el.props?.locked || !L || L.locked || !L.visible) return true;
+    return !!(FP.auth?.isClient?.() && !CLIENT_EDITABLE(el));
   };
   FP.isVisible = (el) => {
     const L = FP.plan.layers[el.layer];

@@ -140,10 +140,21 @@
      per category. */
   const userToggled = new Set(FP.prefs.catalogOpened || []);
 
+  /* Clients place the rentals they're choosing — walls, booths, safety
+     and power are staff tools and never appear in their palette. */
+  const clientPlaceable = (k) =>
+    k.layer === 'contents' || ['carpet', 'turf', 'hanging-sign'].includes(k.id);
+
   function renderCatalog() {
     const q = catalogQuery.trim().toLowerCase();
+    const isClient = FP.auth?.isClient?.();
     const kinds = C.kindsForScope(S.scope.type).filter((k) =>
-      !q || k.name.toLowerCase().includes(q) || k.id.includes(q));
+      (!isClient || clientPlaceable(k)) &&
+      (!q || k.name.toLowerCase().includes(q) || k.id.includes(q)));
+
+    /* staff workflows disappear with the staff kinds */
+    document.querySelectorAll('#boothPresets, #btnBoothRow, #btnAutoNumber, #btnUnderlay')
+      .forEach((n) => { const sect = n.closest('.sect') || n; sect.style.display = isClient ? 'none' : ''; });
 
     /* How many of each kind are actually on the plan right now — the
        catalog is a palette, but a bare list of tool types tells you
@@ -352,7 +363,13 @@
       <label class="check"><input type="checkbox" id="pHidden" ${el.props.hidden ? 'checked' : ''}/> Hidden</label>
     </div>`;
 
-    h += arrangeGroup(isSpace, el);
+    /* a protected element offers no move/delete controls — clicking it
+       is inspection, not an invitation to take the floor apart */
+    h += FP.isLocked(el)
+      ? `<div class="grp"><h4 class="grp-title">Arrange</h4>
+          <p class="helptext" style="margin:0">This part of the floor plan is managed
+          by Source One — you can view it, but not move or delete it.</p></div>`
+      : arrangeGroup(isSpace, el);
     return h;
   }
 
@@ -555,7 +572,11 @@
           case 'front': FP.setZ('front'); break;
           case 'back': FP.setZ('back'); break;
           case 'duplicate': FP.duplicateSelected(); break;
-          case 'delete': FP.removeSelected(); break;
+          case 'delete': {
+            const n = FP.removeSelected();
+            if (n) FP.toast(`Deleted ${n} item${n === 1 ? '' : 's'} — Ctrl+Z brings it back`);
+            break;
+          }
           case 'enter': if (single) { FP.enterScope(single.id); R().fit(); } break;
         }
         R().draw();
