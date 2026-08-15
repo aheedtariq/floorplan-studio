@@ -123,6 +123,10 @@ svg { display: block; }
   z-index: 40;
 }
 
+/* quick-rotate button row in the Properties panel */
+.rot-row { display: flex; gap: 5px; flex-wrap: wrap; margin: 6px 0 10px; }
+.rot-row .mini { flex: 1 0 auto; text-align: center; }
+
 /* floating "back to cursor" chip while a placement tool is armed */
 .tool-chip {
   position: absolute; left: 50%; bottom: 46px; transform: translateX(-50%);

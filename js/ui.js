@@ -317,6 +317,13 @@
       h += `<div class="row2">${field('X', numInput('gX', G.round(q.x, 2), unit()))}
         ${field('Y', numInput('gY', G.round(q.y, 2), unit()))}</div>`;
       h += field('Rotation', numInput('gRot', G.round(q.rot || 0, 1), '°'));
+      h += `<div class="rot-row">
+        <button class="mini" data-rot="45">↻ 45°</button>
+        <button class="mini" data-rot="90">↻ 90°</button>
+        <button class="mini" data-rot="180">↻ 180°</button>
+        <button class="mini" data-rot="-45">↺ 45°</button>
+        <button class="mini" data-rot="0" title="Back to 0°">Reset</button>
+      </div>`;
       h += `<div class="kv"><span>Area</span><span>${esc(G.fmtArea(G.area(el), unit()))}</span></div>`;
     } else if (el.shape === 'line') {
       h += `<div class="row2">${field('Length', numInput('gLen', G.round(G.length(el), 2), unit()))}
@@ -481,6 +488,18 @@
           Object.assign(single.geometry, fn(v));
         });
       });
+
+      /* quick-rotate buttons: each press turns by the step (0 resets) */
+      pane.querySelectorAll('[data-rot]').forEach((btn) =>
+        btn.addEventListener('click', () => {
+          const step = Number(btn.dataset.rot);
+          FP.snapshot();
+          single.geometry.rot = step === 0 ? 0
+            : (((single.geometry.rot || 0) + step) % 360 + 360) % 360;
+          FP.changed();
+          R().draw();
+          renderProps();
+        }));
 
       const len = byId('gLen');
       if (len) live(len, (n) => {
