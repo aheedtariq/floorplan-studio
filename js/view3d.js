@@ -35,7 +35,8 @@
     'coffee-table': 1.3, bar: 3.5, 'registration-counter': 3.5, podium: 4,
     'display-case': 3.2, kiosk: 7, tower: 12, 'banner-stand': 8,
     'led-poster': 6.5, 'poster-board': 6, 'grid-wall': 6,
-    'entrance-unit': 12, carpet: 0.02, 'custom-room': 8,
+    'entrance-unit': 12, carpet: 0.02, turf: 0.04, 'charging-station': 4,
+    'custom-room': 8,
     'fire-exit': 0.15, 'first-aid': 0.05, 'fire-lane': 0.02,
     'electrical-panel': 6, 'distro-box': 2.5, generator: 7,
     /* floor markings and annotations are not walls — keep them flat or
@@ -220,7 +221,7 @@
     restroom: 'RESTROOMS', storage: 'STORAGE', 'av-booth': 'AV / PRODUCTION',
     'fire-lane': 'FIRE LANE · KEEP CLEAR', 'first-aid': 'FIRST AID',
     'dead-space': 'NO BUILD', 'dead-space-poly': 'NO BUILD',
-    zone: 'ZONE', carpet: '', 'rigging-zone': 'RIGGING',
+    zone: 'ZONE', carpet: '', turf: '', 'rigging-zone': 'RIGGING',
   };
 
   const BUILDERS = {
@@ -392,6 +393,19 @@
     'coffee-table':   (el, g) => tableTop(el, g.w, g.h, 1.35, false),
     'table-round-60': (el, g) => tableTop(el, g.w, g.h, 2.5, true),
     'cocktail-table': (el, g) => tableTop(el, g.w, g.h, 3.5, true),
+
+    'charging-station'(el, g) {
+      /* a freestanding charging pedestal with a lit top ring */
+      const grp = new THREE.Group();
+      const s = Math.min(g.w, g.h);
+      const body = box(s * 0.6, 3.6, s * 0.6, mat(0x22242b, { rough: .5 }), 0.05);
+      body.position.y = 1.8;
+      grp.add(body);
+      const top = box(s * 0.8, 0.25, s * 0.8, mat(0xfacc15, { emissive: 0x8a6d00, rough: .35 }), 0.04);
+      top.position.y = 3.75;
+      grp.add(top);
+      return grp;
+    },
 
     'charging-table'(el, g) {
       const grp = tableTop(el, g.w, g.h, 2.5, false);
