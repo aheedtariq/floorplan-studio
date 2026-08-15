@@ -839,23 +839,26 @@
     fs = Math.max(fs, 7 / zoom);
     if (fs * zoom > 26) fs = 26 / zoom;
 
-    /* Every placed item carries its name. Furniture that can't fit the
-       name inside its own footprint gets a small haloed caption just
-       below it instead, the way a drafter annotates fixtures — hidden
-       only when the view is too far out for 7 px text to mean anything. */
+    /* Every placed item carries its name — INSIDE its own footprint.
+       The font shrinks until the whole name fits both dimensions; when
+       even 7-px-on-screen text cannot fit, the name drops rather than
+       spill: an overflowing caption reads as if it belongs to the
+       neighbouring booth, which is worse than no caption at all. */
     if (el.layer === 'contents') {
-      const fitsInside = wpx >= 34 && hpx >= 18 && fs * zoom >= 8 &&
-                         title.length * fs * 0.58 <= box.w * 0.9;
-      if (!fitsInside) {
-        const cfs = G.clamp(9 / zoom, 0.6, 2.2);
-        if (cfs * zoom < 7 || wpx < 14) return '';
-        const cap = title.length > 22 ? `${title.slice(0, 21)}…` : title;
-        return `<text x="${n(cx)}" y="${n(box.y + box.h + cfs * 1.05)}"
-            font-size="${n(cfs)}" fill="var(--ink-2)" text-anchor="middle" font-weight="600"
-            font-family="var(--font)" pointer-events="none"
-            style="paint-order:stroke" stroke="var(--paper)" stroke-width="${n(cfs * 0.28)}"
-            >${esc(cap)}</text>`;
-      }
+      const name = String(el.props.label || k.short || k.name);
+      /* tall narrow pieces (a table serving a side aisle) read along
+         their long axis, the way a drafter letters a corridor */
+      const vert = box.h > box.w * 1.4;
+      const along = vert ? box.h : box.w, across = vert ? box.w : box.h;
+      const cfs = Math.min(2.2, across * 0.72,
+                           (along * 0.94) / Math.max(name.length * 0.56, 1));
+      if (cfs * zoom < 7) return '';
+      const rot = vert ? ` transform="rotate(-90 ${n(cx)} ${n(cy)})"` : '';
+      return `<text x="${n(cx)}" y="${n(cy + cfs * 0.34)}"${rot}
+          font-size="${n(cfs)}" fill="var(--ink-2)" text-anchor="middle" font-weight="600"
+          font-family="var(--font)" pointer-events="none"
+          style="paint-order:stroke" stroke="var(--paper)" stroke-width="${n(cfs * 0.26)}"
+          >${esc(name)}</text>`;
     }
 
     if (wpx < 34 || hpx < 18) return '';
