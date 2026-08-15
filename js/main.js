@@ -38,6 +38,18 @@
 
     await openInitialPlan();
 
+    /* A dashboard-created plan can carry a template to build on first
+       open. Only ever on an EMPTY plan — a reload after building finds
+       elements and does nothing, even if the param survived. */
+    const tplKey = new URLSearchParams(location.search).get('template');
+    if (tplKey && FP.templates?.[tplKey] && !(FP.plan.elements || []).length) {
+      FP.templates[tplKey].build();
+      history.replaceState(null, '',
+        `${location.pathname}?plan=${encodeURIComponent(FP.plan.id)}`);
+      await FP.save();
+      FP.toast?.(`${FP.templates[tplKey].name} built — make it this show's own`);
+    }
+
     FP.render.fit();
     FP.renderAll();
 

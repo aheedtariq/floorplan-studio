@@ -52,7 +52,7 @@
 
   async function load() {
     const [sh, cl, cu] = await Promise.all([
-      sb.from('show').select('id, name, width, height, unit, client_id, freeze_date, published_at, created_at')
+      sb.from('show').select('id, name, width, height, unit, client_id, freeze_date, published_at, created_at, is_template')
         .order('created_at', { ascending: false }),
       FP.auth.canEdit()
         ? sb.from('client').select('id, name, portal_token, active').order('name')
@@ -78,13 +78,16 @@
   /* ---------------- render ---------------- */
   function render() {
     const isClient = FP.auth.isClient();
+    const plans = shows.filter((s) => !s.is_template);
+    const templates = shows.filter((s) => s.is_template);
+
     $('pageTitle').textContent = isClient ? 'Your event plans' : 'All plans';
     $('pageSub').textContent = isClient
       ? 'Open a plan to arrange your event — every change saves automatically, and the Source One team sees it live.'
-      : `${shows.length} plan${shows.length === 1 ? '' : 's'} · ${clients.length} client${clients.length === 1 ? '' : 's'}`;
+      : `${plans.length} plan${plans.length === 1 ? '' : 's'} · ${clients.length} client${clients.length === 1 ? '' : 's'}`;
 
     const c = $('content');
-    if (!shows.length) {
+    if (!plans.length && !templates.length) {
       c.innerHTML = `<div class="empty">
         ${isClient
           ? 'No plans have been shared with your company yet.<br>Contact the Source One team.'
@@ -93,7 +96,22 @@
       return;
     }
 
-    c.innerHTML = `<div class="grid">${shows.map(card).join('')}</div>`;
+    let h = plans.length
+      ? `<div class="grid">${plans.map(card).join('')}</div>`
+      : '<div class="empty">No plans yet. Click <b>New plan</b> — a template gets you 80% of the way.</div>';
+
+    /* Templates: the reusable starting points for future orders.
+       Internal-only rows, so clients never receive them from RLS. */
+    if (!isClient && FP.auth.canEdit()) {
+      h += `<h2 class="section-h" style="margin:28px 0 12px;font-size:15px">Templates
+              <span style="font-weight:400;color:var(--tx-3);font-size:12.5px;margin-left:8px">
+                start a customer's plan from a proven layout</span></h2>`;
+      h += templates.length
+        ? `<div class="grid">${templates.map(templateCard).join('')}</div>`
+        : `<div class="empty" style="padding:18px">No saved templates yet — open any plan card
+             and press <b>Save as template</b>, or pick a built-in layout in <b>New plan</b>.</div>`;
+    }
+    c.innerHTML = h;
 
     c.querySelectorAll('[data-open]').forEach((b) => (b.onclick = () => {
       FP.setPref('store', 'supabase');
@@ -101,6 +119,15 @@
     }));
     c.querySelectorAll('[data-photos]').forEach((b) => (b.onclick = () => photosModal(b.dataset.photos)));
     c.querySelectorAll('[data-link]').forEach((b) => (b.onclick = () => linkModal(b.dataset.link)));
+    c.querySelectorAll('[data-use]').forEach((b) => (b.onclick = () => newPlanModal(b.dataset.use)));
+    c.querySelectorAll('[data-mktpl]').forEach((b) => (b.onclick = () => saveAsTemplate(b.dataset.mktpl)));
+    c.querySelectorAll('[data-deltpl]').forEach((b) => (b.onclick = async () => {
+      const t = shows.find((s) => s.id === b.dataset.deltpl);
+      if (!confirm(`Delete the template “${t?.name}”? Plans made from it are not affected.`)) return;
+      const { error } = await sb.from('show').delete().eq('id', b.dataset.deltpl);
+      if (error) alert(error.message);
+      await load(); render();
+    }));
     c.querySelectorAll('[data-assign]').forEach((sel) =>
       sel.addEventListener('change', async () => {
         const { error } = await sb.from('show')
@@ -108,6 +135,23 @@
         if (error) alert(error.message);
         await load(); render();
       }));
+  }
+
+  function templateCard(s) {
+    const booths = boothCounts[s.id] || 0;
+    return `<div class="plan-card">
+      <h3>${esc(s.name)}</h3>
+      <div class="plan-meta">
+        <span><b>${booths}</b> booth${booths === 1 ? '' : 's'}</span>
+        <span>${esc(String(s.width))} × ${esc(String(s.height))} ${esc(s.unit || 'ft')}</span>
+      </div>
+      <span class="chip internal">TEMPLATE</span>
+      <div class="card-actions">
+        <button class="btn soft" data-use="${esc(s.id)}">Use template</button>
+        <button class="mini" data-open="${esc(s.id)}">Edit</button>
+        <button class="mini danger" data-deltpl="${esc(s.id)}">Delete</button>
+      </div>
+    </div>`;
   }
 
   function card(s) {
@@ -132,6 +176,8 @@
         <button class="btn soft" data-open="${esc(s.id)}">Open plan</button>
         <button class="mini" data-photos="${esc(s.id)}">Photos</button>
         ${!isClientUser && client ? `<button class="mini" data-link="${esc(s.client_id)}">Client link</button>` : ''}
+        ${!isClientUser && FP.auth.canEdit() ? `<button class="mini" data-mktpl="${esc(s.id)}"
+          title="Copy this layout into the template library">Save as template</button>` : ''}
       </div>
       ${!isClientUser && FP.auth.canEdit() ? `
         <div class="card-actions" style="margin-top:8px">
@@ -279,14 +325,85 @@
   }
 
   /* ---------------- new plan ---------------- */
-  function newPlanModal() {
+  /* Deep-copy a show and its elements under fresh ids. The one careful
+     part is the id remap: parent links must survive, and parents must
+     land before children or the FK complains. */
+  async function copyShow(srcId, name, isTemplate) {
+    const { data: src, error } = await sb.from('show').select('*').eq('id', srcId).single();
+    if (error) throw new Error(error.message);
+    const { data: els, error: elErr } = await sb.from('element')
+      .select('*').eq('show_id', srcId).order('z');
+    if (elErr) throw new Error(elErr.message);
+
+    const id = FP.uid();
+    const {
+      id: _id, created_at: _ca, created_by: _cb, client_id: _cl,
+      published_at: _pa, freeze_date: _fd, load_in: _li, opens: _op,
+      teardown: _td, deadline: _dl, ...keep
+    } = src;
+    const { error: insErr } = await sb.from('show').insert({
+      ...keep, id, name, is_template: isTemplate,
+      created_by: FP.auth.user()?.id || null,
+    });
+    if (insErr) throw new Error(insErr.message);
+
+    const map = {};
+    (els || []).forEach((e) => (map[e.id] = FP.uid()));
+    const rows = (els || []).map((e) => ({
+      id: map[e.id], show_id: id,
+      parent_id: e.parent_id ? map[e.parent_id] : null,
+      kind: e.kind, shape: e.shape, layer: e.layer,
+      geometry: e.geometry, props: e.props, z: e.z,
+    }));
+    for (const batch of [rows.filter((r) => !r.parent_id), rows.filter((r) => r.parent_id)]) {
+      if (!batch.length) continue;
+      const { error: e2 } = await sb.from('element').insert(batch);
+      if (e2) throw new Error(e2.message);
+    }
+    return id;
+  }
+
+  async function saveAsTemplate(showId) {
+    const s = shows.find((x) => x.id === showId);
+    if (!s) return;
+    const name = prompt('Template name', `${s.name} — template`);
+    if (!name) return;
+    try {
+      await copyShow(showId, name.trim(), true);
+      await load(); render();
+    } catch (e) { alert(e.message); }
+  }
+
+  /* New plan — blank, a built-in layout, or a copy of a saved template.
+     Built-ins are generated inside the Studio on first open, so booths
+     arrive furnished and numbered by the same code as hand placement. */
+  function newPlanModal(useTemplateId) {
+    const templates = shows.filter((s) => s.is_template);
+    const builtins = [
+      ['rows', 'Classic booth rows — 10×10 back-to-back, named aisles'],
+      ['tabletop', 'Tabletop expo — 8×10 spaces, tight aisles'],
+      ['islands', 'Island showcase — 20×20 islands, wide aisles'],
+    ];
     overlay(`<div class="sheet box">
       <h2>New plan</h2>
-      <p>Set the hall's rough size — you'll refine it in the Studio, usually by
-         tracing a venue photo.</p>
+      <p>Start from a template — booths, aisles, and entrances arrive ready to
+         adapt — or from a blank hall you'll trace from a venue photo.</p>
+      <label>Start from</label>
+      <select class="inp" id="bxTpl">
+        <option value="">Blank hall</option>
+        <optgroup label="Built-in layouts">
+          ${builtins.map(([k, label]) =>
+            `<option value="builtin:${k}">${esc(label)}</option>`).join('')}
+        </optgroup>
+        ${templates.length ? `<optgroup label="Your templates">
+          ${templates.map((t) =>
+            `<option value="tpl:${esc(t.id)}"${useTemplateId === t.id ? ' selected' : ''}
+             >${esc(t.name)} (${esc(String(t.width))}×${esc(String(t.height))})</option>`).join('')}
+        </optgroup>` : ''}
+      </select>
       <label>Plan name</label>
       <input class="inp" id="bxName" placeholder="e.g. Spring Home Show 2027" />
-      <div class="row2">
+      <div class="row2" id="bxDims">
         <div><label>Width (ft)</label><input class="inp" id="bxW" type="number" value="200" /></div>
         <div><label>Depth (ft)</label><input class="inp" id="bxH" type="number" value="120" /></div>
       </div>
@@ -298,18 +415,37 @@
       </div>
     </div>`);
     $('bxCancel').onclick = closeOverlay;
+
+    /* a saved template brings its own hall size */
+    const syncDims = () => {
+      const v = $('bxTpl').value;
+      $('bxDims').style.display = v.startsWith('tpl:') ? 'none' : '';
+    };
+    $('bxTpl').onchange = syncDims;
+    syncDims();
+
     $('bxGo').onclick = async () => {
       const name = $('bxName').value.trim() || 'Untitled Show';
+      const choice = $('bxTpl').value;
       boxMsg('Creating…');
-      const { data, error } = await sb.from('show').insert({
-        name,
-        width: Number($('bxW').value) || 200,
-        height: Number($('bxH').value) || 120,
-        created_by: FP.auth.user()?.id || null,
-      }).select('id').single();
-      if (error) return boxMsg(error.message, 'err');
-      FP.setPref('store', 'supabase');
-      location.href = `index.html?plan=${encodeURIComponent(data.id)}`;
+      try {
+        let id, suffix = '';
+        if (choice.startsWith('tpl:')) {
+          id = await copyShow(choice.slice(4), name, false);
+        } else {
+          const { data, error } = await sb.from('show').insert({
+            name,
+            width: Number($('bxW').value) || 200,
+            height: Number($('bxH').value) || 120,
+            created_by: FP.auth.user()?.id || null,
+          }).select('id').single();
+          if (error) throw new Error(error.message);
+          id = data.id;
+          if (choice.startsWith('builtin:')) suffix = `&template=${choice.slice(8)}`;
+        }
+        FP.setPref('store', 'supabase');
+        location.href = `index.html?plan=${encodeURIComponent(id)}${suffix}`;
+      } catch (e) { boxMsg(e.message, 'err'); }
     };
   }
 
