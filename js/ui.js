@@ -1684,7 +1684,7 @@
             if (which === 'supabase') plansModal();
           }));
 
-        b.querySelector('#btnTeam')?.addEventListener('click', () => FP.adminModal());
+        b.querySelector('#btnTeam')?.addEventListener('click', () => (location.href = 'admin.html'));
 
         b.querySelector('#btnPushPlan')?.addEventListener('click', async () => {
           try {

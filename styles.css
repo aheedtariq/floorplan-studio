@@ -679,8 +679,6 @@ select.inp { appearance: none; background-image: linear-gradient(45deg, transpar
 }
 
 /* ---------- admin: clients ---------- */
-.adm-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
-.adm-tabs .mini.on { background: var(--accent-soft); color: var(--accent); }
 
 .adm-newrow { display: flex; gap: 8px; align-items: center; margin: 10px 0; }
 .adm-newrow .inp { flex: 1; min-width: 0; }

@@ -22,7 +22,7 @@
     ['crew', 'Crew'], ['sales', 'Sales'], ['planner', 'Planner'], ['admin', 'Admin'],
   ];
 
-  let sb, clients = [], shows = [], clientUsers = [], staff = [], logins = {};
+  let sb, clients = [], shows = [], clientUsers = [], staff = [], logins = {}, presence = [];
 
   const msg = (t, cls) => { const m = $('pageMsg'); m.textContent = t || ''; m.className = cls || ''; };
 
@@ -53,10 +53,19 @@
     $('btnOut').onclick = async () => { await FP.auth.signOut(); location.replace('login.html'); };
     await load();
     render();
+
+    /* the heartbeat board refreshes itself — presence only, so the rest
+       of the page never repaints under the user's cursor */
+    setInterval(async () => {
+      const { data } = await sb.from('presence').select('*').order('last_seen', { ascending: false });
+      presence = data || [];
+      const live = $('liveNow');
+      if (live) live.outerHTML = liveSection();
+    }, 30_000);
   }
 
   async function load() {
-    const [cl, sh, cu, st, lg] = await Promise.all([
+    const [cl, sh, cu, st, lg, pr] = await Promise.all([
       sb.from('client').select('id, name, contact_name, contact_email, portal_token, active, created_at')
         .order('created_at'),
       sb.from('show').select('id, name, client_id, is_template, freeze_date').order('created_at', { ascending: false }),
@@ -65,7 +74,9 @@
          team table simply stays empty for them */
       sb.from('profile').select('id, email, full_name, role, active').neq('role', 'client').order('email'),
       FP.auth.callFn('admin-clients', { action: 'list-logins' }),
+      sb.from('presence').select('*').order('last_seen', { ascending: false }),
     ]);
+    presence = pr.data || [];
     clients = cl.data || [];
     shows = (sh.data || []).filter((s) => !s.is_template);
     clientUsers = cu.data || [];
@@ -74,10 +85,42 @@
     (lg.users || []).forEach((u) => (logins[u.id] = u));
   }
 
+  /* The heartbeat board: who's in the app right now, and what they're
+     doing. "Online" is a heartbeat in the last 3 minutes; recent
+     activity stays listed for an hour so a just-left session is still
+     answerable ("was the client in today?"). */
+  function liveSection() {
+    const now = Date.now();
+    const rows = presence.filter((p) => now - Date.parse(p.last_seen) < 3600_000);
+    const dot = (p) => now - Date.parse(p.last_seen) < 180_000
+      ? '<span style="color:#16a34a">●</span>' : '<span style="color:var(--tx-3)">○</span>';
+    const doing = (p) => {
+      const page = { index: 'in the Studio', home: 'on the dashboard',
+                     admin: 'on this admin page', portal: 'in the portal' }[p.page] || p.page;
+      return p.plan_name ? `${page} — <b>${esc(p.plan_name)}</b>` : page;
+    };
+    return `<div id="liveNow">
+      <h2 class="sec" style="margin-top:0">Live now
+        <span>heartbeat every minute · refreshes itself</span></h2>
+      ${rows.length ? `<table class="team"><thead><tr>
+          <th></th><th>Who</th><th>Role</th><th>Where</th><th>Last heartbeat</th>
+        </tr></thead><tbody>${rows.map((p) => `
+          <tr>
+            <td>${dot(p)}</td>
+            <td>${esc(p.email || '—')}</td>
+            <td>${esc(p.role || '—')}</td>
+            <td>${doing(p)}</td>
+            <td class="muted">${esc(ago(p.last_seen) || '—')}</td>
+          </tr>`).join('')}</tbody></table>`
+        : '<div class="empty-note">Nobody has been in during the last hour.</div>'}
+    </div>`;
+  }
+
   /* ---------------- render ---------------- */
   function render() {
     const isAdmin = FP.auth.isAdmin();
-    let h = `<h2 class="sec">Clients <span>${clients.length} compan${clients.length === 1 ? 'y' : 'ies'}</span></h2>`;
+    let h = liveSection();
+    h += `<h2 class="sec">Clients <span>${clients.length} compan${clients.length === 1 ? 'y' : 'ies'}</span></h2>`;
     h += clients.map(clientCard).join('') || '<div class="empty-note">No clients yet — add the first one below.</div>';
 
     h += `<form class="newform" id="newClient" style="margin-top:16px">

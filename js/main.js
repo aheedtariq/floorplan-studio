@@ -23,14 +23,21 @@
        Never let a backend problem stop the editor from opening. */
     try {
       await FP.auth?.init?.();
-      /* A ?plan= deep link (from the dashboard) implies the cloud store,
-         whatever the stored preference says. */
-      const deepLink = new URLSearchParams(location.search).has('plan');
-      if (FP.auth?.signedIn?.() && (FP.prefs.store === 'supabase' || deepLink)) {
-        FP.useStore('supabase');
-      }
     } catch (e) {
-      console.warn('Auth unavailable — continuing with local storage', e);
+      console.warn('Auth init failed', e);
+    }
+    /* Every page is walled: the Studio needs a signed-in session. The
+       real protection is RLS — this keeps signed-out visitors from even
+       seeing the app shell. */
+    if (!FP.auth?.signedIn?.()) {
+      location.replace('login.html');
+      return;
+    }
+    /* A ?plan= deep link (from the dashboard) implies the cloud store,
+       whatever the stored preference says. */
+    const deepLink = new URLSearchParams(location.search).has('plan');
+    if (FP.prefs.store === 'supabase' || deepLink || !FP.prefs.store) {
+      FP.useStore('supabase');
     }
     FP.syncAccountBadge?.();
     FP.on('auth', () => FP.syncAccountBadge?.());
@@ -58,8 +65,8 @@
        hashchange, and some hosts apply the fragment after load */
     const maybeAdmin = () => {
       if (location.hash !== '#admin') return;
-      history.replaceState(null, '', location.pathname + location.search);
-      FP.adminModal?.();
+      /* the admin panel is its own page now */
+      location.replace('admin.html');
     };
     maybeAdmin();
     window.addEventListener('hashchange', maybeAdmin);

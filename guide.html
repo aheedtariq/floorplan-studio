@@ -110,6 +110,13 @@
     header { padding-top: 10px; }
   }
 </style>
+<script>
+/* walled: the guide is for signed-in users; the wall is cosmetic —
+   nothing sensitive lives here — but every page checks in. */
+try {
+  if (!localStorage.getItem('sb-bvbjjawpmdfpkmasrcpk-auth-token')) location.replace('login.html');
+} catch { location.replace('login.html'); }
+</script>
 </head>
 <body>
 
