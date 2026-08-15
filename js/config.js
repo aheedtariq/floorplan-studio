@@ -273,7 +273,11 @@
     /* ---- zones ---- */
     { id: 'dead-space', name: 'Dead space', cat: 'zones', layer: 'zones', shape: 'rect', scope: ['hall'],
       size: [20, 20], fill: '#64748b', stroke: '#475569', opacity: .16, hatch: 'diag', icon: ic.dead,
-      flags: { blocking: true, unsellable: true }, fields: [F.label, F.notes] },
+      flags: { blocking: true, unsellable: true },
+      fields: [F.label,
+        { key: 'ceiling', label: 'Ceiling height', type: 'number', unit: 'len',
+          help: 'For low-clearance areas — the feet show on the plan label' },
+        F.notes] },
     { id: 'dead-space-poly', name: 'Dead space (freeform)', cat: 'zones', layer: 'zones', shape: 'poly', scope: ['hall'],
       fill: '#64748b', stroke: '#475569', opacity: .16, hatch: 'diag', icon: ic.dead,
       flags: { blocking: true, unsellable: true }, fields: [F.label, F.notes] },
