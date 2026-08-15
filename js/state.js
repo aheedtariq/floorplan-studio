@@ -266,11 +266,64 @@
     return el;
   };
 
-  FP.addElements = (els, { snapshot = true, select = true } = {}) => {
+  /* ------------------------------------------------------------
+     Booths arrive set up the standard way: a 6 ft draped table at
+     the opening, two chairs behind it, then the back wall. The
+     orientation follows the same back-detection the 3D build uses,
+     so the set always opens onto the booth's aisle.
+     ------------------------------------------------------------ */
+  FP.furnishSpace = (space, others) => {
+    const g = space.geometry;
+    if (!g || g.w < 6.5 || g.h < 6.5) return [];     /* too tight for the set */
+    const geos = [g, ...(others || FP.plan.elements)
+      .filter((e) => e.kind === 'space' && e !== space)
+      .map((e) => e.geometry)];
+    const back = FP._boothBack?.(g, geos, FP.plan.width, FP.plan.height) || 'n';
+    const front = { n: 's', s: 'n', w: 'e', e: 'w' }[back];
+
+    const cx = g.x + g.w / 2, cy = g.y + g.h / 2;
+    const horiz = front === 'n' || front === 's';     /* front runs along x */
+    const frontLen = horiz ? g.w : g.h;
+    /* rect from booth-local terms: offset along the front edge from its
+       centre, depth inward from the aisle, then footprint */
+    const rect = (alongOff, dIn, sAlong, sDeep) => ({
+      s: { x: cx + alongOff - sAlong / 2, y: g.y + g.h - dIn - sDeep, w: sAlong, h: sDeep },
+      n: { x: cx + alongOff - sAlong / 2, y: g.y + dIn, w: sAlong, h: sDeep },
+      e: { x: g.x + g.w - dIn - sDeep, y: cy + alongOff - sAlong / 2, w: sDeep, h: sAlong },
+      w: { x: g.x + dIn, y: cy + alongOff - sAlong / 2, w: sDeep, h: sAlong },
+    }[front]);
+    const chairRot = { s: 0, n: 180, e: 270, w: 90 }[front];
+
+    const T_IN = 0.7, T_D = 2.5, C_GAP = 0.6, C_S = 1.6;
+    const table = FP.makeElement('table-6ft', rect(0, T_IN, Math.min(6, frontLen - 1.5), T_D), space.id);
+    table.props.throw = 'black';
+    const out = [table];
+    if ((horiz ? g.h : g.w) >= T_IN + T_D + C_GAP + C_S + 1) {
+      const off = Math.min(1.5, frontLen / 2 - C_S);
+      for (const s of [-1, 1]) {
+        const ch = FP.makeElement('chair', rect(s * off, T_IN + T_D + C_GAP, C_S, C_S), space.id);
+        if (chairRot) ch.geometry.rot = chairRot;
+        out.push(ch);
+      }
+    }
+    return out;
+  };
+
+  FP.addElements = (els, { snapshot = true, select = true, furnish = true } = {}) => {
     const list = Array.isArray(els) ? els : [els];
     if (!list.length) return [];
+    /* every new booth comes furnished — unless the batch already brings
+       its own contents (duplicates carry theirs along) */
+    const extra = [];
+    if (furnish) {
+      for (const el of list) {
+        if (C.flag(el.kind, 'sellable') && !list.some((c) => c.parentId === el.id)) {
+          extra.push(...FP.furnishSpace(el, FP.plan.elements.concat(list)));
+        }
+      }
+    }
     if (snapshot) FP.snapshot();
-    FP.plan.elements.push(...list);
+    FP.plan.elements.push(...list, ...extra);
     if (select) FP.state.selection = list.map((e) => e.id);
     FP.changed();
     FP.emit('select');

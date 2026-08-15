@@ -825,10 +825,9 @@
   function labelFor(el, k, box, opts) {
     /* A legend swatch is the symbol alone; the name sits beside it. */
     if (opts.swatch) return '';
-    if (!FP.state.showLabels || opts.ghost) return '';
+    if (!FP.state.showLabels || (opts.ghost && !opts.captions)) return '';
     const zoom = FP.state.view.zoom;
     const wpx = box.w * zoom, hpx = box.h * zoom;
-    if (wpx < 34 || hpx < 18) return '';
 
     const cx = box.x + box.w / 2, cy = box.y + box.h / 2;
     const isSpace = C.flag(el.kind, 'sellable');
@@ -839,6 +838,27 @@
     let fs = Math.min(box.w * 0.22, box.h * 0.3, 4.5);
     fs = Math.max(fs, 7 / zoom);
     if (fs * zoom > 26) fs = 26 / zoom;
+
+    /* Every placed item carries its name. Furniture that can't fit the
+       name inside its own footprint gets a small haloed caption just
+       below it instead, the way a drafter annotates fixtures — hidden
+       only when the view is too far out for 7 px text to mean anything. */
+    if (el.layer === 'contents') {
+      const fitsInside = wpx >= 34 && hpx >= 18 && fs * zoom >= 8 &&
+                         title.length * fs * 0.58 <= box.w * 0.9;
+      if (!fitsInside) {
+        const cfs = G.clamp(9 / zoom, 0.6, 2.2);
+        if (cfs * zoom < 7 || wpx < 14) return '';
+        const cap = title.length > 22 ? `${title.slice(0, 21)}…` : title;
+        return `<text x="${n(cx)}" y="${n(box.y + box.h + cfs * 1.05)}"
+            font-size="${n(cfs)}" fill="var(--ink-2)" text-anchor="middle" font-weight="600"
+            font-family="var(--font)" pointer-events="none"
+            style="paint-order:stroke" stroke="var(--paper)" stroke-width="${n(cfs * 0.28)}"
+            >${esc(cap)}</text>`;
+      }
+    }
+
+    if (wpx < 34 || hpx < 18) return '';
     if (fs * zoom < 7) return '';
 
     /* Large open zones (aisles, fire lanes, rigging areas) sit UNDER the
@@ -885,18 +905,6 @@
        overflowing name reads as if it belongs to the neighbouring booth. */
     const maxChars = Math.floor(box.w / (fs * 0.54));
     if (maxChars < 2) return '';
-
-    /* Furniture is not captioned on a real drawing. A stool labelled
-       "Ale Bar Stool" cannot physically fit the words inside a 1.5 ft
-       circle, so the text escapes the shape and collides with whatever is
-       next to it — which is exactly what makes a plan look amateur.
-       Draw the name only when it genuinely fits inside the object;
-       otherwise the symbol speaks for itself and the name lives in the
-       order list and the properties panel. */
-    if (el.layer === 'contents') {
-      const needed = title.length * fs * 0.58;
-      if (needed > box.w * 0.9 || fs * zoom < 8) return '';
-    }
 
     /* A symbol owns the middle of the box, so the caption drops to the
        foot of it rather than sitting on top of the glyph. */
@@ -1184,12 +1192,14 @@
     for (const { el } of ordered) out += drawElement(el, opts);
     out += '</g>';
 
-    /* Booth contents shown faintly on the hall view so nothing is hidden. */
+    /* Booth contents shown faintly on the hall view so nothing is hidden.
+       `captions` keeps their names on — ghosting here means "not the
+       focus", not "anonymous". */
     if (!scoped) {
       const children = FP.plan.elements.filter((e) => e.parentId && FP.isVisible(e));
       if (children.length) {
         out += '<g class="children" opacity=".5">';
-        for (const el of children) out += drawElement(el, { ...opts, ghost: true });
+        for (const el of children) out += drawElement(el, { ...opts, ghost: true, captions: true });
         out += '</g>';
       }
     }

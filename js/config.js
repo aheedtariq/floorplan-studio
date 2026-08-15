@@ -337,6 +337,9 @@
        no dimensions, so footprints are the industry-standard sizes these
        products ship in. `symbol` reuses an ARCH renderer, so a 60" round
        draws as a circle and a bar gets its service edge. */
+    { id: 'table-6ft', name: 'Banquet table 6 ft', cat: 'rentals', layer: 'contents', shape: 'rect',
+      scope: ['hall', 'booth'], size: [6, 2.5], symbol: 'table',
+      fill: '#d6d3d1', stroke: '#78716c', opacity: .55, icon: ic.table, fields: [F.label, F.throw_] },
     { id: 'table-8ft', name: 'Banquet table 8 ft', cat: 'rentals', layer: 'contents', shape: 'rect',
       scope: ['hall', 'booth'], size: [8, 2.5], symbol: 'table',
       fill: '#d6d3d1', stroke: '#78716c', opacity: .55, icon: ic.table, fields: [F.label, F.throw_] },

@@ -30,7 +30,7 @@
     restroom: 0.05, storage: 0.05, 'av-booth': 0.05,
     table: 2.5, chair: 1.5, stool: 2.5, display: 8, monitor: 6,
     shelf: 5, counter: 3.5,
-    'table-8ft': 2.5, 'table-round-60': 2.5, 'cocktail-table': 3.5,
+    'table-6ft': 2.5, 'table-8ft': 2.5, 'table-round-60': 2.5, 'cocktail-table': 3.5,
     'charging-table': 2.5, sofa: 2.4, 'lounge-chair': 2.4, 'cube-seat': 1.5,
     'coffee-table': 1.3, bar: 3.5, 'registration-counter': 3.5, podium: 4,
     'display-case': 3.2, kiosk: 7, tower: 12, 'banner-stand': 8,
@@ -443,6 +443,7 @@
     },
 
     table:            (el, g) => tableTop(el, g.w, g.h, 2.5, Math.abs(g.w - g.h) < Math.min(g.w, g.h) * 0.35),
+    'table-6ft':      (el, g) => tableTop(el, g.w, g.h, 2.5, false),
     'table-8ft':      (el, g) => tableTop(el, g.w, g.h, 2.5, false),
     'coffee-table':   (el, g) => tableTop(el, g.w, g.h, 1.35, false),
     'table-round-60': (el, g) => tableTop(el, g.w, g.h, 2.5, true),
