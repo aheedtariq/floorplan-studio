@@ -542,7 +542,8 @@
     overlay.innerHTML = `
       <div class="v3d-top">
         <b>3D preview</b>
-        <span class="v3d-hint">Drag to orbit · scroll to zoom · right-drag to pan</span>
+        <span class="v3d-hint">Click to select · drag an object to move it · R rotates ·
+          arm a catalog item and click the floor to place it · drag floor to orbit</span>
         <button class="btn ghost" id="v3dClose">Back to plan</button>
       </div>`;
     const stage = document.getElementById('stage')
@@ -704,6 +705,7 @@
           grp.position.set((g.x1 + g.x2) / 2, 0, (g.y1 + g.y2) / 2);
           grp.rotation.y = -Math.atan2(dy, dx);
           grp.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
+          grp.userData.elId = el.id;
           model.add(grp);
           continue;
         }
@@ -716,6 +718,7 @@
         mesh.position.set((g.x1 + g.x2) / 2, h / 2, (g.y1 + g.y2) / 2);
         mesh.rotation.y = -Math.atan2(dy, dx);
         mesh.castShadow = mesh.receiveShadow = true;
+        mesh.userData.elId = el.id;
         model.add(mesh);
         continue;
       }
@@ -741,6 +744,7 @@
           }
           grp.position.set(g.x, 0, g.y);
           grp.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+          grp.userData.elId = el.id;
           model.add(grp);
           continue;
         }
@@ -750,6 +754,7 @@
           new THREE.MeshStandardMaterial({ color: colorFor(el, k), roughness: .7 }));
         mesh.position.set(g.x, 0.6, g.y);
         mesh.castShadow = true;
+        mesh.userData.elId = el.id;
         model.add(mesh);
         continue;
       }
@@ -796,6 +801,7 @@
         grp.position.set(g.x + g.w / 2, 0, g.y + g.h / 2);
         if (g.rot) grp.rotation.y = -(g.rot * Math.PI) / 180;
         grp.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
+        grp.userData.elId = el.id;
         model.add(grp);
 
         if (el.props?.number) {
@@ -815,6 +821,7 @@
         grp.position.set(g.x + g.w / 2, 0, g.y + g.h / 2);
         if (g.rot) grp.rotation.y = -(g.rot * Math.PI) / 180;
         grp.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
+        grp.userData.elId = el.id;
         model.add(grp);
         continue;
       }
@@ -836,6 +843,7 @@
       mesh.position.set(g.x + g.w / 2, flat ? h / 2 + 0.011 : h / 2, g.y + g.h / 2);
       if (g.rot) mesh.rotation.y = -(g.rot * Math.PI) / 180;
       if (!flat) mesh.castShadow = mesh.receiveShadow = true;
+      mesh.userData.elId = el.id;
       model.add(mesh);
 
       /* booth number floats above sold/held tiles */
@@ -871,6 +879,157 @@
     const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: tex, depthTest: true }));
     spr.scale.set(4, 2, 1);
     return spr;
+  }
+
+  /* ============================================================
+     Editing in 3D.
+
+     The 3D view is an editor, not a picture: click selects (and the
+     Properties panel follows, since selection is shared with 2D),
+     dragging an object slides it across the floor, R rotates it, and
+     whatever is armed in the side catalog places on click. Dragging
+     empty floor still orbits.
+     ============================================================ */
+  let selBox = null, drag = null;
+  let ray, ptr, floorPlane;
+
+  function pick(ev) {
+    const r = renderer.domElement.getBoundingClientRect();
+    ptr.set(((ev.clientX - r.left) / r.width) * 2 - 1,
+            -((ev.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ptr, camera);
+    for (const h of ray.intersectObjects(scene.children, true)) {
+      if (h.object.isSprite || h.object.type === 'GridHelper') continue;
+      let o = h.object;
+      while (o && !o.userData.elId) o = o.parent;
+      if (o) return { obj: o, point: h.point };
+      break;    /* hit scenery (floor/curb) — treat as empty floor */
+    }
+    const pt = new THREE.Vector3();
+    ray.ray.intersectPlane(floorPlane, pt);
+    return { obj: null, point: pt };
+  }
+
+  function groupFor(id) {
+    let found = null;
+    scene.traverse((o) => { if (!found && o.userData.elId === id) found = o; });
+    return found;
+  }
+
+  function highlight() {
+    if (selBox) { scene.remove(selBox); selBox.dispose?.(); selBox = null; }
+    const id = FP.state.selection?.[0];
+    const obj = id && groupFor(id);
+    if (obj) {
+      selBox = new THREE.BoxHelper(obj, 0x7c5cfc);
+      scene.add(selBox);
+    }
+  }
+
+  const SNAP = 0.5;
+  const snap = (v) => Math.round(v / SNAP) * SNAP;
+
+  function translateEl(el, dx, dz) {
+    const g = el.geometry;
+    if (el.shape === 'line') { g.x1 += dx; g.y1 += dz; g.x2 += dx; g.y2 += dz; }
+    else { g.x = (g.x ?? 0) + dx; g.y = (g.y ?? 0) + dz; }
+  }
+
+  function onDown(ev) {
+    if (ev.button !== 0) return;
+    const hit = pick(ev);
+
+    /* armed catalog kind + empty floor = place it right here */
+    const armed = FP.state.armedKind;
+    if (!hit.obj && armed && ['draw', 'marker'].includes(FP.state.tool)) {
+      const k = FP.config.kind(armed);
+      if (k.shape === 'rect' || k.shape === 'marker') {
+        const [w, h] = k.size || [4, 2];
+        const geo = k.shape === 'marker'
+          ? { x: snap(hit.point.x), y: snap(hit.point.z) }
+          : { x: snap(hit.point.x - w / 2), y: snap(hit.point.z - h / 2), w, h };
+        const el = FP.makeElement(armed, geo);
+        FP.addElements([el]);           /* snapshots, selects, rebuilds */
+        return;
+      }
+      FP.toast?.('Draw walls, drape and lines on the 2D plan');
+      return;
+    }
+
+    if (!hit.obj) return;               /* empty floor: orbit as usual */
+
+    const el = (FP.plan.elements || []).find((e) => e.id === hit.obj.userData.elId);
+    if (!el) return;
+    FP.state.selection = [el.id];
+    FP.emit('select');
+    highlight();
+    if (FP.isLocked?.(el)) return;
+
+    controls.enabled = false;
+    drag = { el, obj: hit.obj, start: hit.point.clone(), moved: false,
+             origin: hit.obj.position.clone() };
+  }
+
+  function onMove(ev) {
+    if (!drag) return;
+    const r = renderer.domElement.getBoundingClientRect();
+    ptr.set(((ev.clientX - r.left) / r.width) * 2 - 1,
+            -((ev.clientY - r.top) / r.height) * 2 + 1);
+    ray.setFromCamera(ptr, camera);
+    const pt = new THREE.Vector3();
+    if (!ray.ray.intersectPlane(floorPlane, pt)) return;
+    const dx = snap(pt.x - drag.start.x), dz = snap(pt.z - drag.start.z);
+    if (dx || dz) drag.moved = true;
+    drag.obj.position.set(drag.origin.x + dx, drag.origin.y, drag.origin.z + dz);
+    selBox?.update();
+  }
+
+  function onUp() {
+    if (!drag) return;
+    const { el, obj, origin, moved } = drag;
+    drag = null;
+    controls.enabled = true;
+    if (!moved) return;
+    const dx = obj.position.x - origin.x, dz = obj.position.z - origin.z;
+    FP.snapshot();
+    translateEl(el, dx, dz);
+    /* a booth takes its contents with it, same as in 2D */
+    if (el.kind === 'space') {
+      for (const c of FP.plan.elements) {
+        if (c.parentId === el.id) translateEl(c, dx, dz);
+      }
+    }
+    FP.changed();                       /* recheck + autosave + rebuild */
+  }
+
+  function onKey(ev) {
+    if (!opened) return;
+    if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '')) return;
+    if (ev.key === 'r' || ev.key === 'R') {
+      const el = (FP.plan.elements || []).find((e) => e.id === FP.state.selection?.[0]);
+      if (!el || el.shape !== 'rect') return;
+      FP.snapshot();
+      el.geometry.rot = ((el.geometry.rot || 0) + 45) % 360;
+      FP.changed();
+      ev.preventDefault();
+    } else if (ev.key === 'Escape') {
+      FP.state.selection = [];
+      FP.emit('select');
+      highlight();
+    }
+  }
+
+  function initEditing() {
+    ray = new THREE.Raycaster();
+    ptr = new THREE.Vector2();
+    floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    const c = renderer.domElement;
+    c.addEventListener('pointerdown', onDown);
+    c.addEventListener('pointermove', onMove);
+    c.addEventListener('pointerup', onUp);
+    c.addEventListener('pointerleave', onUp);
+    document.addEventListener('keydown', onKey);
+    FP.on?.('select', () => { if (opened) highlight(); });
   }
 
   /* ---------------- lifecycle ---------------- */
@@ -939,7 +1098,8 @@
 
       /* the model follows every edit, so 3D can stay open while the
          other side moves furniture */
-      FP.on?.('change', () => { if (opened) rebuild(); });
+      FP.on?.('change', () => { if (opened) { rebuild(); highlight(); } });
+      initEditing();
     }
 
     const W = FP.plan.width, H = FP.plan.height;
