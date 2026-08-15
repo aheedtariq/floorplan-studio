@@ -220,7 +220,7 @@
      label always wins over the stock wording. */
   const FLAT_LABELS = {
     registration: 'REGISTRATION', food: 'FOOD & BEVERAGE', lounge: 'LOUNGE',
-    restroom: 'RESTROOMS', storage: 'STORAGE', 'av-booth': 'AV / PRODUCTION',
+    storage: 'STORAGE', 'av-booth': 'AV / PRODUCTION',
     'fire-lane': 'FIRE LANE · KEEP CLEAR', 'first-aid': 'FIRST AID',
     'dead-space': 'NO BUILD', 'dead-space-poly': 'NO BUILD',
     zone: 'ZONE', carpet: '', turf: '', 'rigging-zone': 'RIGGING',

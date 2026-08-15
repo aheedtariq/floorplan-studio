@@ -556,7 +556,6 @@
        edge drawn heavy so the direction of service is readable. */
     counter(el, b, col) {
       const rad = Math.min(b.w, b.h) * 0.18;
-      const horiz = b.w >= b.h;
       const { ax, dir } = inwardAxis(b);
       /* front faces the aisle, i.e. the middle of the hall */
       let fx1, fy1, fx2, fy2;
@@ -567,7 +566,6 @@
         const x = dir > 0 ? b.x + b.w : b.x;
         fx1 = x; fy1 = b.y; fx2 = x; fy2 = b.y + b.h;
       }
-      void horiz;
       return `<g pointer-events="none">
         <rect x="${n(b.x)}" y="${n(b.y)}" width="${n(b.w)}" height="${n(b.h)}"
           rx="${n(rad)}" fill="${col}" fill-opacity=".3" stroke="${col}"

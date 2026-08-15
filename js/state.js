@@ -25,7 +25,6 @@
   FP.emit = (evt, data) => (listeners[evt] || []).forEach((fn) => fn(data));
 
   /* ---------------- ids ---------------- */
-  let seq = 0;
   /* Real UUIDs, because these ids become Postgres uuid primary keys the
      moment a plan is saved to the cloud. Generating them client-side means
      a plan drafted offline keeps its identity when it syncs — no
@@ -39,8 +38,6 @@
       return v.toString(16);
     });
   };
-  void seq;
-
   FP.isUuid = (v) =>
     typeof v === 'string' &&
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
