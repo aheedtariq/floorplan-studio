@@ -35,7 +35,9 @@
     'coffee-table': 1.3, bar: 3.5, 'registration-counter': 3.5, podium: 4,
     'display-case': 3.2, kiosk: 7, tower: 12, 'banner-stand': 8,
     'led-poster': 6.5, 'poster-board': 6, 'grid-wall': 6,
-    'entrance-unit': 12, carpet: 0.02, turf: 0.04, 'charging-station': 4,
+    /* ordered flooring lies ON TOP of the booth's status tile (0.07),
+       so what the client bought is what the walkthrough shows */
+    'entrance-unit': 12, carpet: 0.09, turf: 0.1, 'charging-station': 4,
     'custom-room': 8,
     'fire-exit': 0.15, 'first-aid': 0.05, 'fire-lane': 0.02,
     'electrical-panel': 6, 'distro-box': 2.5, generator: 7,
