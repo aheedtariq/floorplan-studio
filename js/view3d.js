@@ -551,6 +551,40 @@
     overlay.querySelector('#v3dClose').onclick = close;
   }
 
+  /* Which edge is a booth's back? Booths stand back-to-back, so the
+     edge that ABUTS another booth is the back — that's where the shared
+     drape line runs, and the opposite side opens onto the aisle. Only
+     when a booth touches nothing (a lone perimeter row) do we fall back
+     to "back faces away from the hall centre". */
+  function boothBack(g, spaceGeos, W, H) {
+    const eps = 0.8;
+    const abut = { n: false, s: false, e: false, w: false };
+    for (const o of spaceGeos) {
+      if (o === g) continue;
+      const xOv = Math.min(g.x + g.w, o.x + o.w) - Math.max(g.x, o.x);
+      const zOv = Math.min(g.y + g.h, o.y + o.h) - Math.max(g.y, o.y);
+      if (xOv > Math.min(g.w, o.w) * 0.5) {
+        if (Math.abs(o.y + o.h - g.y) < eps) abut.n = true;
+        if (Math.abs(g.y + g.h - o.y) < eps) abut.s = true;
+      }
+      if (zOv > Math.min(g.h, o.h) * 0.5) {
+        if (Math.abs(o.x + o.w - g.x) < eps) abut.w = true;
+        if (Math.abs(g.x + g.w - o.x) < eps) abut.e = true;
+      }
+    }
+    const cx = g.x + g.w / 2, cz = g.y + g.h / 2;
+    const awayNS = cz - H / 2 >= 0 ? 's' : 'n';
+    const awayEW = cx - W / 2 >= 0 ? 'e' : 'w';
+    /* in an east-west row with a booth touching exactly one long edge,
+       that touching edge is the back; same logic rotated for n-s rows */
+    if ((abut.e || abut.w) && abut.n !== abut.s) return abut.n ? 'n' : 's';
+    if ((abut.n || abut.s) && abut.e !== abut.w) return abut.e ? 'e' : 'w';
+    const touching = ['n', 's', 'e', 'w'].filter((d) => abut[d]);
+    if (touching.length === 1) return touching[0];
+    return Math.abs(cz - H / 2) >= Math.abs(cx - W / 2) ? awayNS : awayEW;
+  }
+  FP._boothBack = boothBack;   /* shared with layout tooling */
+
   /* A run of pipe & drape: uprights every ~10 ft, chrome crossbar,
      cloth hanging shy of the floor. Centred on x, running along x. */
   function drapeRun(len, h, colorHex) {
@@ -626,6 +660,9 @@
        drape elements — explicit drape (a traced plan like Schaumburg)
        always wins over the standard-build guess. */
     const hasRealDrape = (FP.plan.elements || []).some((e) => e.kind === 'drape');
+    const spaceGeos = (FP.plan.elements || [])
+      .filter((e) => e.kind === 'space' && e.shape === 'rect' && e.geometry?.w !== undefined)
+      .map((e) => e.geometry);
 
     /* elements — children carry absolute coordinates, so one flat pass */
     for (const el of FP.plan.elements || []) {
@@ -735,10 +772,7 @@
 
         if (!hasRealDrape && el.props?.spaceType !== 'island') {
           const drapeCol = 0x24272e, backH = 8, sideH = 3;
-          const cx = g.x + g.w / 2, cz = g.y + g.h / 2;
-          const dx = cx - W / 2, dz = cz - H / 2;
-          const back = Math.abs(dz) >= Math.abs(dx)
-            ? (dz >= 0 ? 's' : 'n') : (dx >= 0 ? 'e' : 'w');
+          const back = boothBack(g, spaceGeos, W, H);
 
           /* [len, height, offsetX, offsetZ, rotDeg] per run */
           const runs = {
