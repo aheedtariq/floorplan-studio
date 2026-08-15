@@ -226,7 +226,56 @@
     zone: 'ZONE', carpet: '', turf: '', 'rigging-zone': 'RIGGING',
   };
 
+  /* the universal blue restroom sign: white figures, divider bar */
+  function restroomSignTexture() {
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 256;
+    const x = c.getContext('2d');
+    x.fillStyle = '#1d5c8c';
+    x.fillRect(0, 0, 512, 256);
+    x.fillStyle = '#fff';
+    x.fillRect(252, 40, 8, 176);
+    /* male figure */
+    x.beginPath(); x.arc(150, 66, 24, 0, 7); x.fill();
+    x.fillRect(124, 96, 52, 72);
+    x.fillRect(126, 170, 18, 52);
+    x.fillRect(156, 170, 18, 52);
+    /* female figure */
+    x.beginPath(); x.arc(362, 66, 24, 0, 7); x.fill();
+    x.beginPath();
+    x.moveTo(362, 92); x.lineTo(320, 182); x.lineTo(404, 182);
+    x.closePath(); x.fill();
+    x.fillRect(344, 182, 14, 40);
+    x.fillRect(366, 182, 14, 40);
+    const t = new THREE.CanvasTexture(c);
+    t.anisotropy = 8;
+    return t;
+  }
+
   const BUILDERS = {
+    restroom(el, g) {
+      /* the floor says it, and a pole sign says it from across the hall */
+      const grp = new THREE.Group();
+      const tile = box(g.w, 0.07, g.h, mat(0xbfe0f2, { rough: .9 }));
+      tile.position.y = 0.045;
+      grp.add(tile);
+      const lbl = floorLabel(String(el.props?.label || 'RESTROOMS').toUpperCase(),
+        Math.max(g.w, g.h), Math.min(g.w, g.h));
+      if (g.h > g.w * 1.3) lbl.rotation.z = Math.PI / 2;
+      lbl.position.y = 0.1;
+      grp.add(lbl);
+      const pole = cyl(0.08, 0.08, 9, chromeMat(), 10);
+      pole.position.y = 4.5;
+      grp.add(pole);
+      const face = new THREE.MeshBasicMaterial({ map: restroomSignTexture() });
+      const side = mat(0x14497a, { rough: .5 });
+      const panel = new THREE.Mesh(new THREE.BoxGeometry(4.4, 2.2, 0.22),
+        [side, side, side, side, face, face]);
+      panel.position.y = 10.1;
+      grp.add(panel);
+      return grp;
+    },
+
     stairs(el, g) {
       /* a staircase is steps, not a ramp-shaped box */
       const grp = new THREE.Group();
