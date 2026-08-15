@@ -282,7 +282,11 @@
       flags: { aisle: true, keepClear: true }, fields: [F.label] },
     { id: 'zone', name: 'Named zone / pavilion', cat: 'zones', layer: 'zones', shape: 'rect', scope: ['hall'],
       size: [40, 40], fill: '#a855f7', stroke: '#9333ea', opacity: .1, dashed: true, icon: ic.zone,
-      flags: { zone: true }, fields: [F.label, F.color] },
+      flags: { zone: true },
+      fields: [F.label, F.color,
+        { key: 'ceiling', label: 'Ceiling height', type: 'number', unit: 'len',
+          help: 'Overhead clearance — shown on the zone label so crews and '
+              + 'exhibitors know exactly how many feet they have' }] },
 
     /* ---- amenities ---- */
     { id: 'registration', name: 'Registration', cat: 'amenities', layer: 'amenities', shape: 'rect', scope: ['hall'],

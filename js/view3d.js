@@ -838,11 +838,34 @@
     floor.receiveShadow = true;
     model.add(floor);
 
-    const grid = new THREE.GridHelper(Math.max(W, H), Math.max(W, H) / (FP.plan.grid || 5),
-                                      0xd5dae4, 0xe8ebf2);
-    grid.position.set(W / 2, 0.012, H / 2);
-    grid.scale.set(W / Math.max(W, H), 1, H / Math.max(W, H));
-    model.add(grid);
+    /* a real survey grid: minor lines at the plan grid (5 ft), heavier
+       majors every 10 ft, drawn at exact spacing on both axes so every
+       line matches the perimeter ruler numbers. (The old GridHelper was
+       scaled non-uniformly — its cells weren't actually 5 ft on a
+       non-square hall.) */
+    {
+      const step = FP.plan.grid || 5;
+      const minor = [], major = [];
+      for (let x = 0; x <= W + 0.01; x += step) {
+        (Math.round(x) % (step * 2) === 0 ? major : minor).push(x, 0, 0, x, 0, H);
+      }
+      for (let z = 0; z <= H + 0.01; z += step) {
+        (Math.round(z) % (step * 2) === 0 ? major : minor).push(0, 0, z, W, 0, z);
+      }
+      const lines = (arr, color, opacity) => {
+        const geo = new THREE.BufferGeometry();
+        geo.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
+        const seg = new THREE.LineSegments(geo,
+          new THREE.LineBasicMaterial({ color, transparent: true, opacity }));
+        seg.userData.isHelper = true;
+        return seg;
+      };
+      const grid = new THREE.Group();
+      grid.add(lines(minor, 0xc2c9d6, 0.45));
+      grid.add(lines(major, 0x9aa3b5, 0.7));
+      grid.position.y = 0.02;
+      model.add(grid);
+    }
 
     /* hall perimeter: a low curb so the boundary reads without caging
        the camera */
@@ -896,6 +919,16 @@
         strip.position.set(px2, 0.045, pz);
         model.add(strip);
       });
+
+    /* overall hall dimensions, stated in 3D just like the 2D arrows:
+       width across the top edge, depth along the left edge */
+    const dimW = floorLabel(`${Math.round(W)} FT`, 28, 8);
+    dimW.position.set(W / 2, 0.045, -7);
+    model.add(dimW);
+    const dimH = floorLabel(`${Math.round(H)} FT`, 28, 8);
+    dimH.rotation.z = Math.PI / 2;
+    dimH.position.set(-7, 0.045, H / 2);
+    model.add(dimH);
 
     /* Booth framing is inferred only when the plan carries no real
        drape elements — explicit drape (a traced plan like Schaumburg)
@@ -1126,8 +1159,11 @@
 
       /* areas that stay flat carry their name on the slab */
       if (el.kind in FLAT_LABELS) {
-        const text = String(el.props?.label || FLAT_LABELS[el.kind] || '')
+        let text = String(el.props?.label || FLAT_LABELS[el.kind] || '')
           .trim().toUpperCase();
+        /* a zone with a known ceiling says HOW low, not just "low" */
+        const ceil = Number(el.props?.ceiling);
+        if (text && ceil > 0) text += ` · ${ceil} FT CLEARANCE`;
         if (text && Math.min(g.w, g.h) >= 3.5) {
           const vertical = g.h > g.w * 1.3;
           const lbl = floorLabel(text, vertical ? g.h : g.w, vertical ? g.w : g.h);
