@@ -38,11 +38,7 @@
     $('btnOut').onclick = async () => { await FP.auth.signOut(); location.replace('login.html'); };
     $('btnHelp').onclick = () => FP.tour.open();
     $('btnNew').onclick = newPlanModal;
-    $('btnAdmin').onclick = () => {
-      /* the Admin panel lives in the Studio; open it there */
-      FP.setPref('store', 'supabase');
-      location.href = 'index.html#admin';
-    };
+    $('btnAdmin').onclick = () => (location.href = 'admin.html');
 
     await load();
     render();

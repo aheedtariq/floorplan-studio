@@ -147,7 +147,14 @@
 
   A.signOut = async () => {
     const sb = A.client();
-    if (sb) await sb.auth.signOut();
+    /* An expired session makes the server-side signOut fail — which used
+       to leave the stale token in storage and bounce the user straight
+       back to the dashboard. Local sign-out must always succeed. */
+    try { if (sb) await sb.auth.signOut(); } catch { /* still signing out */ }
+    try {
+      const ref = new URL(CONFIG.url).hostname.split('.')[0];
+      localStorage.removeItem(`sb-${ref}-auth-token`);
+    } catch { /* storage unavailable — nothing to clear */ }
     session = null;
     profile = null;
     FP.emit('auth', { session: null, profile: null });

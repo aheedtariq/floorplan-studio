@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Admin — Floorplan Studio · Source One Events</title>
+<link rel="stylesheet" href="styles.css?v=104" />
+<style>
+  body { background: var(--bg); color: var(--tx); font: 14px/1.5 var(--font); margin: 0; }
+  .top {
+    display: flex; align-items: center; gap: 14px; padding: 10px 22px;
+    background: var(--bg-2); border-bottom: 1px solid var(--line);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .top .grow { flex: 1; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 26px 22px 60px; }
+  .page-h { display: flex; align-items: baseline; gap: 12px; margin: 4px 0 4px; }
+  .page-h h1 { font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin: 0; }
+  .page-sub { color: var(--tx-3); font-size: 13.5px; margin: 0 0 22px; }
+  h2.sec { font-size: 15px; font-weight: 700; margin: 30px 0 12px; }
+  h2.sec span { font-weight: 400; color: var(--tx-3); font-size: 12.5px; margin-left: 8px; }
+
+  .ccard {
+    background: var(--card, var(--bg-2)); border: 1px solid var(--line);
+    border-radius: 14px; padding: 18px 20px; margin-bottom: 14px;
+  }
+  .ccard-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .ccard-head h3 { margin: 0; font-size: 15.5px; font-weight: 700; }
+  .chip {
+    font-size: 10.5px; font-weight: 700; letter-spacing: .05em; border-radius: 99px;
+    padding: 3.5px 9px; text-transform: uppercase;
+  }
+  .chip.ok   { background: color-mix(in srgb, #16a34a 14%, transparent); color: #15803d; }
+  .chip.warn { background: color-mix(in srgb, #d97706 14%, transparent); color: #b45309; }
+  .chip.mute { background: var(--bg-3); color: var(--tx-3); }
+  .chip.err  { background: color-mix(in srgb, #dc2626 12%, transparent); color: #b91c1c; }
+  [data-theme="dark"] .chip.ok { color: #4ade80; }
+  [data-theme="dark"] .chip.warn { color: #fbbf24; }
+  [data-theme="dark"] .chip.err { color: #f87171; }
+
+  .rowline { display: flex; gap: 8px; align-items: center; margin-top: 10px; }
+  .rowline label { font-size: 11.5px; font-weight: 650; color: var(--tx-3); width: 82px; flex: 0 0 auto; }
+  .rowline .inp { flex: 1; padding: 8px 11px; font-size: 13px; }
+  .plans { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; }
+  .plan-chip {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600;
+    background: var(--bg-3); border: 1px solid var(--line); border-radius: 8px;
+    padding: 6px 10px; cursor: pointer; color: var(--tx);
+  }
+  .plan-chip:hover { border-color: var(--accent); color: var(--accent); }
+  .plan-chip .x { color: var(--tx-3); font-weight: 700; padding: 0 2px; }
+  .plan-chip .x:hover { color: var(--err, #dc2626); }
+  .newform {
+    display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px;
+    background: var(--bg-2); border: 1.5px dashed var(--line-2);
+    border-radius: 14px; padding: 14px 16px;
+  }
+  table.team { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  table.team th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .05em;
+    color: var(--tx-3); padding: 8px 10px; border-bottom: 1.5px solid var(--line); }
+  table.team td { padding: 9px 10px; border-bottom: 1px solid var(--line); }
+  .muted { color: var(--tx-3); }
+  #pageMsg { min-height: 20px; font-size: 13px; margin-top: 6px; }
+  #pageMsg.ok { color: #15803d; } #pageMsg.err { color: #b91c1c; }
+  .empty-note { color: var(--tx-3); border: 1.5px dashed var(--line-2); border-radius: 12px;
+    padding: 22px; text-align: center; }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="brand" href="home.html" title="Back to the dashboard">
+    <span class="brand-mark"><svg viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="#7c5cfc"/><path d="M8 12h16M8 12v10h16V12M8 17h16M13 12v10" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/></svg></span>
+    <span class="brand-text"><span class="brand-title">Floorplan Studio</span><span class="brand-sub">SOURCE ONE EVENTS</span></span>
+  </a>
+  <div class="grow"></div>
+  <span id="who" class="muted"></span>
+  <button class="btn ghost" id="btnHome">Dashboard</button>
+  <button class="btn ghost" id="btnOut">Sign out</button>
+</header>
+
+<div class="wrap">
+  <div class="page-h"><h1>Admin</h1></div>
+  <p class="page-sub">Client companies, their access links, and who's actually using them.
+    Every rule here is enforced by the database — this page just makes it visible.</p>
+  <div id="pageMsg"></div>
+  <div id="content"><div class="empty-note">Loading…</div></div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
+<script src="js/geometry.js?v=73"></script>
+<script src="js/config.js?v=101"></script>
+<script src="js/state.js?v=99"></script>
+<script src="js/backend.js?v=105"></script>
+<script src="js/adminpage.js?v=105"></script>
+</body>
+</html>
