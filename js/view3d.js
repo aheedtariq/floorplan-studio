@@ -41,7 +41,7 @@
     /* floor markings and annotations are not walls — keep them flat or
        out of the model entirely, or the walkthrough reads as a maze */
     'egress-path': 0, 'electrical-run': 0, arrow: 0, dimension: 0,
-    text: 0, 'rigging-zone': 0, 'hanging-sign': 0, 'water-drop': 0,
+    text: 0, 'rigging-zone': 0, 'hanging-sign': 14, 'water-drop': 0,
     'network-drop': 0, 'power-drop': 0, 'rigging-point': 0, disconnect: 0,
   };
 
@@ -412,6 +412,84 @@
       return grp;
     },
 
+    display(el, g) {
+      /* a booth graphic is a printed panel on feet, not a slab */
+      const grp = new THREE.Group();
+      const w = Math.max(g.w, g.h), h = Number(el.props?.height) || 8;
+      const p = box(w, h - 0.2, 0.25,
+        mat(new THREE.Color(el.props?.color || '#6366f1').getHex(), { rough: .6 }), 0.02);
+      p.position.y = (h - 0.2) / 2 + 0.2;
+      grp.add(p);
+      for (const s of [-1, 1]) {
+        const foot = box(0.8, 0.08, 1.4, chromeMat());
+        foot.position.set(s * (w / 2 - 0.5), 0.04, 0);
+        grp.add(foot);
+      }
+      return grp;
+    },
+
+    'poster-board'(el, g) {
+      const grp = new THREE.Group();
+      const w = Math.max(g.w, g.h), h = 6;
+      const frame = box(w, h * 0.62, 0.2, mat(0x9aa0aa, { rough: .5, metal: .4 }), 0.02);
+      frame.position.y = h - (h * 0.62) / 2;
+      grp.add(frame);
+      const face = box(w - 0.25, h * 0.62 - 0.25, 0.06, mat(0xf7f6f2, { rough: .8 }));
+      face.position.set(0, h - (h * 0.62) / 2, 0.1);
+      grp.add(face);
+      for (const s of [-1, 1]) {
+        const leg = box(0.15, h - h * 0.62, 0.15, mat(0x9aa0aa, { rough: .5, metal: .4 }));
+        leg.position.set(s * (w / 2 - 0.3), (h - h * 0.62) / 2, 0);
+        grp.add(leg);
+      }
+      return grp;
+    },
+
+    'grid-wall'(el, g) {
+      const grp = new THREE.Group();
+      const w = Math.max(g.w, g.h), h = 6;
+      const m = chromeMat();
+      for (const [bw, bh, x, y] of [
+        [w, 0.1, 0, h - 0.05], [w, 0.1, 0, 0.6],
+        [0.1, h - 0.55, -w / 2 + 0.05, (h + 0.55) / 2 - 0.28],
+        [0.1, h - 0.55, w / 2 - 0.05, (h + 0.55) / 2 - 0.28]]) {
+        const bar = box(bw, bh, 0.1, m);
+        bar.position.set(x, y, 0);
+        grp.add(bar);
+      }
+      const n = Math.max(2, Math.floor(w / 0.6));
+      for (let i = 1; i < n; i++) {
+        const bar = box(0.04, h - 0.7, 0.04, m);
+        bar.position.set(-w / 2 + (w / n) * i, (h + 0.6) / 2 - 0.3, 0);
+        grp.add(bar);
+      }
+      for (const s of [-1, 1]) {
+        const foot = box(0.7, 0.08, 1.6, m);
+        foot.position.set(s * (w / 2 - 0.4), 0.04, 0);
+        grp.add(foot);
+      }
+      return grp;
+    },
+
+    shelf(el, g) {
+      const grp = new THREE.Group();
+      const w = Math.max(g.w, g.h), d = Math.max(Math.min(g.w, g.h), 0.8);
+      const wood = mat(0xd9d2c4, { rough: .65 });
+      for (const s of [-1, 1]) {
+        const side = box(0.12, 5, d, mat(0x8d8579, { rough: .6 }));
+        side.position.set(s * (w / 2 - 0.06), 2.5, 0);
+        grp.add(side);
+      }
+      for (const y of [1.6, 3.1, 4.6]) {
+        const board = box(w - 0.2, 0.12, d, wood);
+        board.position.y = y;
+        grp.add(board);
+      }
+      return grp;
+    },
+
+    stage: (el, g) => BUILDERS['stage-deck'](el, g),
+
     'entrance-unit'(el, g) {
       const grp = new THREE.Group();
       const h = Number(el.props?.height) || 12;
@@ -581,6 +659,29 @@
 
       if (el.shape === 'marker') {
         const g = el.geometry;
+
+        if (el.kind === 'hanging-sign') {
+          /* the circle sign hangs from the steel — ring at rigging
+             height, cables running up to it */
+          const grp = new THREE.Group();
+          const r = Math.max(g.r || 2, 1.5);
+          const ring = new THREE.Mesh(
+            new THREE.TorusGeometry(r, r * 0.22, 12, 40),
+            mat(new THREE.Color(el.props?.color || '#ec4899').getHex(), { rough: .55 }));
+          ring.rotation.x = Math.PI / 2;
+          ring.position.y = h;
+          grp.add(ring);
+          for (const a of [0.5, 2.6, 4.7]) {
+            const cable = cyl(0.025, 0.025, 24 - h, mat(0x3a3d44, { rough: .5 }), 6);
+            cable.position.set(Math.cos(a) * r * 0.75, h + (24 - h) / 2, Math.sin(a) * r * 0.75);
+            grp.add(cable);
+          }
+          grp.position.set(g.x, 0, g.y);
+          grp.traverse((o) => { if (o.isMesh) o.castShadow = true; });
+          model.add(grp);
+          continue;
+        }
+
         const mesh = new THREE.Mesh(
           new THREE.CylinderGeometry(0.5, 0.5, 1.2, 16),
           new THREE.MeshStandardMaterial({ color: colorFor(el, k), roughness: .7 }));

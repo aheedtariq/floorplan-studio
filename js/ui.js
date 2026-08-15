@@ -1799,6 +1799,15 @@
         FP.setPref('catalogCollapsed', [...collapsed]);
       }
       renderCatalog();
+
+      /* Opening a section also TAKES you to it. The re-render replaced
+         the clicked node, so find the fresh header and bring it to the
+         top of the panel — its items land right under the cursor
+         instead of unfolding somewhere off-screen. */
+      if (nowOpen) {
+        document.querySelector(`[data-toggle="${CSS.escape(id)}"]`)
+          ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
 
     $('boothPresets').addEventListener('click', (e) => {
