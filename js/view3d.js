@@ -715,15 +715,38 @@
       <div class="v3d-top">
         <b>3D preview</b>
         <span class="v3d-hint">Scroll zooms to your cursor · double-click flies there ·
-          click selects · drag an object moves it · R rotates · drag floor to orbit</span>
+          click selects · drag an object moves it · drag floor to orbit</span>
         <button class="btn ghost" id="v3dFit">Fit floor</button>
         <button class="btn ghost" id="v3dClose">Back to plan</button>
+      </div>
+      <div class="v3d-selbar" id="v3dSelBar" hidden>
+        <b></b>
+        <button class="mini" data-vrot="-45">↺ 45°</button>
+        <button class="mini" data-vrot="45">↻ 45°</button>
+        <button class="mini" data-vrot="90">↻ 90°</button>
+        <button class="mini" data-vrot="0">Reset</button>
       </div>`;
     const stage = document.getElementById('stage')
                || document.getElementById('vStage') || document.body;
     stage.appendChild(overlay);
     overlay.querySelector('#v3dClose').onclick = close;
     overlay.querySelector('#v3dFit').onclick = () => flyFit();
+    overlay.querySelectorAll('[data-vrot]').forEach((b) =>
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        rotateSel(Number(b.dataset.vrot));
+      }));
+  }
+
+  /** Turn the selected rect by a step; 0 resets. Shared by the 3D
+      rotate bar and the R key. */
+  function rotateSel(step) {
+    const el = (FP.plan.elements || []).find((e) => e.id === FP.state.selection?.[0]);
+    if (!el || el.shape !== 'rect' || FP.isLocked?.(el)) return;
+    FP.snapshot();
+    el.geometry.rot = step === 0 ? 0
+      : (((el.geometry.rot || 0) + step) % 360 + 360) % 360;
+    FP.changed();
   }
 
   /* Which edge is a booth's back? Booths stand back-to-back, so the
@@ -1190,7 +1213,11 @@
             -((ev.clientY - r.top) / r.height) * 2 + 1);
     ray.setFromCamera(ptr, camera);
     for (const h of ray.intersectObjects(scene.children, true)) {
-      if (h.object.isSprite || h.object.type === 'GridHelper') continue;
+      /* helpers (selection box, grid) and label sprites are not
+         clickable things — they must never eat a click meant for the
+         object they decorate */
+      if (h.object.isSprite || h.object.type === 'GridHelper' ||
+          h.object.userData.isHelper) continue;
       let o = h.object;
       while (o && !o.userData.elId) o = o.parent;
       if (o) return { obj: o, point: h.point };
@@ -1213,8 +1240,19 @@
     const obj = id && groupFor(id);
     if (obj) {
       selBox = new THREE.BoxHelper(obj, 0x7c5cfc);
+      selBox.userData.isHelper = true;
       scene.add(selBox);
     }
+    syncSelBar();
+  }
+
+  function syncSelBar() {
+    const bar = overlay?.querySelector('#v3dSelBar');
+    if (!bar) return;
+    const el = (FP.plan.elements || []).find((e) => e.id === FP.state.selection?.[0]);
+    if (!opened || !el || el.shape !== 'rect') { bar.hidden = true; return; }
+    bar.hidden = false;
+    bar.querySelector('b').textContent = FP.config.kind(el.kind).name;
   }
 
   const SNAP = 0.5;
@@ -1227,6 +1265,9 @@
   }
 
   function onDown(ev) {
+    /* capture-phase on the overlay: only the canvas itself, never the
+       overlay's own buttons */
+    if (ev.target !== renderer.domElement) return;
     fly = null;                        /* user takes over from any flight */
     if (ev.button !== 0) return;
     const hit = pick(ev);
@@ -1234,6 +1275,7 @@
     /* armed catalog kind + empty floor = place it right here */
     const armed = FP.state.armedKind;
     if (!hit.obj && armed && ['draw', 'marker'].includes(FP.state.tool)) {
+      ev.stopPropagation();            /* the camera never sees this press */
       const k = FP.config.kind(armed);
       if (k.shape === 'rect' || k.shape === 'marker') {
         const [w, h] = k.size || [4, 2];
@@ -1249,6 +1291,10 @@
     }
 
     if (!hit.obj) return;               /* empty floor: orbit as usual */
+
+    /* an object press belongs to the OBJECT — stop it before the orbit
+       controls can grab the pointer and move the camera instead */
+    ev.stopPropagation();
 
     const el = (FP.plan.elements || []).find((e) => e.id === hit.obj.userData.elId);
     if (!el) return;
@@ -1298,11 +1344,7 @@
     if (!opened) return;
     if (/INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName || '')) return;
     if (ev.key === 'r' || ev.key === 'R') {
-      const el = (FP.plan.elements || []).find((e) => e.id === FP.state.selection?.[0]);
-      if (!el || el.shape !== 'rect') return;
-      FP.snapshot();
-      el.geometry.rot = ((el.geometry.rot || 0) + 45) % 360;
-      FP.changed();
+      rotateSel(45);
       ev.preventDefault();
     } else if (ev.key === 'Escape') {
       FP.state.selection = [];
@@ -1313,14 +1355,18 @@
 
   function initEditing() {
     ray = new THREE.Raycaster();
+    /* default line threshold is a whole foot — the selection box would
+       swallow clicks aimed at the object inside it */
+    ray.params.Line = { threshold: 0.01 };
+    ray.params.Points = { threshold: 0.01 };
     ptr = new THREE.Vector2();
     floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
-    const c = renderer.domElement;
-    c.addEventListener('pointerdown', onDown);
-    c.addEventListener('pointermove', onMove);
-    c.addEventListener('pointerup', onUp);
-    c.addEventListener('pointerleave', onUp);
-    c.addEventListener('dblclick', (ev) => {
+    /* capture on the OVERLAY so object presses are decided before the
+       orbit controls (listening on the canvas) ever run */
+    overlay.addEventListener('pointerdown', onDown, true);
+    window.addEventListener('pointermove', onMove);
+    window.addEventListener('pointerup', onUp);
+    renderer.domElement.addEventListener('dblclick', (ev) => {
       const hit = pick(ev);
       if (hit.point) flyPoint(hit.point.x, hit.point.z, hit.obj ? 22 : 45);
     });

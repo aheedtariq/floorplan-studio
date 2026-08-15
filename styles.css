@@ -374,6 +374,15 @@ a.brand:hover .brand-title { color: var(--accent); }
 .v3d-hint { font-size: 11px; color: var(--tx-3); margin-right: auto; }
 .v3d canvas { display: block; flex: 1; }
 
+/* floating rotate bar for the selected object in 3D */
+.v3d-selbar {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%);
+  z-index: 30; display: flex; align-items: center; gap: 6px;
+  background: var(--bg-2); border: 1px solid var(--line);
+  border-radius: 99px; padding: 6px 10px 6px 14px; box-shadow: var(--shadow);
+}
+.v3d-selbar b { font-size: 12.5px; font-weight: 650; margin-right: 4px; white-space: nowrap; }
+
 #canvas { width: 100%; height: 100%; display: block; touch-action: none; cursor: default; }
 #canvas.tool-draw { cursor: crosshair; }
 #canvas.tool-pan { cursor: grab; }
