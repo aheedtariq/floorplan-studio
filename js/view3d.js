@@ -551,6 +551,27 @@
     overlay.querySelector('#v3dClose').onclick = close;
   }
 
+  /* A run of pipe & drape: uprights every ~10 ft, chrome crossbar,
+     cloth hanging shy of the floor. Centred on x, running along x. */
+  function drapeRun(len, h, colorHex) {
+    const grp = new THREE.Group();
+    const n = Math.max(2, Math.round(len / 10) + 1);
+    for (let i = 0; i < n; i++) {
+      const x = -len / 2 + (len / (n - 1)) * i;
+      const post = cyl(0.06, 0.06, h, chromeMat(), 8);
+      post.position.set(x, h / 2, 0);
+      grp.add(post);
+    }
+    const bar = cyl(0.05, 0.05, len, chromeMat(), 8);
+    bar.rotation.z = Math.PI / 2;
+    bar.position.y = h - 0.05;
+    grp.add(bar);
+    const cloth = box(len - 0.08, h - 0.3, 0.18, mat(colorHex, { rough: .96 }));
+    cloth.position.y = (h - 0.3) / 2 + 0.22;
+    grp.add(cloth);
+    return grp;
+  }
+
   /* ---------------- scene build ---------------- */
   function rebuild() {
     /* wipe previous model */
@@ -600,6 +621,11 @@
       curb.castShadow = true;
       model.add(curb);
     });
+
+    /* Booth framing is inferred only when the plan carries no real
+       drape elements — explicit drape (a traced plan like Schaumburg)
+       always wins over the standard-build guess. */
+    const hasRealDrape = (FP.plan.elements || []).some((e) => e.kind === 'drape');
 
     /* elements — children carry absolute coordinates, so one flat pass */
     for (const el of FP.plan.elements || []) {
@@ -694,6 +720,59 @@
       if (el.shape !== 'rect') continue;         /* poly zones: skip in v1 */
       const g = el.geometry;
       if (!g || g.w === undefined) continue;
+
+      /* A booth is a built thing, not a coloured tile: status-coloured
+         carpet plus the standard pipe-and-drape build — 8 ft back wall,
+         3 ft side rails — with the back facing away from the hall
+         centre, the way inline rows actually stand. Islands stay open. */
+      if (el.kind === 'space') {
+        const grp = new THREE.Group();
+        const st = FP.config.status(el.props?.status);
+        const col = new THREE.Color(st?.color || '#94a3b8').getHex();
+        const tile = box(g.w, 0.07, g.h, mat(col, { rough: .92 }));
+        tile.position.y = 0.045;
+        grp.add(tile);
+
+        if (!hasRealDrape && el.props?.spaceType !== 'island') {
+          const drapeCol = 0x24272e, backH = 8, sideH = 3;
+          const cx = g.x + g.w / 2, cz = g.y + g.h / 2;
+          const dx = cx - W / 2, dz = cz - H / 2;
+          const back = Math.abs(dz) >= Math.abs(dx)
+            ? (dz >= 0 ? 's' : 'n') : (dx >= 0 ? 'e' : 'w');
+
+          /* [len, height, offsetX, offsetZ, rotDeg] per run */
+          const runs = {
+            n: [[g.w, backH, 0, -g.h / 2, 0],
+                [g.h, sideH, -g.w / 2, 0, 90], [g.h, sideH, g.w / 2, 0, 90]],
+            s: [[g.w, backH, 0, g.h / 2, 0],
+                [g.h, sideH, -g.w / 2, 0, 90], [g.h, sideH, g.w / 2, 0, 90]],
+            w: [[g.h, backH, -g.w / 2, 0, 90],
+                [g.w, sideH, 0, -g.h / 2, 0], [g.w, sideH, 0, g.h / 2, 0]],
+            e: [[g.h, backH, g.w / 2, 0, 90],
+                [g.w, sideH, 0, -g.h / 2, 0], [g.w, sideH, 0, g.h / 2, 0]],
+          }[back];
+          for (const [len, hh, ox, oz, deg] of runs) {
+            const run = drapeRun(len, hh, drapeCol);
+            run.position.set(ox, 0, oz);
+            run.rotation.y = (deg * Math.PI) / 180;
+            grp.add(run);
+          }
+        }
+
+        grp.position.set(g.x + g.w / 2, 0, g.y + g.h / 2);
+        if (g.rot) grp.rotation.y = -(g.rot * Math.PI) / 180;
+        grp.traverse((o) => { if (o.isMesh) o.castShadow = o.receiveShadow = true; });
+        model.add(grp);
+
+        if (el.props?.number) {
+          const spr = numberSprite(String(el.props.number));
+          if (spr) {
+            spr.position.set(g.x + g.w / 2, 9.2, g.y + g.h / 2);
+            model.add(spr);
+          }
+        }
+        continue;
+      }
 
       /* built kinds get real furniture; everything else keeps the tile */
       const build = BUILDERS[el.kind];
