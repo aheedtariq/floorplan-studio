@@ -2408,6 +2408,17 @@
     wireTopbar();
     syncToggles();
 
+    /* iPad portrait: the catalog collapses to the icon rail; a rail tap
+       slides the full catalog over the canvas, a canvas tap tucks it away */
+    const leftPanel = $('leftPanel');
+    const narrow = () => matchMedia('(max-width: 900px)').matches;
+    leftPanel?.addEventListener('click', (e) => {
+      if (!narrow()) return;
+      if (e.target.closest('.rail-btn')) leftPanel.classList.add('open');
+    });
+    $('canvas')?.addEventListener('pointerdown', () =>
+      leftPanel?.classList.remove('open'));
+
     /* keep panels in step with the model */
     let paneTimer = null;
     const schedulePane = () => {

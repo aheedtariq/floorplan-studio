@@ -865,4 +865,13 @@ kbd {
   .panel.left .panel-scroll { display: none; }
   .panel.left { width: var(--rail); }
   .brand-text, .plan-name-wrap { display: none; }
+  /* iPad portrait: tapping the icon rail slides the full catalog over
+     the canvas, so placing items stays possible on a narrow screen */
+  .panel.left.open .panel-scroll {
+    display: block; position: absolute; left: var(--rail); top: 0; bottom: 0;
+    width: 290px; z-index: 40; background: var(--bg-2);
+    border-right: 1px solid var(--line); box-shadow: var(--shadow);
+    overflow-y: auto;
+  }
+  .panel.left { position: relative; }
 }

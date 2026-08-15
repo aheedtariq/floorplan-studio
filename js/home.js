@@ -36,7 +36,7 @@
     }
 
     $('btnOut').onclick = async () => { await FP.auth.signOut(); location.replace('login.html'); };
-    $('btnHelp').onclick = () => welcome(true);
+    $('btnHelp').onclick = () => FP.tour.open();
     $('btnNew').onclick = newPlanModal;
     $('btnAdmin').onclick = () => {
       /* the Admin panel lives in the Studio; open it there */
@@ -47,7 +47,8 @@
     await load();
     render();
 
-    if (!FP.prefs.homeWelcomeSeen) welcome(false);
+    /* first sign-in: the full walkthrough, skippable on every page */
+    if (!FP.prefs.tourDone) FP.tour.open();
   }
 
   async function load() {
@@ -191,38 +192,8 @@
     </div>`;
   }
 
-  /* ---------------- welcome / instructions ---------------- */
-  function welcome(manual) {
-    const staff = !FP.auth.isClient();
-    const steps = staff
-      ? [
-          ['Build or open a plan', 'Click a card to open it in the Studio — or <b>New plan</b>, then trace the venue from a photo (Import reference image, scale it, trace the walls, remove the photo).'],
-          ['Add the photos on site', 'Shoot the venue’s posted floor plan straight-on and note one real measurement. When you import a photo into a cloud plan, the original is saved to that plan’s photo library automatically.'],
-          ['Lay out the show', 'Quick booths, booth rows, and the Source One rentals catalog — tables, lounges, bars, staging — all at real sizes. The Safety tab flags anything unbuildable.'],
-          ['Hand it to the client', 'Open <b>Admin</b> → add the client company and assign the plan. Every client has one permanent link — set their access password and send them link + password. They see and edit only their own plans.'],
-          ['Show it in 3D', 'The <b>3D</b> button stands the plan up as a walkthrough — the fastest way to get a client to say "move the bar now, not on load-in day."'],
-        ]
-      : [
-          ['Open your plan', 'Click your event card. Everything you see is live — the Source One team works on the same plan.'],
-          ['Arrange your space', 'Drag tables, seating, and displays from the catalog on the left. Changes save automatically.'],
-          ['Walk it in 3D', 'Click <b>3D</b> in the top bar to stand inside your event and orbit around it.'],
-          ['Locked after the freeze date', 'Up to the freeze date you can adjust freely; after that the layout locks so the build matches what you approved.'],
-        ];
-
-    overlay(`<div class="sheet">
-      <h2>${staff ? 'How this works' : 'Welcome to your event workspace'}</h2>
-      <p>${staff
-        ? 'The 60-second version. The full manual is in the user guide.'
-        : 'Set up your event exactly how you want it — here’s the short version.'}</p>
-      ${steps.map(([t, d], i) => `<div class="step"><div class="n">${i + 1}</div><div><b>${t}</b><span>${d}</span></div></div>`).join('')}
-      <div class="sheet-foot">
-        <a href="guide.html" target="_blank" rel="noopener">Open the full user guide</a>
-        <div class="grow"></div>
-        <button class="btn primary" id="wClose">${manual ? 'Close' : 'Got it — let’s go'}</button>
-      </div>
-    </div>`);
-    $('wClose').onclick = () => { FP.setPref('homeWelcomeSeen', 1); closeOverlay(); };
-  }
+  /* The first-login walkthrough lives in tour.js (FP.tour.open) — the
+     dashboard just triggers it: automatically once, then from Help. */
 
   /* ---------------- client link ----------------
      One PERMANENT link per client company + a password staff set.
