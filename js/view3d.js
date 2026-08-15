@@ -714,8 +714,9 @@
     overlay.innerHTML = `
       <div class="v3d-top">
         <b>3D preview</b>
-        <span class="v3d-hint">Scroll zooms to your cursor · double-click flies there ·
-          click selects · drag an object moves it · drag floor to orbit</span>
+        <span class="v3d-hint">Drag the floor to slide the view · right-drag to orbit ·
+          scroll zooms to your cursor · double-click flies there ·
+          drag an object to move it</span>
         <button class="btn ghost" id="v3dFit">Fit floor</button>
         <button class="btn ghost" id="v3dClose">Back to plan</button>
       </div>
@@ -1444,6 +1445,17 @@
       controls.panSpeed = 1.2;
       controls.screenSpacePanning = false;
       controls.minDistance = 4;
+      /* grabbing the floor DRAGS the view like a map — the intuitive
+         default; orbiting lives on the right button */
+      controls.mouseButtons = {
+        LEFT: THREE.MOUSE.PAN,
+        MIDDLE: THREE.MOUSE.DOLLY,
+        RIGHT: THREE.MOUSE.ROTATE,
+      };
+      controls.touches = {
+        ONE: THREE.TOUCH.PAN,
+        TWO: THREE.TOUCH.DOLLY_ROTATE,
+      };
 
       /* the model follows every edit, so 3D can stay open while the
          other side moves furniture */
