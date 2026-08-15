@@ -261,19 +261,85 @@
 
     'fire-exit'(el, g) {
       const grp = new THREE.Group();
-      const w = Math.max(g.w, g.h), d = Math.min(g.w, g.h);
+      const along = g.w >= g.h;
+      const len = Math.max(g.w, g.h);
       const pad = box(g.w, 0.12, g.h, mat(0xd93a3a, { rough: .8 }));
       pad.position.y = 0.06;
       grp.add(pad);
       const lbl = floorLabel('FIRE EXIT', g.w, g.h);
       lbl.position.y = 0.15;
+      if (!along) lbl.rotation.z = Math.PI / 2;
       grp.add(lbl);
-      /* illuminated EXIT box where the door head would be */
-      const sign = box(Math.min(w * 0.45, 3), 0.9, 0.3,
+
+      /* the actual door: steel double leaves with push bars, jambs,
+         header, and the illuminated EXIT box above */
+      const dgrp = new THREE.Group();
+      const doorW = Math.min(len * 0.8, 8);
+      const steel = mat(0x97a0ab, { rough: .55, metal: .3 });
+      for (const s of [-1, 1]) {
+        const leaf = box(doorW / 2 - 0.1, 7, 0.22, steel, 0.02);
+        leaf.position.set(s * (doorW / 4), 3.5, 0);
+        dgrp.add(leaf);
+        const bar = box(doorW / 2 - 0.6, 0.16, 0.12,
+          mat(0xd0d4da, { rough: .3, metal: .8 }));
+        bar.position.set(s * (doorW / 4), 3.1, 0.2);
+        dgrp.add(bar);
+      }
+      for (const s of [-1, 1]) {
+        const jamb = box(0.3, 7.5, 0.4, mat(0x50565f, { rough: .6 }));
+        jamb.position.set(s * (doorW / 2 + 0.15), 3.75, 0);
+        dgrp.add(jamb);
+      }
+      const header = box(doorW + 0.9, 0.5, 0.4, mat(0x50565f, { rough: .6 }));
+      header.position.y = 7.5;
+      dgrp.add(header);
+      const sign = box(Math.min(doorW * 0.5, 3), 0.8, 0.3,
         mat(0x0e5c2f, { emissive: 0x16a34a, rough: .4 }));
-      sign.position.y = 7.5;
-      grp.add(sign);
-      void d;
+      sign.position.y = 8.3;
+      dgrp.add(sign);
+      if (!along) dgrp.rotation.y = Math.PI / 2;
+      grp.add(dgrp);
+      return grp;
+    },
+
+    door(el, g) {
+      /* an entrance is glass double doors in a chrome frame */
+      const grp = new THREE.Group();
+      const along = g.w >= g.h;
+      const len = Math.max(g.w, g.h);
+      const dgrp = new THREE.Group();
+      const doorW = Math.min(len * 0.92, 14);
+      const nLeaves = Math.max(2, Math.round(doorW / 3.2));
+      const lw = doorW / nLeaves;
+      for (let i = 0; i < nLeaves; i++) {
+        const cxOff = -doorW / 2 + lw * (i + 0.5);
+        const glass = box(lw - 0.14, 7, 0.14, glassMat());
+        glass.position.set(cxOff, 3.5, 0);
+        dgrp.add(glass);
+        const stile = box(0.12, 7, 0.2, chromeMat());
+        stile.position.set(cxOff - lw / 2 + 0.07, 3.5, 0);
+        dgrp.add(stile);
+        const rail = box(lw - 0.2, 0.14, 0.18, chromeMat());
+        rail.position.set(cxOff, 3.2, 0.1);
+        dgrp.add(rail);
+      }
+      const endStile = box(0.12, 7, 0.2, chromeMat());
+      endStile.position.set(doorW / 2 - 0.07, 3.5, 0);
+      dgrp.add(endStile);
+      const header = box(doorW + 0.6, 0.55, 0.4,
+        mat(new THREE.Color(el.props?.color || '#16a34a').getHex(), { rough: .55 }));
+      header.position.y = 7.55;
+      dgrp.add(header);
+      if (!along) dgrp.rotation.y = Math.PI / 2;
+      grp.add(dgrp);
+
+      const name = String(el.props?.label || '').trim();
+      if (name) {
+        const lbl = floorLabel(name.toUpperCase(), Math.max(g.w, 10), Math.max(g.h, 4));
+        lbl.position.y = 0.1;
+        if (!along) lbl.rotation.z = Math.PI / 2;
+        grp.add(lbl);
+      }
       return grp;
     },
     sofa: (el, g) => softSeat(el, g),
@@ -817,22 +883,60 @@
         const g = el.geometry;
 
         if (el.kind === 'hanging-sign') {
-          /* the circle sign hangs from the steel — ring at rigging
-             height, cables running up to it */
           const grp = new THREE.Group();
-          const r = Math.max(g.r || 2, 1.5);
-          const ring = new THREE.Mesh(
-            new THREE.TorusGeometry(r, r * 0.22, 12, 40),
-            mat(new THREE.Color(el.props?.color || '#ec4899').getHex(), { rough: .55 }));
-          ring.rotation.x = Math.PI / 2;
-          ring.position.y = h;
-          grp.add(ring);
-          for (const a of [0.5, 2.6, 4.7]) {
-            const cable = cyl(0.025, 0.025, 24 - h, mat(0x3a3d44, { rough: .5 }), 6);
-            cable.position.set(Math.cos(a) * r * 0.75, h + (24 - h) / 2, Math.sin(a) * r * 0.75);
-            grp.add(cable);
+          const label = String(el.props?.label || '').trim();
+
+          if (label) {
+            /* a NAMED hanging sign is an aisle sign: a rectangular
+               panel with the name on both faces, hung on two cables */
+            const c = document.createElement('canvas');
+            c.width = 512; c.height = 160;
+            const x = c.getContext('2d');
+            x.fillStyle = '#131a26';
+            x.fillRect(0, 0, 512, 160);
+            let size = 86;
+            x.font = `700 ${size}px Inter, sans-serif`;
+            while (size > 30 && x.measureText(label.toUpperCase()).width > 460) {
+              size -= 6;
+              x.font = `700 ${size}px Inter, sans-serif`;
+            }
+            x.fillStyle = '#fff';
+            x.textAlign = 'center';
+            x.textBaseline = 'middle';
+            x.fillText(label.toUpperCase(), 256, 82);
+            const tex = new THREE.CanvasTexture(c);
+            tex.anisotropy = 8;
+            const w = 7, hh = w * 160 / 512;
+            const face = new THREE.MeshBasicMaterial({ map: tex });
+            const side = mat(0x131a26, { rough: .6 });
+            const panel = new THREE.Mesh(new THREE.BoxGeometry(w, hh, 0.25),
+              [side, side, side, side, face, face]);
+            panel.position.y = h;
+            grp.add(panel);
+            for (const s of [-1, 1]) {
+              const drop = 24 - h - hh / 2;
+              const cable = cyl(0.02, 0.02, drop, mat(0x3a3d44, { rough: .5 }), 6);
+              cable.position.set(s * (w / 2 - 0.6), h + hh / 2 + drop / 2, 0);
+              grp.add(cable);
+            }
+          } else {
+            /* unnamed: the SOE circle sign — ring at rigging height */
+            const r = Math.max(g.r || 2, 1.5);
+            const ring = new THREE.Mesh(
+              new THREE.TorusGeometry(r, r * 0.22, 12, 40),
+              mat(new THREE.Color(el.props?.color || '#ec4899').getHex(), { rough: .55 }));
+            ring.rotation.x = Math.PI / 2;
+            ring.position.y = h;
+            grp.add(ring);
+            for (const a of [0.5, 2.6, 4.7]) {
+              const cable = cyl(0.025, 0.025, 24 - h, mat(0x3a3d44, { rough: .5 }), 6);
+              cable.position.set(Math.cos(a) * r * 0.75, h + (24 - h) / 2, Math.sin(a) * r * 0.75);
+              grp.add(cable);
+            }
           }
+
           grp.position.set(g.x, 0, g.y);
+          if (g.rot) grp.rotation.y = -(g.rot * Math.PI) / 180;
           grp.traverse((o) => { if (o.isMesh) o.castShadow = true; });
           grp.userData.elId = el.id;
           model.add(grp);
