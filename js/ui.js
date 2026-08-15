@@ -197,9 +197,48 @@
   function armKind(kindId, size = null, spaceType = null) {
     const k = C.kind(kindId);
     const tool = { rect: 'draw', line: 'line', poly: 'poly', marker: 'marker', text: 'text' }[k.shape] || 'draw';
+    /* clicking the armed item again DISARMS it — back to the cursor */
+    if (S.tool === tool && S.armedKind === kindId &&
+        JSON.stringify(S.armedSize || null) === JSON.stringify(size || null)) {
+      S.armedSize = null;
+      S.armedSpaceType = null;
+      FP.setTool('select');
+      return;
+    }
     S.armedSize = size;
     S.armedSpaceType = spaceType;
     FP.setTool(tool, kindId);
+  }
+
+  /* A floating "back to cursor" chip whenever a placement tool is armed —
+     works over the 2D canvas and the 3D walkthrough alike. */
+  function ensureToolChip() {
+    let chip = $('toolChip');
+    if (!chip) {
+      chip = document.createElement('button');
+      chip.id = 'toolChip';
+      chip.className = 'tool-chip';
+      chip.hidden = true;
+      ($('stage') || document.body).appendChild(chip);
+      chip.onclick = () => {
+        S.armedSize = null;
+        S.armedSpaceType = null;
+        FP.setTool('select');
+      };
+    }
+    return chip;
+  }
+
+  function syncToolChip() {
+    const chip = ensureToolChip();
+    const active = S.tool !== 'select' && S.tool !== 'pan';
+    chip.hidden = !active;
+    if (active) {
+      const what = S.armedKind ? C.kind(S.armedKind).name
+        : { measure: 'Measure', calibrate: 'Calibrate', fill: 'Fill with booths',
+            line: 'Line', poly: 'Polygon', text: 'Text' }[S.tool] || 'Tool';
+      chip.innerHTML = `✕&nbsp; ${esc(what)} — back to cursor <kbd>Esc</kbd>`;
+    }
   }
 
   /* ============================================================
@@ -1776,6 +1815,12 @@
       const r = RAIL.find((x) => x.id === b.dataset.rail);
       if (!r) return;
       S.armedSize = null;
+      /* clicking the active tool again puts the cursor back */
+      if (r.tool !== 'select' && S.tool === r.tool &&
+          (r.kind || null) === (S.armedKind || null)) {
+        FP.setTool('select');
+        return;
+      }
       FP.setTool(r.tool, r.kind || null);
     });
 
@@ -2224,6 +2269,8 @@
        "not saved YET", not "your changes are not reaching the cloud". */
     FP.on('save-error', (e) => FP.toast(
       `Could not save: ${e?.message || 'unknown error'}`, true));
+    FP.on('tool', syncToolChip);
+    syncToolChip();
     FP.on('painted', updateScaleBar);
 
     FP.on('cursor', (w) => {
