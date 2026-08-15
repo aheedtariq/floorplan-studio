@@ -63,6 +63,11 @@
     S.scope = { type: 'hall', spaceId: null };
     S.showLabels = true;
     S.showGrid = false;
+    /* Labels gate themselves on screen legibility, so a zoomed-out
+       editor window would print a numberless floor. Exports paint at a
+       fixed reading zoom instead — every booth number and item name is
+       decided by the sheet, not by how wide the editor happened to be. */
+    S.view = { ...keep.view, zoom: 10 };
     FP.render.paintNow();
     const markup = svg.innerHTML;
     Object.assign(S, {
