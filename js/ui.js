@@ -1876,10 +1876,14 @@
           ['Esc', 'Cancel'], ['Double-click', 'Open booth interior'],
         ])}
       </div>`,
-      foot: `<a class="btn ghost" href="guide.html" target="_blank" rel="noopener"
+      foot: `<button class="btn ghost" data-tour>Interactive tour</button>
+             <a class="btn ghost" href="guide.html" target="_blank" rel="noopener"
                style="text-decoration:none">Open the user guide</a>
              <button class="btn primary" data-close>Got it</button>`,
-      onMount: (_b, foot) => { foot.querySelector('[data-close]').onclick = FP.closeModal; },
+      onMount: (_b, foot) => {
+        foot.querySelector('[data-close]').onclick = FP.closeModal;
+        foot.querySelector('[data-tour]').onclick = () => { FP.closeModal(); FP.tour?.open(); };
+      },
     });
   }
 
