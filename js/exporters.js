@@ -62,7 +62,8 @@
     S.draft = null;
     S.scope = { type: 'hall', spaceId: null };
     S.showLabels = true;
-    S.showGrid = false;
+    /* exports are working drawings — the measurement grid prints */
+    S.showGrid = true;
     /* Labels gate themselves on screen legibility, so a zoomed-out
        editor window would print a numberless floor. Exports paint at a
        fixed reading zoom instead — every booth number and item name is
@@ -92,8 +93,74 @@
   <style>svg{${EXPORT_VARS}} text{font-family:var(--font)}</style>
   <rect x="${-m}" y="${-m}" width="${vbW}" height="${vbH}" fill="#ffffff"/>
   ${body}
+  ${rulersSvg(p, m)}
+  ${aisleCalloutsSvg(p)}
   ${titleBlock ? titleBlockSvg(p, m, p.height + m * 0.6, vbW, blockH) : ''}
 </svg>`;
+  }
+
+  /* Coordinate rulers on all four edges — the sheet reads like a site
+     drawing: tick every grid line, number every labelled step, feet. */
+  function rulersSvg(p, m) {
+    const W = p.width, H = p.height;
+    const step = p.grid || 5;
+    const label = (Math.max(W, H) >= 400 ? step * 10 : step * 2);
+    const fs = Math.min(3, Math.max(1.6, m * 0.17));
+    const t = [];
+    const line = (x1, y1, x2, y2) =>
+      t.push(`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#9aa5b8" stroke-width="0.18"/>`);
+    const txt = (x, y, s, anchor = 'middle') =>
+      t.push(`<text x="${x}" y="${y}" font-size="${fs}" fill="#5a6779" text-anchor="${anchor}"
+        font-family="ui-monospace,Menlo,Consolas,monospace">${s}</text>`);
+
+    for (let x = 0; x <= W; x += step) {
+      const big = x % label === 0;
+      const len = big ? 2 : 1.1;
+      line(x, -0.8, x, -0.8 - len);
+      line(x, H + 0.8, x, H + 0.8 + len);
+      if (big) {
+        txt(x, -0.8 - len - 0.8, x);
+        txt(x, H + 0.8 + len + fs, x);
+      }
+    }
+    for (let y = 0; y <= H; y += step) {
+      const big = y % label === 0;
+      const len = big ? 2 : 1.1;
+      line(-0.8, y, -0.8 - len, y);
+      line(W + 0.8, y, W + 0.8 + len, y);
+      if (big) {
+        txt(-0.8 - len - 0.6, y + fs * 0.35, y, 'end');
+        txt(W + 0.8 + len + 0.6, y + fs * 0.35, y, 'start');
+      }
+    }
+    /* units tag, top-left corner */
+    txt(-0.8 - 2 - 0.6, -0.8 - 2 - 0.8, p.unit === 'm' ? 'm' : 'ft', 'end');
+    return `<g>${t.join('')}</g>`;
+  }
+
+  /* Printed aisle widths — "10-FT AISLE" along each aisle band, the way
+     venue placards mark them, so the crew reads clearances off the sheet. */
+  function aisleCalloutsSvg(p) {
+    const out = [];
+    for (const el of p.elements) {
+      if (el.kind !== 'aisle') continue;
+      const q = el.geometry;
+      if (!q || !q.w || !q.h) continue;
+      const across = Math.min(q.w, q.h);
+      const along = Math.max(q.w, q.h);
+      const n = Math.round(across * 2) / 2;
+      const label = `${n}-${p.unit === 'm' ? 'M' : 'FT'} AISLE`;
+      const fs = Math.min(2.4, across * 0.42, along * 0.05 + 1.1);
+      if (fs < 1.1) continue;
+      const vert = q.h > q.w;
+      /* off-centre so it clears the aisle's hanging-sign label */
+      const cx = vert ? q.x + q.w / 2 : q.x + q.w * 0.35;
+      const cy = vert ? q.y + q.h * 0.35 : q.y + q.h / 2;
+      out.push(`<text x="${cx}" y="${cy + fs * 0.35}" font-size="${fs}" fill="#64748d"
+        text-anchor="middle" font-weight="600" letter-spacing="${(fs * 0.1).toFixed(2)}"
+        ${vert ? `transform="rotate(-90 ${cx} ${cy})"` : ''}>${label}</text>`);
+    }
+    return out.length ? `<g>${out.join('')}</g>` : '';
   }
 
   function titleBlockSvg(p, m, y, vbW, h) {
@@ -178,6 +245,27 @@
       .map((id) => C.kind(id))
       .filter((k) => k && k.cat !== 'annotate');
 
+    /* aisle clearances, straight off the drawing */
+    const aisles = p.elements.filter((e) => e.kind === 'aisle' && e.geometry?.w && e.geometry?.h);
+    const aisleWidths = [...new Set(aisles.map((a) =>
+      Math.round(Math.min(a.geometry.w, a.geometry.h))))].sort((a, b) => a - b);
+    const usualAisle = (() => {
+      const c = {};
+      aisles.forEach((a) => {
+        const w = Math.round(Math.min(a.geometry.w, a.geometry.h));
+        c[w] = (c[w] || 0) + 1;
+      });
+      return Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0];
+    })();
+
+    /* booth mix — counts by footprint, the placard-style totals table */
+    const mix = {};
+    spaces.forEach((s) => {
+      const k = G.fmtDims(s.geometry.w, s.geometry.h, p.unit);
+      mix[k] = (mix[k] || 0) + 1;
+    });
+    const mixRows = Object.entries(mix).sort((a, b) => b[1] - a[1]);
+
     const win = window.open('', '_blank');
     if (!win) return FP.toast('Allow pop-ups to print', true);
 
@@ -195,8 +283,9 @@
   .meta div span { display: block; font-size: 10px; color: #8b96a8; text-transform: uppercase;
                    letter-spacing: .06em; }
   .meta div b { font-size: 13px; }
-  .plan { border: 1px solid #dde3ec; padding: 8px; margin-bottom: 18px; }
+  .plan { border: 1px solid #dde3ec; padding: 8px; margin-bottom: 4px; }
   .plan svg { width: 100%; height: auto; }
+  .plannote { font-size: 10.5px; color: #8b96a8; text-align: right; margin: 0 2px 16px; }
   .legend-h { font-size: 12px; margin: 0 0 8px; }
   /* the legend carries real drawings, so it is laid out as a grid rather
      than a wrapped run of chips — symbols need to line up to be compared */
@@ -226,13 +315,22 @@
   <div><span>Outstanding</span><b>${st.outstanding}</b></div>
   <div><span>Sellable area</span><b>${esc(G.fmtArea(st.sellable, p.unit))}</b></div>
   <div><span>Utilisation</span><b>${Math.round(st.utilization * 100)}%</b></div>
+  <div><span>Aisles</span><b>${aisleWidths.length ? aisleWidths.map((w) => `${w} ft`).join(' / ') : '—'}</b></div>
   <div><span>Load-in</span><b>${esc(p.dates.loadIn || '—')}</b></div>
   <div><span>Opens</span><b>${esc(p.dates.open || '—')}</b></div>
 </div>
 <div class="plan">${planSvg()}</div>
+<div class="plannote">Dimensions in ${p.unit === 'm' ? 'metres' : 'feet'} · grid ${p.grid || 5} ${p.unit || 'ft'}${
+  usualAisle ? ` · all aisles ${usualAisle} ft unless otherwise indicated` : ''}</div>
 <h2 class="legend-h">Legend</h2>
 <div class="legend">${legendKinds.map((k) =>
   `<span class="lg">${FP.render.symbolSwatch(k.id, 18)}<em>${esc(k.name)}</em></span>`).join('')}</div>
+
+${mixRows.length ? `<h2>Booth mix</h2>
+<table style="max-width:340px"><thead><tr><th>Size</th><th>Booths</th></tr></thead><tbody>
+${mixRows.map(([size, n]) => `<tr><td class="num">${esc(size)}</td><td class="num">${n}</td></tr>`).join('')}
+  <tr style="font-weight:700;border-top:1.5px solid #131a26"><td>Total</td><td class="num">${st.total}</td></tr>
+</tbody></table>` : ''}
 
 <div class="pagebreak"></div>
 <h2>Space manifest</h2>
