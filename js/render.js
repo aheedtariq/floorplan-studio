@@ -905,8 +905,10 @@
     }
 
     /* Never let a label spill past its own footprint — on a floor plan an
-       overflowing name reads as if it belongs to the neighbouring booth. */
-    const maxChars = Math.floor(box.w / (fs * 0.54));
+       overflowing name reads as if it belongs to the neighbouring booth.
+       0.6 em per character is what Inter actually measures at these
+       weights; the old 0.54 estimate let long names cross booth walls. */
+    const maxChars = Math.floor((box.w * 0.92) / (fs * 0.6));
     if (maxChars < 2) return '';
 
     /* A symbol owns the middle of the box, so the caption drops to the
@@ -926,21 +928,36 @@
 
     if (sub && hpx > 40) {
       const sfs = fs * 0.62;
-      if (sfs * zoom >= 6.5) {
+      const subMax = Math.floor((box.w * 0.92) / (sfs * 0.58));
+      if (sfs * zoom >= 6.5 && subMax >= 4) {
         out += `<text x="${n(cx)}" y="${n(cy + fs * 0.95)}" font-size="${n(sfs)}"
             fill="var(--ink-2)" text-anchor="middle" font-weight="500"
             font-family="var(--font)" pointer-events="none"
             style="paint-order:stroke" stroke="var(--paper)" stroke-width="${n(sfs * 0.22)}"
-            >${esc(clip(sub, Math.floor(box.w / (sfs * 0.5))))}</text>`;
+            >${esc(clip(sub, subMax))}</text>`;
       }
     }
 
-    /* Footprint dimensions, only when there is room for them. */
+    /* Footprint dimensions, only when there is room for them — and only
+       in a band the booth's own furniture doesn't occupy: a caption
+       printed across the 8-ft table reads as a smudge. Bottom edge
+       first, top edge second, dropped when both are furnished. */
     if (isSpace && hpx > 62 && wpx > 60) {
       const dfs = fs * 0.5;
-      out += `<text x="${n(cx)}" y="${n(box.y + box.h - dfs * 0.7)}" font-size="${n(dfs)}"
-          fill="var(--ink-3)" text-anchor="middle" font-family="var(--mono)"
-          pointer-events="none">${esc(G.fmtDims(box.w, box.h, opts.unit))}</text>`;
+      const kids = FP.childrenOf?.(el.id) || [];
+      const bandClear = (y1, y2) => !kids.some((c) => {
+        const b = G.bbox(c);
+        return b.x < box.x + box.w && b.x + b.w > box.x && b.y < y2 && b.y + b.h > y1;
+      });
+      const bh = dfs * 1.9;
+      const dy = bandClear(box.y + box.h - bh, box.y + box.h) ? box.y + box.h - dfs * 0.7
+               : bandClear(box.y, box.y + bh) ? box.y + dfs * 1.5
+               : null;
+      if (dy !== null) {
+        out += `<text x="${n(cx)}" y="${n(dy)}" font-size="${n(dfs)}"
+            fill="var(--ink-3)" text-anchor="middle" font-family="var(--mono)"
+            pointer-events="none">${esc(G.fmtDims(box.w, box.h, opts.unit))}</text>`;
+      }
     }
     return out;
   }
