@@ -59,6 +59,11 @@
 
     FP.render.fit();
     FP.renderAll();
+    /* phones lay the stage out a beat after boot (panels reflow to the
+       bottom sheet) — refit once the true canvas size has settled */
+    if (matchMedia('(max-width: 700px)').matches) {
+      setTimeout(() => FP.render.fit(), 350);
+    }
 
     /* dashboard hand-offs — checked at boot AND on hash changes, because
        navigating to an already-open editor with #admin only fires

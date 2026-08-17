@@ -2442,6 +2442,20 @@
     $('canvas')?.addEventListener('pointerdown', () =>
       leftPanel?.classList.remove('open'));
 
+    /* phone: the inspector is a bottom sheet raised by a floating button
+       (CSS shows the button and reshapes the panel under 700px) */
+    const rightPanel = document.querySelector('.panel.right');
+    if (rightPanel) {
+      const fab = document.createElement('button');
+      fab.id = 'inspFab';
+      fab.className = 'insp-fab';
+      fab.innerHTML = `${iconSvg('<path d="M4 6h16M4 12h16M4 18h10"/>')}<span>Inspector</span>`;
+      document.body.appendChild(fab);
+      fab.onclick = () => rightPanel.classList.toggle('open');
+      $('canvas')?.addEventListener('pointerdown', () =>
+        rightPanel.classList.remove('open'));
+    }
+
     /* keep panels in step with the model */
     let paneTimer = null;
     const schedulePane = () => {

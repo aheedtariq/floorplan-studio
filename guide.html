@@ -45,6 +45,12 @@
   nav.toc a { display: block; color: var(--tx-2); text-decoration: none; padding: 3.5px 0; }
   nav.toc a:hover { color: var(--accent); }
   @media (max-width: 900px) { nav.toc { display: none; } }
+  @media (max-width: 700px) {
+    /* wide tables scroll inside their own box instead of stretching the page */
+    table { display: block; overflow-x: auto; }
+    header { padding: 28px 16px 20px; }
+    .wrap { padding: 0 16px 60px; }
+  }
 
   /* ---------- sections ---------- */
   section {

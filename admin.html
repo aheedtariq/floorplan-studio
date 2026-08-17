@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Admin — Floorplan Studio · Source One Events</title>
-<link rel="stylesheet" href="styles.css?v=104" />
+<link rel="stylesheet" href="styles.css?v=114" />
 <style>
   body { background: var(--bg); color: var(--tx); font: 14px/1.5 var(--font); margin: 0; }
   .top {
@@ -64,6 +64,16 @@
   #pageMsg.ok { color: #15803d; } #pageMsg.err { color: #b91c1c; }
   .empty-note { color: var(--tx-3); border: 1.5px dashed var(--line-2); border-radius: 12px;
     padding: 22px; text-align: center; }
+
+  /* ---------- phone ---------- */
+  @media (max-width: 640px) {
+    .top { flex-wrap: wrap; height: auto; padding: 10px 14px; row-gap: 8px; }
+    #who { display: none; }
+    .wrap { padding: 20px 14px 60px; }
+    .newform { grid-template-columns: 1fr; }
+    table.team { display: block; overflow-x: auto; }
+    .rowline { flex-wrap: wrap; }
+  }
 </style>
 </head>
 <body>
