@@ -1315,6 +1315,13 @@
 
         ${FP.auth?.canEdit?.() ? `
         <div class="grp">
+          <h4 class="grp-title">Best: import the CAD file itself</h4>
+          <p class="helptext" style="margin:0 0 6px">Have the venue's drawing as a
+            <b>.dwg</b> or <b>.dxf</b>? Import it directly — booths arrive numbered
+            and exact, walls and labels included. No photo, no tracing, no AI guessing.</p>
+          <button class="mini" data-cad style="width:100%">Import CAD file (.dwg / .dxf)…</button>
+        </div>
+        <div class="grp">
           <h4 class="grp-title">Or: convert it automatically with AI</h4>
           <p class="helptext" style="margin:0 0 6px">Skip the tracing — Claude reads the
             photo and draws the plan for you: walls, doors, numbered booths, and zones
@@ -1347,8 +1354,26 @@
           FP.closeModal();
           pickAiFile();
         };
+        const cad = body.querySelector('[data-cad]');
+        if (cad) cad.onclick = () => {
+          FP.closeModal();
+          pickCadFile();
+        };
       },
     });
+  }
+
+  /* CAD import — the picker hands straight to cad.js, which owns the
+     layer-mapping dialog and the build. */
+  function pickCadFile() {
+    const picker = $('filePicker');
+    picker.accept = '.dwg,.dxf';
+    picker.value = '';
+    picker.onchange = () => {
+      const file = picker.files[0];
+      if (file) FP.cad?.importFile(file);
+    };
+    picker.click();
   }
 
   /* ------------------------------------------------------------

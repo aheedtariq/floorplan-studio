@@ -10,3 +10,4 @@ plans/*.jpeg
 plans/*.png
 plans/*.heic
 .vercel
+plans/test-cad.dwg
