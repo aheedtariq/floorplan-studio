@@ -147,6 +147,19 @@
 
     { id: 'submission', name: 'Submission received', from: 'submitted',
       values: { yes: '#22c55e', no: '#ef4444' } },
+
+    /* Sections are named by the planner per booth (props.section); the
+       colour comes from a stable hash of the name, so "Italian" is the
+       same colour on every plan and every reprint. */
+    { id: 'section', name: 'Section', from: 'section' },
+  ];
+
+  /* Placard-style section tints — light enough to carry booth numbers
+     and exhibitor names printed on top, distinct enough to read at
+     arm's length on a working sheet. */
+  const SECTION_PALETTE = [
+    '#93c5fd', '#fca5a5', '#fcd34d', '#86efac', '#c4b5fd', '#f9a8d4',
+    '#fdba74', '#67e8f9', '#d9f99d', '#a5b4fc', '#f5d0fe', '#99f6e4',
   ];
 
   /* ------------------------------------------------------------
@@ -658,6 +671,24 @@
   cfg.flag = (kindId, flag) => !!cfg.kind(kindId)?.flags?.[flag];
   cfg.colorMode = (id) => cfg.colorModes.find((m) => m.id === id) || cfg.colorModes[0];
 
+  /** Colour for a section name. Sections on the open plan take distinct
+      palette slots by alphabetical rank — two sections can never share a
+      colour until a plan has more than twelve. Names not on this plan
+      fall back to a stable hash. */
+  cfg.sectionColor = (name) => {
+    const s = String(name || '').trim();
+    if (!s) return '#e2e8f0';
+    const uniq = [...new Set((FP.spaces?.() || [])
+      .map((sp) => String(sp.props?.section || '').trim()).filter(Boolean)
+      .map((n) => n.toLowerCase()))].sort();
+    const i = uniq.indexOf(s.toLowerCase());
+    if (i >= 0) return SECTION_PALETTE[i % SECTION_PALETTE.length];
+    let h = 0;
+    const t = s.toLowerCase();
+    for (let k = 0; k < t.length; k++) h = (h * 31 + t.charCodeAt(k)) >>> 0;
+    return SECTION_PALETTE[h % SECTION_PALETTE.length];
+  };
+
   /**
    * The colour a space should take under a given mode, plus the legend
    * entry it belongs to. Returns null when the mode does not apply, so
@@ -675,6 +706,11 @@
     if (mode.id === 'status') {
       const st = cfg.status(space.props.status);
       return st ? { color: st.color, label: st.name } : null;
+    }
+
+    if (mode.id === 'section') {
+      const s = String(space.props.section || '').trim();
+      return s ? { color: cfg.sectionColor(s), label: s } : null;
     }
 
     if (mode.buckets) {

@@ -57,6 +57,7 @@
       view: { ...S.view },
       labels: S.showLabels,
       grid: S.showGrid,
+      colorBy: S.colorBy,
     };
     S.selection = [];
     S.draft = null;
@@ -64,6 +65,11 @@
     S.showLabels = true;
     /* exports are working drawings — the measurement grid prints */
     S.showGrid = true;
+    /* when the plan has named sections and no other colouring was chosen,
+       the sheet colours by section — the placard look */
+    if (S.colorBy === 'status' && FP.spaces().some((s) => String(s.props.section || '').trim())) {
+      S.colorBy = 'section';
+    }
     /* Labels gate themselves on screen legibility, so a zoomed-out
        editor window would print a numberless floor. Exports paint at a
        fixed reading zoom instead — every booth number and item name is
@@ -73,7 +79,7 @@
     const markup = svg.innerHTML;
     Object.assign(S, {
       selection: keep.selection, draft: keep.draft, scope: keep.scope,
-      showLabels: keep.labels, showGrid: keep.grid,
+      showLabels: keep.labels, showGrid: keep.grid, colorBy: keep.colorBy,
     });
     S.view = keep.view;
     FP.render.paintNow();
@@ -95,6 +101,7 @@
   ${body}
   ${rulersSvg(p, m)}
   ${aisleCalloutsSvg(p)}
+  ${sectionChipsSvg(p)}
   ${titleBlock ? titleBlockSvg(p, m, p.height + m * 0.6, vbW, blockH) : ''}
 </svg>`;
   }
@@ -161,6 +168,41 @@
         ${vert ? `transform="rotate(-90 ${cx} ${cy})"` : ''}>${label}</text>`);
     }
     return out.length ? `<g>${out.join('')}</g>` : '';
+  }
+
+  /* Placard-style section headers — "ITALIAN — 18 BTHS" on a colour chip
+     over each named section's block of booths. */
+  function sectionChipsSvg(p) {
+    const groups = {};
+    for (const el of p.elements) {
+      if (!C.flag(el.kind, 'sellable')) continue;
+      const name = String(el.props?.section || '').trim();
+      if (!name) continue;
+      const b = G.bbox(el);
+      const g = groups[name] || (groups[name] = { n: 0, x1: 1e9, y1: 1e9, x2: -1e9, y2: -1e9 });
+      g.n++;
+      g.x1 = Math.min(g.x1, b.x); g.y1 = Math.min(g.y1, b.y);
+      g.x2 = Math.max(g.x2, b.x + b.w); g.y2 = Math.max(g.y2, b.y + b.h);
+    }
+    const names = Object.keys(groups);
+    if (!names.length) return '';
+    return `<g>${names.map((name) => {
+      const g = groups[name];
+      const label = `${name.toUpperCase()} — ${g.n} BTHS`;
+      const fs = 2.3;
+      const w = label.length * fs * 0.64 + 3;
+      const h = fs * 1.75;
+      const cx = (g.x1 + g.x2) / 2;
+      /* straddle the section's top edge so it reads as a header without
+         covering the first row's numbers */
+      const y = Math.max(g.y1 - h * 0.65, 0.5);
+      return `<g>
+        <rect x="${cx - w / 2}" y="${y}" width="${w}" height="${h}" rx="0.9"
+          fill="${C.sectionColor(name)}" stroke="#1c2333" stroke-width="0.14" opacity="0.96"/>
+        <text x="${cx}" y="${y + fs * 1.28}" font-size="${fs}" font-weight="700"
+          text-anchor="middle" fill="#1c2333" letter-spacing="0.1">${esc(label)}</text>
+      </g>`;
+    }).join('')}</g>`;
   }
 
   function titleBlockSvg(p, m, y, vbW, h) {
@@ -258,6 +300,15 @@
       return Object.entries(c).sort((a, b) => b[1] - a[1])[0]?.[0];
     })();
 
+    /* section totals — the placard's per-area booth counts */
+    const sectionCounts = {};
+    spaces.forEach((s) => {
+      const n = String(s.props.section || '').trim();
+      if (n) sectionCounts[n] = (sectionCounts[n] || 0) + 1;
+    });
+    const secRows = Object.entries(sectionCounts).sort((a, b) => b[1] - a[1]);
+    const unassigned = st.total - secRows.reduce((t, [, n]) => t + n, 0);
+
     /* booth mix — counts by footprint, the placard-style totals table */
     const mix = {};
     spaces.forEach((s) => {
@@ -325,6 +376,16 @@
 <h2 class="legend-h">Legend</h2>
 <div class="legend">${legendKinds.map((k) =>
   `<span class="lg">${FP.render.symbolSwatch(k.id, 18)}<em>${esc(k.name)}</em></span>`).join('')}</div>
+
+${secRows.length ? `<h2>Sections</h2>
+<table style="max-width:340px"><thead><tr><th>Section</th><th>Booths</th></tr></thead><tbody>
+${secRows.map(([name, n]) => `<tr>
+    <td><i style="display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px;
+      background:${C.sectionColor(name)};border:1px solid #1c2333;margin-right:7px"></i>${esc(name)}</td>
+    <td class="num">${n}</td></tr>`).join('')}
+  ${unassigned > 0 ? `<tr><td style="color:#8b96a8">Unassigned</td><td class="num">${unassigned}</td></tr>` : ''}
+  <tr style="font-weight:700;border-top:1.5px solid #131a26"><td>Total</td><td class="num">${st.total}</td></tr>
+</tbody></table>` : ''}
 
 ${mixRows.length ? `<h2>Booth mix</h2>
 <table style="max-width:340px"><thead><tr><th>Size</th><th>Booths</th></tr></thead><tbody>

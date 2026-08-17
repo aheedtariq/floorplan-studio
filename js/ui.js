@@ -352,6 +352,13 @@
           style="${el.props.status === s.id ? `color:${s.color}` : ''}">${esc(s.name)}</button>`).join('')
       }</div>`);
       h += field('Exhibitor', input({ id: 'pExhibitor', value: el.props.exhibitor || '', placeholder: 'Company name' }));
+      /* section = the placard-style named area this booth belongs to;
+         datalist offers every section already used on this plan */
+      const sections = [...new Set(FP.spaces()
+        .map((s) => String(s.props.section || '').trim()).filter(Boolean))].sort();
+      h += field('Section', `${input({ id: 'pSection', value: el.props.section || '',
+        placeholder: 'e.g. Local, Produce, Tech', list: 'sectionList' })}
+        <datalist id="sectionList">${sections.map((s) => `<option value="${esc(s)}">`).join('')}</datalist>`);
     }
 
     /* fields declared by the kind record */
@@ -519,6 +526,8 @@
     if (single) {
       const ex = byId('pExhibitor');
       if (ex) live(ex, (n) => { single.props.exhibitor = n.value; });
+      const sec = byId('pSection');
+      if (sec) live(sec, (n) => { single.props.section = n.value.trim(); });
 
       (C.kind(single.kind).fields || []).forEach((f) => {
         const node = byId(`fld_${f.key}`);
@@ -753,6 +762,16 @@
 
     if (mode.id === 'status') {
       return C.statuses.map((s) => chip(s.color, s.name)).join('');
+    }
+    if (mode.id === 'section') {
+      const counts = {};
+      FP.spaces().forEach((s) => {
+        const name = String(s.props.section || '').trim();
+        if (name) counts[name] = (counts[name] || 0) + 1;
+      });
+      const names = Object.keys(counts).sort();
+      if (!names.length) return chip('#e2e8f0', 'No sections yet — set one on any booth');
+      return names.map((n) => chip(C.sectionColor(n), `${n} — ${counts[n]}`)).join('');
     }
     if (mode.buckets) {
       return mode.buckets.map((b) => chip(b.color, b.name)).join('');
