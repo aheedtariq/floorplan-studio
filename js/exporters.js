@@ -579,20 +579,8 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> â
   <div style="font-size:8.6px"><b>File Name:</b> ${esc(p.name)}</div>
 
   <div class="logo">
-    <svg viewBox="0 0 200 48" style="width:152px;display:block;margin:0 auto">
-      <g transform="skewX(-14)">
-        <g fill="#9aa2ad">
-          <rect x="14" y="30" width="4" height="11"/><rect x="21" y="30" width="4" height="11"/>
-          <rect x="28" y="30" width="4" height="11"/><rect x="35" y="30" width="4" height="11"/>
-          <rect x="42" y="30" width="4" height="11"/><rect x="49" y="30" width="4" height="11"/>
-        </g>
-        <text x="16" y="26" font-family="Arial Black, Arial" font-weight="900" font-size="23" fill="#1c2742">SOURCE</text>
-        <rect x="124" y="16" width="62" height="24" rx="4" fill="#0f1115"/>
-        <text x="129" y="35" font-family="Arial Black, Arial" font-weight="900" font-size="17" fill="#fff">ONE</text>
-        <text x="166" y="38" font-family="Arial Black, Arial" font-weight="900" font-size="27" fill="#f2d919">1</text>
-      </g>
-      <text x="100" y="47" font-size="9.5" fill="#1c2742" text-anchor="middle" letter-spacing="7" font-family="Arial">EVENTS</text>
-    </svg>
+    <img src="${location.origin}/assets/soe-logo.svg" alt="Source One Events"
+         style="width:158px;display:block;margin:2px auto 0"/>
     <div class="tag">Tradeshows ~ Expositions ~ Electrical ~ Rigging</div>
     <div class="tel">(877) SOE.EXPO toll free<br>(708) 344.4111 phone Â· (708) 344-3050 fax<br>www.sourceoneevents.com</div>
   </div>
