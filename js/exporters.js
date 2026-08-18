@@ -465,10 +465,15 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> �
 
     /* the right-hand information column, drafting-sheet style */
     const spaces = FP.spaces().slice().sort(byNumber);
-    const mix = {};
+    /* inventory the way Lexi's sheet carries it: per size —
+       quantity, square feet, rented, available */
+    const inv = {};
     spaces.forEach((s) => {
       const k = G.fmtDims(s.geometry.w, s.geometry.h, p.unit);
-      mix[k] = (mix[k] || 0) + 1;
+      const row = (inv[k] ||= { qty: 0, sqft: 0, rented: 0 });
+      row.qty++;
+      row.sqft += G.area(s);
+      if ((s.props.exhibitor || '').trim()) row.rented++;
     });
     const sectionCounts = {};
     spaces.forEach((s) => {
@@ -522,10 +527,13 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> �
 <div class="sheet">${svg}</div>
 <div class="col">
   <div class="title">
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+      <svg width="24" height="24" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="#7c5cfc"/><g fill="none" stroke="#fff" stroke-width="8"><rect x="22" y="22" width="24" height="24"/><rect x="54" y="22" width="24" height="24"/><rect x="22" y="54" width="56" height="24"/></g></svg>
+      <div style="font-size:8.5px;font-weight:700;letter-spacing:.06em;color:#5a6779">SOURCE ONE<br>EVENTS</div>
+    </div>
     <b>${esc(p.name)}</b>
     <span>${esc(p.venue || 'Venue TBC')}${p.hall ? ` · ${esc(p.hall)}` : ''}</span>
-    <span>Hall ${esc(G.fmtDims(p.width, p.height, p.unit))} · ${st.total} spaces · ${esc(G.fmtArea(st.sellable, p.unit))} sellable</span>
-    <span>Source One Events · printed ${stamp()}</span>
+    <span>Hall ${esc(G.fmtDims(p.width, p.height, p.unit))} · printed ${stamp()}</span>
   </div>
 
   ${(() => {
@@ -535,9 +543,15 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> �
         `<div><b>${esc(s.props.number || '—')}</b>${esc(s.props.exhibitor)}</div>`).join('')}</div>`) : '';
   })()}
 
-  ${Object.keys(mix).length ? box('Booth count', `<table>
-    ${Object.entries(mix).sort((a, b) => b[1] - a[1]).map(([k, n]) => trow(esc(k), n)).join('')}
-    <tr class="total"><td>Total</td><td class="num">${st.total}</td></tr></table>`) : ''}
+  ${Object.keys(inv).length ? box(`Inventory as of ${stamp()}`, `<table>
+    <tr style="font-weight:700"><td>Size</td><td class="num">Qty</td><td class="num">Sq ft</td><td class="num">Rented</td><td class="num">Avail</td></tr>
+    ${Object.entries(inv).sort((a, b) => b[1].qty - a[1].qty).map(([k, r]) =>
+      `<tr><td>${esc(k)}</td><td class="num">${r.qty}</td><td class="num">${Math.round(r.sqft).toLocaleString()}</td>
+       <td class="num">${r.rented}</td><td class="num">${r.qty - r.rented}</td></tr>`).join('')}
+    <tr class="total"><td>Totals</td><td class="num">${st.total}</td>
+      <td class="num">${Math.round(st.sellable).toLocaleString()}</td>
+      <td class="num">${spaces.filter((s) => (s.props.exhibitor || '').trim()).length}</td>
+      <td class="num">${spaces.filter((s) => !(s.props.exhibitor || '').trim()).length}</td></tr></table>`) : ''}
 
   ${Object.keys(sectionCounts).length ? box('Sections', `<table>
     ${Object.entries(sectionCounts).sort((a, b) => b[1] - a[1]).map(([nm, n]) =>
