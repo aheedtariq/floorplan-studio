@@ -487,86 +487,159 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> �
       .slice(0, 14);
     const st = FP.stats();
 
-    const box = (title, inner) =>
-      `<div class="box"><h4>${esc(title)}</h4>${inner}</div>`;
-    const trow = (a, b) => `<tr><td>${a}</td><td class="num">${b}</td></tr>`;
+    /* spec-table facts, derived from the plan the way Lexi types them */
+    const aisleEls = p.elements.filter((e) => e.kind === 'aisle' && e.geometry?.w && e.geometry?.h);
+    const usualAisle = (() => {
+      const c = {};
+      aisleEls.forEach((a) => {
+        const w = Math.round(Math.min(a.geometry.w, a.geometry.h));
+        c[w] = (c[w] || 0) + 1;
+      });
+      const t = Object.entries(c).sort((a, b) => b[1] - a[1])[0];
+      return t ? `${t[0]}'` : '';
+    })();
+    const usualBooth = (() => {
+      const t = Object.entries(inv).sort((a, b) => b[1].qty - a[1].qty)[0];
+      return t ? t[0].replace(/['\s]/g, '').replace('×', 'x') : '';
+    })();
+    const rep = FP.auth?.profile?.()?.email?.split('@')[0]?.replace(/[.\-_]/g, ' ') || '';
+
+    const specRow = (k, v) => `<tr><td class="k">${esc(k)}</td><td>${esc(v)}</td></tr>`;
+    const listed = spaces.filter((s) => (s.props.exhibitor || '').trim());
 
     win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
 <title>${esc(p.name)} — floor plan</title>
 <style>
-  @page { size: ${landscape ? 'landscape' : 'portrait'}; margin: 6mm; }
+  @page { size: ${landscape ? 'landscape' : 'portrait'}; margin: 5mm; }
   * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   html, body { height: 100%; }
-  body { margin: 0; display: flex;
-         font: 10px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-         color: #131a26; }
-  .sheet { flex: 1 1 auto; min-width: 0; border: 1.5px solid #131a26; }
+  body { margin: 0; display: flex; gap: 5px;
+         font: 9px/1.35 Arial, Helvetica, sans-serif; color: #111; }
+  .sheet { flex: 1 1 auto; min-width: 0; border: 1.5px solid #111; }
   .sheet svg { width: 100%; height: 100%; display: block; }
-  .col { flex: 0 0 200px; display: flex; flex-direction: column; gap: 6px;
-         padding-left: 6px; min-height: 0; overflow: hidden; }
-  .title { border: 1.5px solid #131a26; padding: 8px 9px; }
-  .title b { display: block; font-size: 13px; line-height: 1.25; }
-  .title span { display: block; color: #5a6779; font-size: 9.5px; margin-top: 2px; }
-  .box { border: 1px solid #9aa5b8; padding: 6px 8px 7px; }
-  .box h4 { margin: 0 0 4px; font-size: 8.5px; text-transform: uppercase;
-            letter-spacing: .07em; color: #5a6779; }
-  table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
-  td { padding: 1.5px 0; border-bottom: 1px solid #eef1f7; }
-  td.num { text-align: right; font-family: ui-monospace, Menlo, monospace; }
-  tr.total td { font-weight: 700; border-top: 1.2px solid #131a26; border-bottom: none; }
-  .lg { display: flex; align-items: center; gap: 6px; padding: 1.5px 0; font-size: 9px; }
-  .lg svg { flex: 0 0 auto; }
-  .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px;
-        border: 1px solid #1c2333; margin-right: 5px; vertical-align: -1px; }
-  .foot { margin-top: auto; color: #8b96a8; font-size: 8.5px; line-height: 1.5; }
-  .exh div { font-size: 8.5px; padding: 1px 0; break-inside: avoid; }
-  .exh b { font-family: ui-monospace, Menlo, monospace; font-weight: 700; margin-right: 4px; }
-  .exh.two { columns: 2; column-gap: 8px; }
-  .exh.two div { font-size: 7.5px; }
+  .col { flex: 0 0 205px; display: flex; flex-direction: column;
+         min-height: 0; overflow: hidden; border: 1.5px solid #111; }
+  .col > div { border-bottom: 1px solid #111; padding: 4px 7px; }
+  .col > div:last-child { border-bottom: none; }
+  .hd { text-align: center; }
+  .hd b { display: block; font-size: 13.5px; line-height: 1.2; margin-bottom: 2px; }
+  .hd span { display: block; font-size: 9px; }
+  .bc h5 { margin: 0 0 2px; font-size: 9.5px; }
+  .bc h5 i { float: right; font-style: normal; font-weight: 400; font-size: 8px; }
+  table.inv { width: 100%; border-collapse: collapse; font-size: 8.5px; }
+  table.inv td { padding: 1px 2px; text-align: right; }
+  table.inv td:first-child { text-align: left; }
+  table.inv tr.h td { font-weight: 700; border-bottom: 1px solid #999; }
+  table.inv tr.t td { font-weight: 700; border-top: 1px solid #999; }
+  .cline { text-align: center; font-weight: 700; font-size: 7.6px; letter-spacing: .02em; }
+  .logo { text-align: center; }
+  .logo .tag { font-size: 8px; margin-top: 2px; }
+  .logo .tel { font-size: 8.6px; line-height: 1.45; margin-top: 2px; }
+  table.spec { width: 100%; border-collapse: collapse; font-size: 8.6px; }
+  table.spec td { border-bottom: 1px solid #cfcfcf; padding: 2px 3px; }
+  table.spec tr:last-child td { border-bottom: none; }
+  table.spec td.k { font-weight: 700; white-space: nowrap; padding-right: 5px; }
+  table.rev { width: 100%; border-collapse: collapse; font-size: 8.4px; }
+  table.rev td { border: 1px solid #cfcfcf; padding: 2px 3px; width: 50%; }
+  .disc { font-size: 6.6px; line-height: 1.35; text-align: justify; }
+  .disc h6 { margin: 0 0 1px; font-size: 8px; text-align: center; letter-spacing: .05em; }
+  .prop { text-align: center; font-weight: 700; font-size: 8.4px; letter-spacing: .02em; }
+  .keys { font-size: 6.9px; columns: 2; column-gap: 8px; }
+  .keys div { break-inside: avoid; padding: .5px 0; }
+  .keys b { color: #b91c1c; }
+  .exh { flex: 1 1 auto; min-height: 0; overflow: hidden; }
+  .exh h5 { margin: 0 0 2px; font-size: 9px; }
+  .exh .list { columns: ${listed.length > 26 ? 2 : 1}; column-gap: 7px; font-size: ${listed.length > 60 ? 6.8 : 7.8}px; }
+  .exh .list div { break-inside: avoid; }
+  .exh .list b { font-family: ui-monospace, Menlo, monospace; margin-right: 3px; }
 </style></head><body>
 <div class="sheet">${svg}</div>
 <div class="col">
-  <div class="title">
-    <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
-      <svg width="24" height="24" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="#7c5cfc"/><g fill="none" stroke="#fff" stroke-width="8"><rect x="22" y="22" width="24" height="24"/><rect x="54" y="22" width="24" height="24"/><rect x="22" y="54" width="56" height="24"/></g></svg>
-      <div style="font-size:8.5px;font-weight:700;letter-spacing:.06em;color:#5a6779">SOURCE ONE<br>EVENTS</div>
-    </div>
+  <div class="hd">
     <b>${esc(p.name)}</b>
-    <span>${esc(p.venue || 'Venue TBC')}${p.hall ? ` · ${esc(p.hall)}` : ''}</span>
-    <span>Hall ${esc(G.fmtDims(p.width, p.height, p.unit))} · printed ${stamp()}</span>
+    ${p.dates?.open ? `<span>${esc(p.dates.open)}</span>` : ''}
+    ${p.hall ? `<span>${esc(p.hall)}</span>` : ''}
+    <span>${esc(p.venue || '')}</span>
   </div>
 
-  ${(() => {
-    const listed = spaces.filter((s) => (s.props.exhibitor || '').trim());
-    return listed.length ? box(`Exhibitors — ${listed.length}`,
-      `<div class="exh${listed.length > 45 ? ' two' : ''}">${listed.map((s) =>
-        `<div><b>${esc(s.props.number || '—')}</b>${esc(s.props.exhibitor)}</div>`).join('')}</div>`) : '';
-  })()}
+  <div class="bc">
+    <h5>Booth Count: <i>Inventory as of ${stamp()}</i></h5>
+    <table class="inv">
+      <tr class="h"><td>Dimension</td><td>Size</td><td>Qty</td><td>SqFt</td><td>Avail</td></tr>
+      ${Object.entries(inv).sort((a, b) => b[1].qty - a[1].qty).map(([k, r]) =>
+        `<tr><td>${esc(k.replace(/\s/g, ''))}</td><td>${Math.round(r.sqft / r.qty)}</td>
+         <td>${r.qty}</td><td>${Math.round(r.sqft).toLocaleString()}</td><td>${r.qty - r.rented}</td></tr>`).join('')}
+      <tr class="t"><td>Totals:</td><td></td><td>${st.total}</td>
+        <td>${Math.round(st.sellable).toLocaleString()}</td>
+        <td>${spaces.filter((s) => !(s.props.exhibitor || '').trim()).length}</td></tr>
+    </table>
+  </div>
 
-  ${Object.keys(inv).length ? box(`Inventory as of ${stamp()}`, `<table>
-    <tr style="font-weight:700"><td>Size</td><td class="num">Qty</td><td class="num">Sq ft</td><td class="num">Rented</td><td class="num">Avail</td></tr>
-    ${Object.entries(inv).sort((a, b) => b[1].qty - a[1].qty).map(([k, r]) =>
-      `<tr><td>${esc(k)}</td><td class="num">${r.qty}</td><td class="num">${Math.round(r.sqft).toLocaleString()}</td>
-       <td class="num">${r.rented}</td><td class="num">${r.qty - r.rented}</td></tr>`).join('')}
-    <tr class="total"><td>Totals</td><td class="num">${st.total}</td>
-      <td class="num">${Math.round(st.sellable).toLocaleString()}</td>
-      <td class="num">${spaces.filter((s) => (s.props.exhibitor || '').trim()).length}</td>
-      <td class="num">${spaces.filter((s) => !(s.props.exhibitor || '').trim()).length}</td></tr></table>`) : ''}
+  <div class="cline">FLOOR PLAN IS SUBJECT TO FIRE MARSHAL APPROVAL</div>
+  <div style="font-size:8.6px"><b>File Name:</b> ${esc(p.name)}</div>
 
-  ${Object.keys(sectionCounts).length ? box('Sections', `<table>
-    ${Object.entries(sectionCounts).sort((a, b) => b[1] - a[1]).map(([nm, n]) =>
-      trow(`<i class="sw" style="background:${C.sectionColor(nm)}"></i>${esc(nm)}`, n)).join('')}</table>`) : ''}
+  <div class="logo">
+    <svg viewBox="0 0 200 48" style="width:152px;display:block;margin:0 auto">
+      <g transform="skewX(-14)">
+        <g fill="#9aa2ad">
+          <rect x="14" y="30" width="4" height="11"/><rect x="21" y="30" width="4" height="11"/>
+          <rect x="28" y="30" width="4" height="11"/><rect x="35" y="30" width="4" height="11"/>
+          <rect x="42" y="30" width="4" height="11"/><rect x="49" y="30" width="4" height="11"/>
+        </g>
+        <text x="16" y="26" font-family="Arial Black, Arial" font-weight="900" font-size="23" fill="#1c2742">SOURCE</text>
+        <rect x="124" y="16" width="62" height="24" rx="4" fill="#0f1115"/>
+        <text x="129" y="35" font-family="Arial Black, Arial" font-weight="900" font-size="17" fill="#fff">ONE</text>
+        <text x="166" y="38" font-family="Arial Black, Arial" font-weight="900" font-size="27" fill="#f2d919">1</text>
+      </g>
+      <text x="100" y="47" font-size="9.5" fill="#1c2742" text-anchor="middle" letter-spacing="7" font-family="Arial">EVENTS</text>
+    </svg>
+    <div class="tag">Tradeshows ~ Expositions ~ Electrical ~ Rigging</div>
+    <div class="tel">(877) SOE.EXPO toll free<br>(708) 344.4111 phone · (708) 344-3050 fax<br>www.sourceoneevents.com</div>
+  </div>
 
-  ${drape.groups.length ? box('Pipe & drape', `<table>
-    ${drape.groups.map((g) =>
-      trow(`${g.height} ft ${esc(g.color)}`, esc(G.fmtLen(g.length, p.unit)))).join('')}
-    <tr class="total"><td>Total run</td><td class="num">${esc(G.fmtLen(drape.totalLength, p.unit))}</td></tr></table>`) : ''}
+  <div style="padding:0">
+    <table class="spec">
+      ${specRow('Show Name:', p.name || '')}
+      ${specRow('Show Dates:', p.dates?.open || '')}
+      ${specRow('Facility:', p.venue || '')}
+      ${specRow('Portion of Facility/Hall:', p.hall || '')}
+      ${specRow('Aisle Size Unless Noted:', usualAisle)}
+      ${specRow('Booth Size Unless Noted:', usualBooth)}
+      ${specRow('Table Sizes Unless Noted:', '')}
+      ${specRow('Miscellaneous:', '')}
+      ${specRow('Job Number:', '')}
+      ${specRow('Account Rep:', rep)}
+    </table>
+    <table class="rev">
+      <tr><td>Initial: ${stamp()}</td><td>Revision:</td></tr>
+      <tr><td>Revision:</td><td>Revision:</td></tr>
+    </table>
+  </div>
 
-  ${legendKinds.length ? box('Legend', legendKinds.map((k) =>
-    `<div class="lg">${FP.render.symbolSwatch(k.id, 11)}<span>${esc(k.name)}</span></div>`).join('')) : ''}
+  <div class="cline" style="font-size:9px">NOT TO SCALE</div>
 
-  <div class="foot">Dimensions in ${p.unit === 'm' ? 'metres' : 'feet'} · grid ${p.grid || 5} ${p.unit || 'ft'}.
-    Print at any paper size — the sheet scales as one page.</div>
+  ${listed.length ? `<div class="exh"><h5>Exhibitors — ${listed.length}</h5>
+    <div class="list">${listed.map((s) =>
+      `<div><b>${esc(s.props.number || '—')}</b>${esc(s.props.exhibitor)}</div>`).join('')}</div></div>` : ''}
+
+  <div class="disc"><h6>DISCLAIMER</h6>
+    Every effort has been made to insure the accuracy of all information contained on this
+    floor plan. However, no warranties, either expressed or implied, are made with respect
+    to this floor plan. If the location of building columns, utilities, or other architectural
+    components of the facility is a consideration in the construction or usage of an exhibit,
+    it is the sole responsibility of the exhibitor to physically inspect the facility to
+    verify all dimensions and locations.</div>
+
+  <div class="prop">PROPERTY OF SOURCEONE EVENTS, INC.</div>
+
+  <div class="keys">
+    <div><b>F.E.C.</b> – FIRE EXTINGUISHER</div>
+    <div><b>F.H.V.</b> – FIRE HOSE</div>
+    <div><b>F.S.</b> – FIRE STROBE</div>
+    <div>□ – COLUMN</div>
+    <div>▣ – UTILITY FLOORPORTS</div>
+    <div>Grid ${p.grid || 5} ${p.unit || 'ft'} · dims in feet</div>
+  </div>
 </div>
 </body></html>`);
     win.document.close();
