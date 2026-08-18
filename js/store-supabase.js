@@ -91,6 +91,23 @@
     return row;
   }
 
+  /** Every element row for a show, paginated past PostgREST's 1,000-row
+      cap. A furnished CAD floor passes 1,000 elements easily; reading a
+      capped page and then "pruning" what the page didn't include is how
+      plans silently lose furniture. */
+  async function allElements(sb, showId, cols) {
+    const out = [];
+    const PAGE = 1000;
+    for (let from = 0; ; from += PAGE) {
+      const { data, error } = await sb.from('element').select(cols)
+        .eq('show_id', showId).order('z').range(from, from + PAGE - 1);
+      if (error) { console.warn('Could not read elements', error.message); break; }
+      out.push(...(data || []));
+      if (!data || data.length < PAGE) break;
+    }
+    return out;
+  }
+
   function planFromRows(show, rows) {
     const base = FP.blankPlan(show.name || 'Untitled Show');
     return FP.migrate({
@@ -147,10 +164,8 @@
         if (error) console.warn('Could not read plan', error.message);
         return null;
       }
-      const { data: rows, error: elErr } = await sb
-        .from('element').select('*').eq('show_id', id).order('z');
-      if (elErr) console.warn('Could not read elements', elErr.message);
-      return planFromRows(show, rows || []);
+      const rows = await allElements(sb, id, '*');
+      return planFromRows(show, rows);
     },
 
     async put(plan) {
@@ -194,8 +209,7 @@
          every current id would blow past URL length on a real floor.
          Client sessions diff only against rows they may write, so the
          structure they can't touch is never flagged stale. */
-      const { data: existing } = await sb
-        .from('element').select('id, layer, kind').eq('show_id', doc.id);
+      const existing = await allElements(sb, doc.id, 'id, layer, kind');
       const keep = new Set(rows.map((r) => r.id));
       const stale = (existing || [])
         .filter((r) => !isClient || editable(r))
