@@ -321,7 +321,10 @@
       const x = cx + R * Math.sin(b), y = cy - R * Math.cos(b);
       const ch = FP.makeElement('chair', { x: x - S / 2, y: y - S / 2, w: S, h: S },
         table.parentId || table.id);
-      ch.geometry.rot = (i * 45 + 180) % 360;     /* every chair faces the table */
+      /* chair rot 0 faces +y (the booth convention), so a chair's rot
+         equals its bearing on the ring — north seat faces south, etc. */
+      ch.geometry.rot = i * 45;
+
       out.push(ch);
     }
     return out;
