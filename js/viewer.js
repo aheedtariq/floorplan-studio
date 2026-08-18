@@ -314,6 +314,13 @@
     renderList();
 
     fillFilterOptions();
+    /* a plan with no exhibitors yet is a booth sales sheet — open with
+       the available-booth view instead of an empty list */
+    if (!spaces().some((s) => (s.props.exhibitor || '').trim()) && spaces().length) {
+      filt.open = true;
+      $('vfOpen').checked = true;
+      renderList();
+    }
     $('vSearch').addEventListener('input', (ev) => {
       query = ev.target.value;
       renderList();

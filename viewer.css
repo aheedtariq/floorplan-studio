@@ -162,4 +162,11 @@ body.viewer { font-size: 14px; }
   .v-list { width: 100%; flex: 0 0 auto; max-height: 42vh; border-right: none;
             border-bottom: 1px solid var(--line); }
   .v-card { left: 10px; right: 10px; width: auto; }
+  /* one tidy header line: the show name ellipsises instead of wrapping
+     under the buttons */
+  .v-brand img.soe-logo { height: 20px !important; }
+  .v-brand > div { min-width: 0; }
+  .v-title { font-size: 13.5px; white-space: nowrap; overflow: hidden;
+             text-overflow: ellipsis; }
+  .v-sub { display: none; }
 }

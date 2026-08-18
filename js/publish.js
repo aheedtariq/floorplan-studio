@@ -123,11 +123,6 @@
     return snapshot;
   };
 
-  FP.readPublic = () => {
-    try { return JSON.parse(localStorage.getItem(PUBLIC_KEY)) || null; }
-    catch { return null; }
-  };
-
   FP.PUBLIC_KEY = PUBLIC_KEY;
 
   /** What publishing would remove — shown in the confirmation dialog. */

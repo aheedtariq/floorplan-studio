@@ -111,35 +111,6 @@
   .sheet-foot { display: flex; gap: 10px; margin-top: 22px; align-items: center; }
   .sheet-foot .grow { flex: 1; }
 
-  /* ---------- tour (first-login tutorial) ---------- */
-  .tour-top { display: flex; align-items: center; margin-bottom: 14px; }
-  .tour-count { font-size: 12px; font-weight: 600; color: var(--tx-3); letter-spacing: .04em; }
-  .tour-skip {
-    margin-left: auto; background: none; border: none; cursor: pointer;
-    font: 600 12.5px/1 inherit; font-family: inherit; color: var(--tx-3); padding: 6px 8px;
-  }
-  .tour-skip:hover { color: var(--accent); }
-  .tour-ico {
-    width: 52px; height: 52px; border-radius: 14px; margin-bottom: 14px;
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
-    color: var(--accent); display: grid; place-items: center;
-  }
-  .tour-ico svg { width: 28px; height: 28px; }
-  .tour-body { font-size: 14px; color: var(--tx-2); }
-  .tour-body p { margin: 0 0 10px; }
-  .tour-body b { color: var(--tx); }
-  .tour-body ul { margin: 0; padding-left: 18px; }
-  .tour-body li { margin: 0 0 8px; }
-  .tour-dots { display: flex; gap: 6px; margin-top: 20px; }
-  .tour-dots i {
-    width: 8px; height: 8px; border-radius: 99px; background: var(--line-2);
-    cursor: pointer; transition: .15s;
-  }
-  .tour-dots i.past { background: color-mix(in srgb, var(--accent) 45%, transparent); }
-  .tour-dots i.on { background: var(--accent); width: 22px; }
-  .sheet.tour { min-height: 430px; display: flex; flex-direction: column; }
-  .sheet.tour .tour-body { flex: 1; }
-
   /* ---------- small modal (links / photos / new plan) ---------- */
   .box { width: min(480px, 100%); }
   .box label { display: block; font-size: 12px; font-weight: 600; color: var(--tx-2); margin: 12px 0 5px; }

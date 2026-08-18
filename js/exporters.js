@@ -475,16 +475,6 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> â
       row.sqft += G.area(s);
       if ((s.props.exhibitor || '').trim()) row.rented++;
     });
-    const sectionCounts = {};
-    spaces.forEach((s) => {
-      const nm = String(s.props.section || '').trim();
-      if (nm) sectionCounts[nm] = (sectionCounts[nm] || 0) + 1;
-    });
-    const drape = FP.drape.takeoff(p);
-    const legendKinds = [...new Set(p.elements.map((e) => e.kind))]
-      .map((id) => C.kind(id))
-      .filter((k) => k && k.cat !== 'annotate' && k.cat !== 'contents')
-      .slice(0, 14);
     const st = FP.stats();
 
     /* spec-table facts, derived from the plan the way Lexi types them */

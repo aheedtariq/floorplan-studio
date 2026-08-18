@@ -1631,10 +1631,16 @@
     }
 
     if (!renderer) {
-      renderer = new THREE.WebGLRenderer({ antialias: true });
+      /* phones pay for every pixel: soft shadows + antialiasing at a 3×
+         device ratio turns a 1,000-element floor into a slideshow. The
+         lite profile keeps shadows (they sell the depth) but trades the
+         soft edge and caps resolution. */
+      const lite = matchMedia('(max-width: 820px), (pointer: coarse) and (max-width: 1100px)').matches;
+      renderer = new THREE.WebGLRenderer({ antialias: !lite });
       renderer.shadowMap.enabled = true;
-      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.shadowMap.type = lite ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.userData = { lite };
       overlay.appendChild(renderer.domElement);
 
       scene = new THREE.Scene();
@@ -1714,7 +1720,7 @@
     if (!renderer || !overlay) return;
     const w = overlay.clientWidth, h = overlay.clientHeight - 44;
     renderer.setSize(w, h);
-    renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    renderer.setPixelRatio(Math.min(devicePixelRatio, renderer.userData?.lite ? 1.5 : 2));
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
   }
