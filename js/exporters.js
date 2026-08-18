@@ -733,18 +733,28 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> �
           </div>
         </div>
 
-        <p class="helptext" style="margin-top:12px">Published to this browser for now.
-          Phase 2 puts it behind a real URL.</p>`,
+        <p class="helptext" style="margin-top:12px">Publishing creates a public link
+          anyone can open — no sign-in, searchable, booth-by-booth. Re-publish any
+          time to update it; the link stays the same.</p>`,
       foot: `<button class="btn ghost" data-cancel>Cancel</button>
              <button class="btn primary" data-ok>Publish</button>`,
       onMount: (body, foot) => {
         foot.querySelector('[data-cancel]').onclick = FP.closeModal;
-        foot.querySelector('[data-ok]').onclick = () => {
-          const snap = FP.publish();
+        foot.querySelector('[data-ok]').onclick = async () => {
+          const btn = foot.querySelector('[data-ok]');
+          btn.disabled = true;
+          btn.textContent = 'Publishing…';
+          const snap = await FP.publish();
           FP.closeModal();
           if (!snap) return FP.toast('Publish failed', true);
-          FP.toast(`Published ${a.listed} exhibitors`);
-          window.open('viewer.html', '_blank');
+          const url = snap.publicUrl || 'viewer.html';
+          if (snap.publicUrl && navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(snap.publicUrl).catch(() => {});
+            FP.toast('Published — public link copied');
+          } else {
+            FP.toast(`Published ${a.listed} exhibitors`);
+          }
+          window.open(url, '_blank');
         };
       },
     });

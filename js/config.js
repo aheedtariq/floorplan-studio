@@ -537,6 +537,14 @@
     { id: 'arrow', name: 'Arrow / flow', cat: 'annotate', layer: 'annotate', shape: 'line', scope: ['hall', 'booth'],
       thickness: 0.4, fill: '#0ea5e9', stroke: '#0ea5e9', icon: ic.arrow,
       flags: { arrow: true }, fields: [F.label] },
+    /* markup for show management: highlight an area, leave a note —
+       the felt pen and the post-it, but they survive reprints */
+    { id: 'marker', name: 'Marker / highlight', cat: 'annotate', layer: 'annotate', shape: 'poly', scope: ['hall', 'booth'],
+      fill: '#ef4444', stroke: '#dc2626', opacity: .22, icon: ic.zone,
+      fields: [F.label, F.color] },
+    { id: 'note', name: 'Sticky note', cat: 'annotate', layer: 'annotate', shape: 'rect', scope: ['hall', 'booth'],
+      size: [10, 7], fill: '#fde047', stroke: '#eab308', opacity: .92, icon: ic.text,
+      fields: [{ key: 'label', label: 'Note', type: 'text', default: 'Note' }, F.color] },
   ];
 
   /* ------------------------------------------------------------

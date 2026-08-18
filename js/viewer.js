@@ -23,15 +23,31 @@
 
   let selectedId = null;
   let query = '';
+  /* TCT-style filters: size, booth type, section (pavilion), open-only */
+  const filt = { size: '', type: '', section: '', open: false };
 
   /* ---------------- data ---------------- */
 
   const spaces = () => FP.plan.elements
     .filter((e) => C.flag(e.kind, 'sellable') && !e.parentId);
 
+  const sizeKey = (s) => `${s.geometry.w}×${s.geometry.h}`;
+
+  function passesFilters(s) {
+    if (filt.size && sizeKey(s) !== filt.size) return false;
+    if (filt.type && (s.props.spaceType || 'inline') !== filt.type) return false;
+    if (filt.section && String(s.props.section || '') !== filt.section) return false;
+    return true;
+  }
+
   const listed = () => spaces()
-    .filter((s) => (s.props.exhibitor || '').trim())
-    .sort((a, b) => String(a.props.exhibitor).localeCompare(String(b.props.exhibitor)));
+    .filter((s) => (filt.open
+      ? !(s.props.exhibitor || '').trim()          /* booths still for sale */
+      : (s.props.exhibitor || '').trim()))
+    .filter(passesFilters)
+    .sort((a, b) => (filt.open
+      ? String(a.props.number || '').localeCompare(String(b.props.number || ''), undefined, { numeric: true })
+      : String(a.props.exhibitor).localeCompare(String(b.props.exhibitor))));
 
   function matches(s) {
     if (!query) return true;
@@ -39,30 +55,53 @@
     return (s.props.exhibitor || '').toLowerCase().includes(q)
         || String(s.props.number || '').toLowerCase().includes(q)
         || (s.props.publicCategory || '').toLowerCase().includes(q)
+        || (s.props.section || '').toLowerCase().includes(q)
         || C.spaceType(s.props.spaceType).name.toLowerCase().includes(q);
   }
 
   /* ---------------- directory ---------------- */
 
+  function fillFilterOptions() {
+    const all = spaces();
+    const opt = (v, label = v) => `<option value="${esc(v)}">${esc(label)}</option>`;
+
+    const sizes = [...new Set(all.map(sizeKey))]
+      .sort((a, b) => (parseFloat(a) * parseFloat(a.split('×')[1] || 1)) -
+                      (parseFloat(b) * parseFloat(b.split('×')[1] || 1)));
+    $('vfSize').innerHTML = opt('', 'Any size') +
+      sizes.map((k) => opt(k, `${k.replace('×', "' × ")}'`)).join('');
+
+    const types = [...new Set(all.map((s) => s.props.spaceType || 'inline'))];
+    $('vfType').innerHTML = opt('', 'Any type') +
+      types.map((t) => opt(t, C.spaceType(t).name)).join('');
+
+    const sections = [...new Set(all.map((s) => String(s.props.section || '').trim())
+      .filter(Boolean))].sort();
+    $('vfSection').innerHTML = opt('', 'All sections') + sections.map((s) => opt(s)).join('');
+    $('vfSection').parentElement.style.display = sections.length ? '' : 'none';
+  }
+
   function renderList() {
     const all = listed();
     const rows = all.filter(matches);
+    const noun = filt.open ? 'available booth' : 'exhibitor';
 
-    $('vCount').textContent = query
-      ? `${rows.length} of ${all.length} exhibitors`
-      : `${all.length} exhibitors`;
+    $('vCount').textContent = query || filt.size || filt.type || filt.section
+      ? `${rows.length} of ${filt.open ? spaces().filter((s) => !(s.props.exhibitor || '').trim()).length : spaces().filter((s) => (s.props.exhibitor || '').trim()).length} ${noun}s`
+      : `${all.length} ${noun}${all.length === 1 ? '' : 's'}`;
 
     $('vResults').innerHTML = rows.length
       ? rows.map((s) => `
         <button class="v-row${s.id === selectedId ? ' on' : ''}" data-id="${s.id}">
           <span class="n">${esc(s.props.number || '—')}</span>
           <span class="m">
-            <b>${esc(s.props.exhibitor)}</b>
+            <b>${filt.open ? 'Available' : esc(s.props.exhibitor)}</b>
             <span>${esc(G.fmtDims(s.geometry.w, s.geometry.h, FP.plan.unit))}${
+              s.props.section ? ` · ${esc(s.props.section)}` :
               s.props.publicCategory ? ` · ${esc(s.props.publicCategory)}` : ''}</span>
           </span>
         </button>`).join('')
-      : `<div class="v-none">No exhibitor matches “${esc(query)}”.</div>`;
+      : `<div class="v-none">${filt.open ? 'No open booths match.' : `No exhibitor matches${query ? ` “${esc(query)}”` : ''}.`}</div>`;
 
     $('vResults').querySelectorAll('[data-id]').forEach((b) =>
       b.addEventListener('click', () => selectBooth(b.dataset.id, true)));
@@ -95,9 +134,11 @@
       </header>
       <div class="rows">
         ${row('Booth', s.props.number || '—')}
+        ${row('Status', (s.props.exhibitor || '').trim() ? 'Reserved' : 'Available')}
         ${row('Size', G.fmtDims(q.w, q.h, FP.plan.unit))}
         ${row('Area', G.fmtArea(G.area(s), FP.plan.unit))}
         ${row('Type', C.spaceType(s.props.spaceType).name)}
+        ${s.props.section ? row('Section', s.props.section) : ''}
         ${s.props.publicCategory ? row('Category', s.props.publicCategory) : ''}
       </div>
       <footer>
@@ -239,11 +280,14 @@
 
   /* ---------------- boot ---------------- */
 
-  function boot() {
+  async function boot() {
     const canvas = $('canvas');
     document.documentElement.dataset.theme = FP.prefs?.theme || 'light';
 
-    const snapshot = FP.readPublicSnapshot();
+    /* viewer.html?s=<show id> — the published cloud copy; without it,
+       fall back to whatever this browser last published (offline dev) */
+    const showId = new URLSearchParams(location.search).get('s');
+    const snapshot = (showId && await fetchPublished(showId)) || FP.readPublicSnapshot();
     if (!snapshot) {
       $('vEmpty').hidden = false;
       $('vCount').textContent = '';
@@ -269,10 +313,16 @@
     R.fit();
     renderList();
 
+    fillFilterOptions();
     $('vSearch').addEventListener('input', (ev) => {
       query = ev.target.value;
       renderList();
     });
+    const refilter = () => { renderList(); };
+    $('vfSize').addEventListener('change', (ev) => { filt.size = ev.target.value; refilter(); });
+    $('vfType').addEventListener('change', (ev) => { filt.type = ev.target.value; refilter(); });
+    $('vfSection').addEventListener('change', (ev) => { filt.section = ev.target.value; refilter(); });
+    $('vfOpen').addEventListener('change', (ev) => { filt.open = ev.target.checked; refilter(); });
     $('vZoomIn').onclick = () => R.setZoom(FP.state.view.zoom * 1.3);
     $('vZoomOut').onclick = () => R.setZoom(FP.state.view.zoom / 1.3);
     $('vFit').onclick = () => { exitBooth(); };
@@ -311,6 +361,22 @@
     try { return JSON.parse(localStorage.getItem('fps.public.v1')) || null; }
     catch { return null; }
   };
+
+  /** Fetch a cloud-published snapshot. Anonymous, read-only by design —
+      this is the public page of a published show. */
+  async function fetchPublished(showId) {
+    if (!/^[0-9a-f-]{36}$/i.test(showId)) return null;
+    try {
+      const base = 'https://bvbjjawpmdfpkmasrcpk.supabase.co';
+      const key = 'sb_publishable_phh-vhvlqPg8YGEjuxIorw_hgn7bnAX';
+      const r = await fetch(
+        `${base}/rest/v1/public_plan?show_id=eq.${showId}&select=doc`,
+        { headers: { apikey: key, Authorization: `Bearer ${key}` } });
+      if (!r.ok) return null;
+      const rows = await r.json();
+      return rows?.[0]?.doc || null;
+    } catch { return null; }
+  }
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', boot);

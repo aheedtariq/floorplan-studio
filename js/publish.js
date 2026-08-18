@@ -19,7 +19,7 @@
   const PUBLIC_KEY = 'fps.public.v1';
 
   /* Allow-lists. A key absent here never reaches the public document. */
-  const SPACE_KEYS = ['number', 'exhibitor', 'spaceType'];
+  const SPACE_KEYS = ['number', 'exhibitor', 'spaceType', 'section'];
   const GENERAL_KEYS = ['label', 'text', 'fontSize', 'color'];
 
   /* Whole categories the public has no business seeing. Power topology
@@ -100,14 +100,25 @@
     };
   };
 
-  /** Publish to local storage. Phase 2 replaces this with a Supabase write. */
-  FP.publish = (plan = FP.plan) => {
+  /** Publish: the snapshot goes to the cloud so the link opens on any
+      device — attendees, exhibitors, Andrew's phone. localStorage keeps
+      working as the offline fallback for this browser. */
+  FP.publish = async (plan = FP.plan) => {
     const snapshot = FP.publishPublicSnapshot(plan);
+    try { localStorage.setItem(PUBLIC_KEY, JSON.stringify(snapshot)); } catch { /* best effort */ }
     try {
-      localStorage.setItem(PUBLIC_KEY, JSON.stringify(snapshot));
+      const sb = FP.auth?.client?.();
+      if (sb && FP.isUuid?.(plan.id)) {
+        const { error } = await sb.from('public_plan').upsert({
+          show_id: plan.id,
+          doc: snapshot,
+          published_at: new Date().toISOString(),
+        });
+        if (error) throw error;
+        snapshot.publicUrl = `${location.origin}/viewer.html?s=${plan.id}`;
+      }
     } catch (err) {
-      console.warn('Publish failed', err);
-      return null;
+      console.warn('Cloud publish failed', err);
     }
     return snapshot;
   };
