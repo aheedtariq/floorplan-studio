@@ -516,10 +516,35 @@
         let b64 = null;
         try { b64 = btoa(unescape(encodeURIComponent(svg))); } catch { /* huge/odd chars */ }
         if (b64) {
-          FP.setUnderlay({
-            src: `data:image/svg+xml;base64,${b64}`,
-            x: 0, y: 0, w: snap(exW), h: snap(exH), opacity: 0.95, locked: true,
-          });
+          /* Bake the vector sheet into one high-res bitmap: the browser
+             re-rasterises SVG images on every zoom step, which turns a
+             4,000-entity backdrop into visible pan/zoom lag. A PNG blits. */
+          const img = new Image();
+          img.onload = () => {
+            try {
+              const long = 4096;
+              const scale = long / Math.max(exW, exH);
+              const cnv = document.createElement('canvas');
+              cnv.width = Math.round(exW * scale);
+              cnv.height = Math.round(exH * scale);
+              const ctx = cnv.getContext('2d');
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(0, 0, cnv.width, cnv.height);
+              ctx.drawImage(img, 0, 0, cnv.width, cnv.height);
+              FP.setUnderlay({
+                src: cnv.toDataURL('image/png'),
+                x: 0, y: 0, w: snap(exW), h: snap(exH), opacity: 0.95, locked: true,
+              });
+            } catch {
+              FP.setUnderlay({
+                src: `data:image/svg+xml;base64,${b64}`,
+                x: 0, y: 0, w: snap(exW), h: snap(exH), opacity: 0.95, locked: true,
+              });
+            }
+            FP.changed();
+            FP.render.paintNow();
+          };
+          img.src = `data:image/svg+xml;base64,${b64}`;
         }
       }
     }
