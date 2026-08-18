@@ -444,6 +444,121 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> �
     setTimeout(() => { win.focus(); win.print(); }, 400);
   }
 
+  /* ============================================================
+     Print — floor plan only, one sheet.
+
+     The foreman's copy: nothing but the plan, filling exactly one
+     page. The SVG stretches to the paper the print dialog picks —
+     letter for a clipboard, tabloid, or a 24×36 large-format sheet —
+     the drawing scales, so bigger paper simply means bigger type.
+     ============================================================ */
+  function printPlanOnly() {
+    const p = FP.plan;
+    const win = window.open('', '_blank');
+    if (!win) return FP.toast('Allow pop-ups to print', true);
+
+    const landscape = p.width >= p.height;
+    /* the plan fills its panel: strip the SVG's fixed pixel size */
+    const svg = planSvg()
+      .replace(/width="\d+" height="\d+">/,
+        'width="100%" height="100%" preserveAspectRatio="xMidYMid meet">');
+
+    /* the right-hand information column, drafting-sheet style */
+    const spaces = FP.spaces().slice().sort(byNumber);
+    const mix = {};
+    spaces.forEach((s) => {
+      const k = G.fmtDims(s.geometry.w, s.geometry.h, p.unit);
+      mix[k] = (mix[k] || 0) + 1;
+    });
+    const sectionCounts = {};
+    spaces.forEach((s) => {
+      const nm = String(s.props.section || '').trim();
+      if (nm) sectionCounts[nm] = (sectionCounts[nm] || 0) + 1;
+    });
+    const drape = FP.drape.takeoff(p);
+    const legendKinds = [...new Set(p.elements.map((e) => e.kind))]
+      .map((id) => C.kind(id))
+      .filter((k) => k && k.cat !== 'annotate' && k.cat !== 'contents')
+      .slice(0, 14);
+    const st = FP.stats();
+
+    const box = (title, inner) =>
+      `<div class="box"><h4>${esc(title)}</h4>${inner}</div>`;
+    const trow = (a, b) => `<tr><td>${a}</td><td class="num">${b}</td></tr>`;
+
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>${esc(p.name)} — floor plan</title>
+<style>
+  @page { size: ${landscape ? 'landscape' : 'portrait'}; margin: 6mm; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  html, body { height: 100%; }
+  body { margin: 0; display: flex;
+         font: 10px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+         color: #131a26; }
+  .sheet { flex: 1 1 auto; min-width: 0; border: 1.5px solid #131a26; }
+  .sheet svg { width: 100%; height: 100%; display: block; }
+  .col { flex: 0 0 200px; display: flex; flex-direction: column; gap: 6px;
+         padding-left: 6px; min-height: 0; overflow: hidden; }
+  .title { border: 1.5px solid #131a26; padding: 8px 9px; }
+  .title b { display: block; font-size: 13px; line-height: 1.25; }
+  .title span { display: block; color: #5a6779; font-size: 9.5px; margin-top: 2px; }
+  .box { border: 1px solid #9aa5b8; padding: 6px 8px 7px; }
+  .box h4 { margin: 0 0 4px; font-size: 8.5px; text-transform: uppercase;
+            letter-spacing: .07em; color: #5a6779; }
+  table { width: 100%; border-collapse: collapse; font-size: 9.5px; }
+  td { padding: 1.5px 0; border-bottom: 1px solid #eef1f7; }
+  td.num { text-align: right; font-family: ui-monospace, Menlo, monospace; }
+  tr.total td { font-weight: 700; border-top: 1.2px solid #131a26; border-bottom: none; }
+  .lg { display: flex; align-items: center; gap: 6px; padding: 1.5px 0; font-size: 9px; }
+  .lg svg { flex: 0 0 auto; }
+  .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px;
+        border: 1px solid #1c2333; margin-right: 5px; vertical-align: -1px; }
+  .foot { margin-top: auto; color: #8b96a8; font-size: 8.5px; line-height: 1.5; }
+  .exh div { font-size: 8.5px; padding: 1px 0; break-inside: avoid; }
+  .exh b { font-family: ui-monospace, Menlo, monospace; font-weight: 700; margin-right: 4px; }
+  .exh.two { columns: 2; column-gap: 8px; }
+  .exh.two div { font-size: 7.5px; }
+</style></head><body>
+<div class="sheet">${svg}</div>
+<div class="col">
+  <div class="title">
+    <b>${esc(p.name)}</b>
+    <span>${esc(p.venue || 'Venue TBC')}${p.hall ? ` · ${esc(p.hall)}` : ''}</span>
+    <span>Hall ${esc(G.fmtDims(p.width, p.height, p.unit))} · ${st.total} spaces · ${esc(G.fmtArea(st.sellable, p.unit))} sellable</span>
+    <span>Source One Events · printed ${stamp()}</span>
+  </div>
+
+  ${(() => {
+    const listed = spaces.filter((s) => (s.props.exhibitor || '').trim());
+    return listed.length ? box(`Exhibitors — ${listed.length}`,
+      `<div class="exh${listed.length > 45 ? ' two' : ''}">${listed.map((s) =>
+        `<div><b>${esc(s.props.number || '—')}</b>${esc(s.props.exhibitor)}</div>`).join('')}</div>`) : '';
+  })()}
+
+  ${Object.keys(mix).length ? box('Booth count', `<table>
+    ${Object.entries(mix).sort((a, b) => b[1] - a[1]).map(([k, n]) => trow(esc(k), n)).join('')}
+    <tr class="total"><td>Total</td><td class="num">${st.total}</td></tr></table>`) : ''}
+
+  ${Object.keys(sectionCounts).length ? box('Sections', `<table>
+    ${Object.entries(sectionCounts).sort((a, b) => b[1] - a[1]).map(([nm, n]) =>
+      trow(`<i class="sw" style="background:${C.sectionColor(nm)}"></i>${esc(nm)}`, n)).join('')}</table>`) : ''}
+
+  ${drape.groups.length ? box('Pipe & drape', `<table>
+    ${drape.groups.map((g) =>
+      trow(`${g.height} ft ${esc(g.color)}`, esc(G.fmtLen(g.length, p.unit)))).join('')}
+    <tr class="total"><td>Total run</td><td class="num">${esc(G.fmtLen(drape.totalLength, p.unit))}</td></tr></table>`) : ''}
+
+  ${legendKinds.length ? box('Legend', legendKinds.map((k) =>
+    `<div class="lg">${FP.render.symbolSwatch(k.id, 11)}<span>${esc(k.name)}</span></div>`).join('')) : ''}
+
+  <div class="foot">Dimensions in ${p.unit === 'm' ? 'metres' : 'feet'} · grid ${p.grid || 5} ${p.unit || 'ft'}.
+    Print at any paper size — the sheet scales as one page.</div>
+</div>
+</body></html>`);
+    win.document.close();
+    setTimeout(() => { win.focus(); win.print(); }, 400);
+  }
+
   const byNumber = (a, b) =>
     String(a.props.number || '').localeCompare(String(b.props.number || ''), undefined, { numeric: true });
 
@@ -806,6 +921,7 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> �
         case 'png': return exportPng();
         case 'svg': return exportSvg();
         case 'pdf': return printPlan();
+        case 'pdfplan': return printPlanOnly();
         case 'csv': return exportCsv();
         case 'json': return exportJson();
         case 'import': return importPlan();
