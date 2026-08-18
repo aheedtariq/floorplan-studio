@@ -529,9 +529,15 @@
       Object.assign(el.props, s.props);
       return el;
     });
-    /* faithful import: the CAD file already says what each booth holds,
-       so no auto-furnishing — staff can furnish afterwards */
-    FP.addElements(real, { snapshot: false, select: false, furnish: false });
+    /* house standard: every booth arrives with its 6-ft draped table
+       and two chairs, same as booths placed by hand */
+    FP.addElements(real, { snapshot: false, select: false, furnish: true });
+    /* …but the 2D sheet stays exactly as drawn — furniture lives on the
+       contents layer, hidden here so only the 3D walkthrough shows it.
+       One click in the Layers panel brings it back. */
+    if (specs.some((s) => s.kind === 'space') && FP.plan.layers?.contents) {
+      FP.plan.layers.contents.visible = false;
+    }
 
     return {
       booths: specs.filter((s) => s.kind === 'space').length,
