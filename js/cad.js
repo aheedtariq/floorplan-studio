@@ -32,6 +32,41 @@
   const isNum = (v) => typeof v === 'number' && isFinite(v);
   const EXPO_RE = /^expo\s*(\d+(?:\.\d+)?)\s*x\s*(\d+(?:\.\d+)?)/i;
 
+  /* AutoCAD colour index → hex; 256 = ByLayer, resolved by the caller */
+  const ACI = {
+    1: '#dc2626', 2: '#ca8a04', 3: '#16a34a', 4: '#0891b2', 5: '#2563eb',
+    6: '#c026d3', 7: '#334155', 8: '#94a3b8', 9: '#cbd5e1', 30: '#ea580c',
+    250: '#1e293b', 251: '#475569', 252: '#64748b', 253: '#94a3b8',
+    254: '#cbd5e1', 255: '#e2e8f0',
+  };
+
+  /** Polyline vertices with bulges → sampled point list (arcs chorded). */
+  function bulgePts(vs) {
+    const out = [];
+    for (let i = 0; i < vs.length; i++) {
+      const a = vs[i], b = vs[i + 1];
+      if (!isNum(a.x) || !isNum(a.y)) continue;
+      out.push([a.x, a.y]);
+      const g = a.bulge || 0;
+      if (!b || !isNum(b.x) || Math.abs(g) < 0.02) continue;
+      const th = 4 * Math.atan(g);
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const d = Math.hypot(dx, dy);
+      if (d < 1e-9) continue;
+      const r = d / (2 * Math.sin(th / 2));
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+      const m = r * Math.cos(th / 2);
+      const cx = mx - (dy / d) * m, cy = my + (dx / d) * m;
+      const a0 = Math.atan2(a.y - cy, a.x - cx);
+      const n = Math.max(3, Math.ceil(Math.abs(th) / 0.3));
+      for (let k = 1; k < n; k++) {
+        const t = a0 + (th * k) / n;
+        out.push([cx + Math.abs(r) * Math.cos(t), cy + Math.abs(r) * Math.sin(t)]);
+      }
+    }
+    return out;
+  }
+
   /* ---------------- parse + digest ---------------- */
 
   async function parse(file) {
@@ -47,56 +82,169 @@
     return digest(db);
   }
 
-  /** Reduce raw entities to simple shapes, bucketed per CAD layer. */
+  /** Reduce raw entities to (a) per-layer buckets for mapping and
+      (b) a flat "sheet" of draw records — EVERY visible stroke, fill,
+      curve and symbol, blocks expanded — for the exact 1:1 backdrop. */
   function digest(db) {
     const layers = {};
     const L = (name) => (layers[name] ||= {
-      name, count: 0, lines: [], polys: [], texts: [], inserts: [], boothRects: [],
+      name, count: 0, lines: [], polys: [], texts: [], inserts: [],
+      boothRects: [], shapes: [],
     });
 
-    for (const e of db.entities || []) {
-      const lay = L(String(e.layer ?? '0'));
-      lay.count++;
+    const layerColor = {};
+    for (const l of db.tables?.LAYER?.entries || []) {
+      layerColor[l.name] = ACI[l.colorIndex] || '#475569';
+    }
+    const blocks = {};
+    for (const b of db.tables?.BLOCK_RECORD?.entries || []) {
+      blocks[b.name] = b.entities || [];
+    }
+
+    const sheet = [];   /* {t, layer, c, bb:[x1,y1,x2,y2], ...} drawing units */
+    const bbOf = (pts) => {
+      let x1 = Infinity, y1 = Infinity, x2 = -Infinity, y2 = -Infinity;
+      for (const [x, y] of pts) {
+        x1 = Math.min(x1, x); x2 = Math.max(x2, x);
+        y1 = Math.min(y1, y); y2 = Math.max(y2, y);
+      }
+      return [x1, y1, x2, y2];
+    };
+    const colorOf = (e, layerName) =>
+      (e.colorIndex == null || e.colorIndex === 256 || e.colorIndex === 0)
+        ? (layerColor[layerName] || '#475569') : (ACI[e.colorIndex] || '#64748b');
+
+    /* transforms for block expansion */
+    const ID = { x: 0, y: 0, rot: 0, sx: 1, sy: 1 };
+    const ap = (tf, px, py) => {
+      const x = px * tf.sx, y = py * tf.sy;
+      const c = Math.cos(tf.rot), s = Math.sin(tf.rot);
+      return [tf.x + x * c - y * s, tf.y + x * s + y * c];
+    };
+
+    function emit(e, tf, depth, layerName) {
+      const lname = depth === 0 ? String(e.layer ?? '0') : layerName;
+      const lay = depth === 0 ? L(lname) : null;
+      if (lay) lay.count++;
+      const c = colorOf(e, lname);
+
       switch (e.type) {
         case 'LINE': {
           const a = e.startPoint, b = e.endPoint;
-          if (a && b && isNum(a.x)) lay.lines.push([a.x, a.y, b.x, b.y]);
+          if (!a || !b || !isNum(a.x)) break;
+          const pts = [ap(tf, a.x, a.y), ap(tf, b.x, b.y)];
+          sheet.push({ t: 'pl', layer: lname, c, pts, bb: bbOf(pts) });
+          if (lay) lay.lines.push([a.x, a.y, b.x, b.y]);
           break;
         }
         case 'LWPOLYLINE':
         case 'POLYLINE2D': {
-          const vs = (e.vertices || [])
-            .map((v) => [v.x, v.y]).filter((v) => isNum(v[0]) && isNum(v[1]));
-          if (vs.length < 2) break;
+          const raw = bulgePts(e.vertices || []);
+          if (raw.length < 2) break;
           const closed = !!(e.closed) || !!((e.flag ?? 0) & 1) ||
-            (Math.hypot(vs[0][0] - vs[vs.length - 1][0], vs[0][1] - vs[vs.length - 1][1]) < 1e-6);
-          lay.polys.push({ pts: vs, closed });
+            (Math.hypot(raw[0][0] - raw[raw.length - 1][0], raw[0][1] - raw[raw.length - 1][1]) < 1e-6);
+          const pts = raw.map(([x, y]) => ap(tf, x, y));
+          sheet.push({ t: closed ? 'pg' : 'pl', layer: lname, c, pts, bb: bbOf(pts) });
+          if (lay) {
+            lay.polys.push({ pts: raw, closed });
+            if (closed) {
+              const [x1, y1, x2, y2] = bbOf(raw);
+              lay.shapes.push({ x: x1, y: y1, w: x2 - x1, h: y2 - y1 });
+            }
+          }
+          break;
+        }
+        case 'CIRCLE': {
+          const p = e.center;
+          if (!p || !isNum(p.x)) break;
+          const [cx, cy] = ap(tf, p.x, p.y);
+          const r = (e.radius || 0) * (Math.abs(tf.sx) + Math.abs(tf.sy)) / 2;
+          sheet.push({ t: 'c', layer: lname, c, cx, cy, r, bb: [cx - r, cy - r, cx + r, cy + r] });
+          if (lay && r > 0) {
+            lay.shapes.push({ x: p.x - e.radius, y: p.y - e.radius, w: e.radius * 2, h: e.radius * 2 });
+          }
+          break;
+        }
+        case 'ARC': {
+          const p = e.center;
+          if (!p || !isNum(p.x)) break;
+          const r = e.radius || 0;
+          const a0 = e.startAngle || 0, a1 = e.endAngle || 0;
+          const sweep = ((a1 - a0) + Math.PI * 2) % (Math.PI * 2) || Math.PI * 2;
+          const n = Math.max(4, Math.ceil(sweep / 0.3));
+          const pts = [];
+          for (let k = 0; k <= n; k++) {
+            const t = a0 + (sweep * k) / n;
+            pts.push(ap(tf, p.x + r * Math.cos(t), p.y + r * Math.sin(t)));
+          }
+          sheet.push({ t: 'pl', layer: lname, c, pts, bb: bbOf(pts) });
+          break;
+        }
+        case 'SPLINE': {
+          const src = (e.fitPoints?.length ? e.fitPoints : e.controlPoints) || [];
+          const pts = src.filter((v) => isNum(v.x)).map((v) => ap(tf, v.x, v.y));
+          if (pts.length >= 2) sheet.push({ t: 'pl', layer: lname, c, pts, bb: bbOf(pts) });
+          break;
+        }
+        case 'SOLID': {
+          const cs = [e.corner1, e.corner2, e.corner4, e.corner3]
+            .filter((p) => p && isNum(p.x)).map((p) => ap(tf, p.x, p.y));
+          if (cs.length >= 3) sheet.push({ t: 'sd', layer: lname, c, pts: cs, bb: bbOf(cs) });
+          break;
+        }
+        case 'HATCH': {
+          const loops = [];
+          for (const bp of e.boundaryPaths || []) {
+            const vs = (bp.vertices || []).filter((v) => isNum(v.x));
+            if (vs.length >= 3) loops.push(bulgePts(vs).map(([x, y]) => ap(tf, x, y)));
+          }
+          if (loops.length) {
+            const bb = bbOf(loops.flat());
+            sheet.push({ t: 'h', layer: lname, c, loops, solid: !!e.solidFill, bb });
+          }
           break;
         }
         case 'TEXT':
         case 'MTEXT': {
           const p = e.startPoint || e.insertionPoint || e.position;
           const s = String(e.text ?? '').replace(/\\[A-Za-z][^;]*;|[{}]/g, '').trim();
-          if (p && isNum(p.x) && s) lay.texts.push({ x: p.x, y: p.y, text: s });
+          if (!p || !isNum(p.x) || !s) break;
+          const [x, y] = ap(tf, p.x, p.y);
+          const h = (e.textHeight || e.height || 9) * Math.abs(tf.sy);
+          sheet.push({ t: 'tx', layer: lname, c, x, y, h, text: s, bb: [x, y, x + s.length * h * 0.6, y + h] });
+          if (lay) lay.texts.push({ x: p.x, y: p.y, text: s });
           break;
         }
         case 'INSERT': {
           const p = e.insertionPoint;
           if (!p || !isNum(p.x)) break;
-          const ins = {
+          const local = {
             x: p.x, y: p.y, name: String(e.name || ''),
             sx: e.xScale ?? 1, sy: e.yScale ?? 1, rot: e.rotation ?? 0,
           };
-          lay.inserts.push(ins);
-          /* ExpoCAD booth blocks: the name is the booth size in feet */
-          const m = EXPO_RE.exec(ins.name);
-          if (m) lay.boothRects.push(expoRect(ins, Number(m[1]), Number(m[2])));
+          if (lay) {
+            lay.inserts.push(local);
+            const m = EXPO_RE.exec(local.name);
+            if (m) lay.boothRects.push(expoRect(local, Number(m[1]), Number(m[2])));
+          }
+          /* expand the block's own geometry through the transform so the
+             backdrop shows door glyphs, symbols, everything */
+          if (depth < 3 && blocks[local.name]?.length) {
+            const [ox, oy] = ap(tf, local.x, local.y);
+            const child = {
+              x: ox, y: oy, rot: tf.rot + local.rot,
+              sx: tf.sx * local.sx, sy: tf.sy * local.sy,
+            };
+            for (const be of blocks[local.name]) emit(be, child, depth + 1, lname);
+          }
           break;
         }
-        default: break; /* hatches, splines, dims: presentation only */
+        default: break; /* dimensions, viewports, OLE — sheet furniture */
       }
     }
-    return layers;
+
+    for (const e of db.entities || []) emit(e, ID, 0, null);
+    return { layers, sheet };
   }
 
   /** Booth rect (drawing units) for an ExpoWxD block insert. The block
@@ -120,10 +268,11 @@
   /* ---------------- layer auto-mapping ---------------- */
 
   const MAPPINGS = [
-    { id: 'skip', name: 'Skip' },
+    { id: 'skip', name: 'Backdrop only' },
     { id: 'booths', name: 'Booths' },
     { id: 'numbers', name: 'Booth numbers' },
     { id: 'walls', name: 'Walls' },
+    { id: 'furniture', name: 'Furniture (auto-detect)' },
     { id: 'doors', name: 'Doors' },
     { id: 'fire', name: 'Fire exits' },
     { id: 'text', name: 'Text labels' },
@@ -136,6 +285,7 @@
     if (lay.boothRects.length) return 'booths';
     if (/booth.*(num|no\b|text|id)/i.test(n)) return 'numbers';
     if (/wall/i.test(n)) return 'walls';
+    if (/round|banquet|furn|seat|chair|\btable/i.test(n) && lay.shapes.length) return 'furniture';
     if (/fire/i.test(n) && lay.inserts.length) return 'fire';
     if (/booth|outline/i.test(n) && lay.polys.some((p) => p.closed)) return 'booths';
     return 'skip';
@@ -151,14 +301,53 @@
     return bits.join(' · ') || `${lay.count} entities`;
   };
 
+  /** A closed shape's footprint (feet) → the rental catalog item it is. */
+  function classifyFurniture(w, h) {
+    const ar = w / Math.max(h, 0.1);
+    if (w >= 3.6 && w <= 7 && ar > 0.8 && ar < 1.25) return { kind: 'table-round-60', w: 5, h: 5 };
+    if (w >= 5.3 && w <= 6.7 && h >= 1.7 && h <= 3.3) return { kind: 'table-6ft', w: 6, h: 2.5 };
+    if (w >= 7.3 && w <= 8.7 && h >= 1.7 && h <= 3.3) return { kind: 'table-8ft', w: 8, h: 2.5 };
+    if (h >= 5.3 && h <= 6.7 && w >= 1.7 && w <= 3.3) return { kind: 'table-6ft', w: 2.5, h: 6 };
+    if (h >= 7.3 && h <= 8.7 && w >= 1.7 && w <= 3.3) return { kind: 'table-8ft', w: 2.5, h: 8 };
+    if (w >= 1.1 && w <= 2.3 && h >= 1.1 && h <= 2.3) return { kind: 'chair', w: 1.6, h: 1.6 };
+    return null;
+  }
+
+  /** Render the whole drawing as one aligned SVG — the exact backdrop.
+      `exclude` layers (booths, numbers) become live elements instead,
+      so they aren't double-drawn under themselves. */
+  function sheetSvg(sheet, tr, exclude, clip) {
+    const { X, Y, exW, exH } = tr;
+    const f = (v) => v.toFixed(2);
+    const P = (pts) => pts.map(([x, y]) => `${f(X(x))},${f(Y(y))}`).join(' ');
+    const out = [];
+    for (const r of sheet) {
+      if (exclude.has(r.layer)) continue;
+      if (r.bb[2] < clip[0] || r.bb[0] > clip[2] || r.bb[3] < clip[1] || r.bb[1] > clip[3]) continue;
+      if (r.t === 'pl') out.push(`<polyline points="${P(r.pts)}" fill="none" stroke="${r.c}" stroke-width=".09"/>`);
+      else if (r.t === 'pg') out.push(`<polygon points="${P(r.pts)}" fill="none" stroke="${r.c}" stroke-width=".09"/>`);
+      else if (r.t === 'sd') out.push(`<polygon points="${P(r.pts)}" fill="${r.c}" fill-opacity=".85"/>`);
+      else if (r.t === 'c') out.push(`<circle cx="${f(X(r.cx))}" cy="${f(Y(r.cy))}" r="${f(r.r * tr.u)}" fill="none" stroke="${r.c}" stroke-width=".09"/>`);
+      else if (r.t === 'h') {
+        const d = r.loops.map((lp) => `M${lp.map(([x, y]) => `${f(X(x))} ${f(Y(y))}`).join('L')}Z`).join('');
+        out.push(`<path d="${d}" fill="${r.c}" fill-opacity="${r.solid ? '.8' : '.12'}" fill-rule="evenodd"/>`);
+      } else if (r.t === 'tx') {
+        const fs = Math.max(r.h * tr.u, 0.6);
+        out.push(`<text x="${f(X(r.x))}" y="${f(Y(r.y))}" font-size="${f(fs)}" fill="${r.c}" font-family="Arial,sans-serif">${
+          String(r.text).replace(/[&<>]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[ch]))}</text>`);
+      }
+    }
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${f(exW)} ${f(exH)}">${out.join('')}</svg>`;
+  }
+
   /* ---------------- build elements ---------------- */
 
-  function build(layers, mapping, unitsPerFt) {
+  function build(layers, sheet, mapping, unitsPerFt, includeSheet) {
     const u = 1 / unitsPerFt;                 /* drawing units → feet */
     const snap = (v) => Math.round(v * 4) / 4;
 
     const booths = [], numbers = [], walls = [], doors = [], fires = [],
-      texts = [], zones = [];
+      texts = [], zones = [], furnShapes = [];
 
     for (const lay of Object.values(layers)) {
       const map = mapping[lay.name] || 'skip';
@@ -196,6 +385,7 @@
         }
       }
       if (map === 'fire') for (const i of lay.inserts) fires.push({ x: i.x, y: i.y });
+      if (map === 'furniture') furnShapes.push(...lay.shapes);
       if (map === 'text') texts.push(...lay.texts);
       if (map === 'zones') {
         for (const p of lay.polys) {
@@ -226,6 +416,7 @@
     texts.forEach((t) => feed(t.x, t.y));
     doors.forEach((d) => feed(d.x, d.y));
     fires.forEach((f) => feed(f.x, f.y));
+    furnShapes.forEach((s) => { feed(s.x, s.y); feed(s.x + s.w, s.y + s.h); });
     if (!isFinite(minX)) return { error: 'The mapped layers contain no usable geometry' };
 
     /* CAD Y is up; the editor's is down — flip around the extents */
@@ -282,12 +473,56 @@
       specs.push({ kind: 'text', geometry: { x: X(t.x), y: Y(t.y) }, props: { text: t.text, fontSize: 2.5 } });
     }
 
+    /* furniture: drawn shapes become the real rental catalog items —
+       nearest-size match, deduped so a table's inner linework doesn't
+       become a second table */
+    const placedFurn = [];
+    for (const s of furnShapes) {
+      const it = classifyFurniture(s.w * u, s.h * u);
+      if (!it) continue;
+      const cx = X(s.x + s.w / 2), cy = Y(s.y + s.h / 2);
+      if (placedFurn.some((p) => Math.hypot(p.x - cx, p.y - cy) < Math.max(it.w, it.h) * 0.6)) continue;
+      placedFurn.push({ x: cx, y: cy });
+      specs.push({
+        kind: it.kind,
+        geometry: { x: snap(cx - it.w / 2), y: snap(cy - it.h / 2), w: it.w, h: it.h },
+        props: {},
+      });
+    }
+
     /* grow the hall to hold the import — never shrink */
     FP.snapshot();
     const needW = Math.ceil(((maxX - minX) * u + 4) / 5) * 5;
     const needH = Math.ceil(((maxY - minY) * u + 4) / 5) * 5;
     if (needW > FP.plan.width) FP.plan.width = needW;
     if (needH > FP.plan.height) FP.plan.height = needH;
+
+    /* the exact 1:1 backdrop: the whole drawing as an aligned SVG
+       underlay — every stroke, fill, curve and symbol, in its colours */
+    if (includeSheet && sheet?.length) {
+      const exclude = new Set(Object.entries(mapping)
+        .filter(([, m]) => m === 'booths' || m === 'numbers')
+        .map(([name]) => name));
+      const exW = (maxX - minX) * u, exH = (maxY - minY) * u;
+      const tr = {
+        X: (x) => (x - minX) * u,
+        Y: (y) => (maxY - y) * u,
+        u, exW, exH,
+      };
+      const pad = Math.max((maxX - minX), (maxY - minY)) * 0.03;
+      const clip = [minX - pad, minY - pad, maxX + pad, maxY + pad];
+      const svg = sheetSvg(sheet, tr, exclude, clip);
+      if (svg.length < 4.5e6) {
+        let b64 = null;
+        try { b64 = btoa(unescape(encodeURIComponent(svg))); } catch { /* huge/odd chars */ }
+        if (b64) {
+          FP.setUnderlay({
+            src: `data:image/svg+xml;base64,${b64}`,
+            x: 0, y: 0, w: snap(exW), h: snap(exH), opacity: 0.95, locked: true,
+          });
+        }
+      }
+    }
 
     const real = specs.map((s) => {
       const el = FP.makeElement(s.kind, s.geometry);
@@ -304,6 +539,7 @@
       walls: specs.filter((s) => s.kind === 'wall').length,
       texts: specs.filter((s) => s.kind === 'text').length,
       zones: specs.filter((s) => s.kind === 'zone').length,
+      furniture: specs.filter((s) => ['table-round-60', 'table-6ft', 'table-8ft', 'chair'].includes(s.kind)).length,
       doors: specs.filter((s) => s.kind === 'door').length + specs.filter((s) => s.kind === 'fire-exit').length,
     };
   }
@@ -336,10 +572,10 @@
     ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
   async function importFile(file) {
-    let layers;
+    let layers, sheet;
     try {
       FP.toast?.('Reading the CAD file…');
-      layers = await parse(file);
+      ({ layers, sheet } = await parse(file));
     } catch (e) {
       FP.toast?.(e?.message || 'Could not read that CAD file', true);
       return;
@@ -355,7 +591,7 @@
           Every CAD layer below can become part of this plan. The usual ones are
           matched automatically — adjust anything, then import. Nothing is final:
           it's all one undo step.</p>
-        <div class="row2" style="margin-bottom:12px;max-width:280px">
+        <div class="row2" style="margin-bottom:10px;max-width:280px">
           <div><label style="font-size:11.5px;font-weight:650;color:var(--tx-3)">Drawing units</label>
           <select class="inp" id="cadUnits">
             <option value="12"${units === 12 ? ' selected' : ''}>Inches</option>
@@ -363,6 +599,11 @@
             <option value="304.8"${units === 304.8 ? ' selected' : ''}>Millimetres</option>
           </select></div>
         </div>
+        <label style="display:flex;align-items:center;gap:8px;margin:0 0 12px;font-size:13px;
+          font-weight:600;color:var(--tx-2);cursor:pointer">
+          <input type="checkbox" id="cadSheet" checked style="accent-color:var(--accent);width:14px;height:14px"/>
+          Show the original drawing underneath — exact 1:1 backdrop
+        </label>
         <div style="max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:10px">
         <table style="width:100%;border-collapse:collapse;font-size:12.5px">
           <thead><tr>
@@ -392,11 +633,12 @@
             mapping[sel.dataset.layer] = sel.value;
           });
           const unitsPerFt = Number(body.querySelector('#cadUnits').value) || 12;
-          const res = build(layers, mapping, unitsPerFt);
+          const includeSheet = !!body.querySelector('#cadSheet')?.checked;
+          const res = build(layers, sheet, mapping, unitsPerFt, includeSheet);
           FP.closeModal();
           if (res.error) return FP.toast?.(res.error, true);
           FP.render.fit();
-          FP.toast?.(`Imported ${res.booths} booths (${res.numbered} numbered), ${res.walls} walls, ${res.texts} labels`);
+          FP.toast?.(`Imported ${res.booths} booths (${res.numbered} numbered), ${res.walls} walls, ${res.furniture} furniture pieces`);
         };
       },
     });

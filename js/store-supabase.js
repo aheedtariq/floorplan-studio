@@ -30,6 +30,7 @@
     unit: 'unit',
     grid: 'grid',
     revision: 'revision',
+    underlay: 'underlay',
   };
 
   /** Give every element and the plan itself a real uuid, keeping links. */
@@ -108,6 +109,7 @@
       },
       ruleConfig: show.rule_config || {},
       fieldDefs: show.field_defs || [],
+      underlay: show.underlay || null,
       elements: (rows || []).map(fromRow),
       updated: Date.parse(show.created_at) || Date.now(),
     });
