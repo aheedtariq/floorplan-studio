@@ -309,6 +309,24 @@
     return out;
   };
 
+  /** House standard: eight folding chairs ring every 60" round table. */
+  FP.furnishRound = (table) => {
+    const g = table.geometry;
+    if (!g) return [];
+    const cx = g.x + g.w / 2, cy = g.y + g.h / 2;
+    const R = 3.1, S = 1.6;                       /* ring radius, chair size */
+    const out = [];
+    for (let i = 0; i < 8; i++) {
+      const b = (i * 45 * Math.PI) / 180;
+      const x = cx + R * Math.sin(b), y = cy - R * Math.cos(b);
+      const ch = FP.makeElement('chair', { x: x - S / 2, y: y - S / 2, w: S, h: S },
+        table.parentId || table.id);
+      ch.geometry.rot = (i * 45 + 180) % 360;     /* every chair faces the table */
+      out.push(ch);
+    }
+    return out;
+  };
+
   FP.addElements = (els, { snapshot = true, select = true, furnish = true } = {}) => {
     const list = Array.isArray(els) ? els : [els];
     if (!list.length) return [];
@@ -319,6 +337,9 @@
       for (const el of list) {
         if (C.flag(el.kind, 'sellable') && !list.some((c) => c.parentId === el.id)) {
           extra.push(...FP.furnishSpace(el, FP.plan.elements.concat(list)));
+        }
+        if (el.kind === 'table-round-60' && !list.some((c) => c.parentId === el.id)) {
+          extra.push(...FP.furnishRound(el));
         }
       }
     }
