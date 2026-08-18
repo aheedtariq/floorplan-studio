@@ -874,6 +874,12 @@ kbd {
   .panel.left { position: relative; }
 }
 
+/* ---------- brand ----------
+   The real Source One wordmark. Navy/grey/yellow on light surfaces;
+   dark themes flip it to the white variant the brand uses on dark. */
+img.soe-logo { display: block; }
+[data-theme="dark"] img.soe-logo { filter: brightness(0) invert(1); }
+
 /* ---------- phone: the floor plan IS the screen ----------
    The right inspector would otherwise eat the whole viewport, leaving a
    sliver of canvas. It becomes a bottom sheet raised by a floating

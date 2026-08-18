@@ -502,7 +502,8 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> �
       const t = Object.entries(inv).sort((a, b) => b[1].qty - a[1].qty)[0];
       return t ? t[0].replace(/['\s]/g, '').replace('×', 'x') : '';
     })();
-    const rep = FP.auth?.profile?.()?.email?.split('@')[0]?.replace(/[.\-_]/g, ' ') || '';
+    /* left blank on purpose — the rep signs their own name */
+    const rep = '';
 
     const specRow = (k, v) => `<tr><td class="k">${esc(k)}</td><td>${esc(v)}</td></tr>`;
     const listed = spaces.filter((s) => (s.props.exhibitor || '').trim());
