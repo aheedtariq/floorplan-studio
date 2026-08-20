@@ -1995,6 +1995,24 @@
     $('btnPlans').onclick = plansModal;
     $('btnAccount').onclick = accountModal;
 
+    /* the manual save: forces the debounced write NOW, and wears the
+       result — accent while unsaved, red when a save actually failed */
+    $('btnSave').onclick = async () => {
+      $('btnSaveLabel').textContent = 'Saving…';
+      await FP.save();
+    };
+    FP.on('saved', () => {
+      $('btnSave')?.classList.remove('error', 'dirty');
+      const l = $('btnSaveLabel');
+      if (l) l.textContent = 'Saved';
+    });
+    FP.on('save-error', () => {
+      $('btnSave')?.classList.add('error');
+      const l = $('btnSaveLabel');
+      if (l) l.textContent = 'Retry save';
+      FP.toast?.('Save failed — check your connection, then press Save', true);
+    });
+
     const menu = $('exportMenu');
     $('btnExport').onclick = (e) => { e.stopPropagation(); menu.hidden = !menu.hidden; };
     document.addEventListener('click', () => { menu.hidden = true; });
@@ -2105,6 +2123,13 @@
     const ss = $('saveState');
     ss.textContent = S.dirty ? 'Unsaved' : 'Saved';
     ss.classList.toggle('dirty', S.dirty);
+    /* the Save button doubles as the save-state light — on phones it is
+       the only one visible */
+    const sb = $('btnSave');
+    if (sb && !sb.classList.contains('error')) {
+      sb.classList.toggle('dirty', S.dirty);
+      $('btnSaveLabel').textContent = S.dirty ? 'Save' : 'Saved';
+    }
 
     const counts = FP.rules.counts(S.issues || []);
     const badge = $('safetyBadge');

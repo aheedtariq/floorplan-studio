@@ -873,6 +873,11 @@ kbd {
   .panel.left { position: relative; }
 }
 
+/* ---------- the Save button wears the save state ---------- */
+#btnSave.dirty { background: var(--accent); border-color: transparent; color: #fff; }
+#btnSave.dirty:hover { background: var(--accent-2, #5a3fd6); }
+#btnSave.error { background: #dc2626; border-color: transparent; color: #fff; }
+
 /* ---------- brand ----------
    The real Source One wordmark. Navy/grey/yellow on light surfaces;
    dark themes flip it to the white variant the brand uses on dark. */
@@ -906,6 +911,7 @@ body:has(.v3d.show) .insp-fab { display: none; }
   .topbar .spacer { display: none; }
   /* a thumb never finds a button it has to scroll to: the ones that
      matter on a phone lead the bar, the tool groups trail behind */
+  .topbar-actions #btnSave { order: -4; }
   .topbar-actions #btn3D { order: -3; }
   .topbar-actions .menu-wrap { order: -2; }
   .topbar-actions #btnPlans { order: -1; }

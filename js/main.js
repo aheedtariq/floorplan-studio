@@ -76,9 +76,14 @@
     maybeAdmin();
     window.addEventListener('hashchange', maybeAdmin);
 
-    /* Autosave is debounced; make sure a pending write lands on exit. */
+    /* Autosave is debounced; make sure a pending write lands on exit.
+       Phones rarely fire beforeunload — backgrounding the tab is how a
+       phone "closes" a page, so flush on visibilitychange too. */
     window.addEventListener('beforeunload', () => {
       if (FP.state.dirty) FP.save();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden' && FP.state.dirty) FP.save();
     });
   }
 
