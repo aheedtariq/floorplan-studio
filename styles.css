@@ -904,6 +904,11 @@ body:has(.v3d.show) .insp-fab { display: none; }
   .topbar-actions::-webkit-scrollbar { display: none; }
   .topbar-actions .btn, .topbar-actions .tb, .topbar-actions .btn-group { flex: 0 0 auto; }
   .topbar .spacer { display: none; }
+  /* a thumb never finds a button it has to scroll to: the ones that
+     matter on a phone lead the bar, the tool groups trail behind */
+  .topbar-actions #btn3D { order: -3; }
+  .topbar-actions .menu-wrap { order: -2; }
+  .topbar-actions #btnPlans { order: -1; }
 
   .panel.right {
     position: fixed; left: 0; right: 0; bottom: 0; top: auto;
