@@ -62,12 +62,21 @@
     clients = cl.data || [];
     clientUsers = cu.data || [];
 
-    /* booth counts in one query — count client-side, the volumes are tiny */
+    /* booth counts — paginated past the 1,000-row response cap, which a
+       few real CAD floors cross easily and cards would silently undercount */
     boothCounts = {};
     if (shows.length) {
-      const els = await sb.from('element').select('show_id')
-        .eq('kind', 'space')
-        .in('show_id', shows.map((s) => s.id));
+      const rows = [];
+      const PAGE = 1000;
+      for (let from = 0; ; from += PAGE) {
+        const { data } = await sb.from('element').select('show_id')
+          .eq('kind', 'space')
+          .in('show_id', shows.map((s) => s.id))
+          .range(from, from + PAGE - 1);
+        rows.push(...(data || []));
+        if (!data || data.length < PAGE) break;
+      }
+      const els = { data: rows };
       (els.data || []).forEach((e) => (boothCounts[e.show_id] = (boothCounts[e.show_id] || 0) + 1));
     }
   }

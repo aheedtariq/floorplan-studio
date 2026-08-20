@@ -141,18 +141,32 @@
     async list() {
       const sb = FP.auth.client();
       if (!sb) return [];
-      /* Embed only what the plan cards actually draw: the thumbnail needs
-         rect geometry, the subtitle needs a space count. Pulling every
-         element of every show here would be wasteful. */
-      const { data, error } = await sb
-        .from('show')
-        .select('*, element(id, kind, shape, layer, parent_id, geometry, props)')
-        .order('created_at', { ascending: false });
+      /* The plan cards need a thumbnail and a space count — booths only.
+         Embedding EVERY element of EVERY show made this call crawl once
+         real CAD floors existed (thousands of rows, megabytes of jsonb):
+         the Plans button sat dead while the request dragged. Fetch shows
+         plain, then just the booth rows, paginated. */
+      const { data: shows, error } = await sb
+        .from('show').select('*').order('created_at', { ascending: false });
       if (error) {
         console.warn('Could not list plans', error.message);
         return [];
       }
-      return (data || []).map((show) => planFromRows(show, show.element));
+      const ids = (shows || []).map((s) => s.id);
+      const spaces = [];
+      const PAGE = 1000;
+      for (let from = 0; ids.length; from += PAGE) {
+        const { data, error: elErr } = await sb.from('element')
+          .select('id, show_id, kind, shape, layer, parent_id, geometry, props')
+          .eq('layer', 'spaces').in('show_id', ids)
+          .range(from, from + PAGE - 1);
+        if (elErr) { console.warn('Could not list booths', elErr.message); break; }
+        spaces.push(...(data || []));
+        if (!data || data.length < PAGE) break;
+      }
+      const byShow = {};
+      for (const row of spaces) (byShow[row.show_id] ||= []).push(row);
+      return (shows || []).map((show) => planFromRows(show, byShow[show.id] || []));
     },
 
     async get(id) {
