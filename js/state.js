@@ -577,7 +577,13 @@
 
   FP.save = async () => {
     try {
-      await FP.store.put(clone(FP.plan));
+      /* a wedged network stack can leave the request pending forever —
+         surface that as a failure instead of an eternal "Saving…" */
+      await Promise.race([
+        FP.store.put(clone(FP.plan)),
+        new Promise((_, rej) =>
+          setTimeout(() => rej(new Error('Save timed out')), 30000)),
+      ]);
       FP.state.dirty = false;
       FP.emit('saved');
     } catch (e) {
