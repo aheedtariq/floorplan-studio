@@ -347,6 +347,9 @@
       }
     }
     if (snapshot) FP.snapshot();
+    /* stable z: new elements stack above everything already on the floor */
+    let z = 1 + FP.plan.elements.reduce((m, e) => Math.max(m, e.z ?? 0), 0);
+    for (const el of [...list, ...extra]) { if (el.z == null) el.z = z++; }
     FP.plan.elements.push(...list, ...extra);
     if (select) FP.state.selection = list.map((e) => e.id);
     FP.changed();
@@ -434,6 +437,13 @@
     FP.snapshot();
     const ids = new Set(sel.map((e) => e.id));
     const rest = FP.plan.elements.filter((e) => !ids.has(e.id));
+    /* z is a stable per-element value, not the array index — so moving
+       one element re-writes one row on save, not the whole floor */
+    const zs = rest.map((e) => e.z ?? 0);
+    let z = dir === 'front'
+      ? (zs.length ? Math.max(...zs) : 0) + 1
+      : (zs.length ? Math.min(...zs) : 0) - sel.length;
+    sel.forEach((e) => { e.z = z++; });
     FP.plan.elements = dir === 'front' ? [...rest, ...sel] : [...sel, ...rest];
     FP.changed();
   };
@@ -646,12 +656,13 @@
     out.dates = Object.assign({}, base.dates, p.dates || {});
     out.layers = Object.assign({}, base.layers, p.layers || {});
     out.ruleConfig = Object.assign({}, p.ruleConfig || {});
-    out.elements = (p.elements || []).map((el) => {
+    out.elements = (p.elements || []).map((el, i) => {
       const k = C.kind(el.kind);
       return {
         parentId: null,
         layer: k.layer,
         shape: k.shape,
+        z: i,                       /* stable z; kept if el already has one */
         ...el,
         geometry: { ...el.geometry },
         props: { ...FP.defaultProps(el.kind), ...el.props },

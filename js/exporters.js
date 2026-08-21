@@ -979,6 +979,164 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> �
   }
 
   /* ============================================================
+     Rental quote — counts everything rentable on the floor,
+     ready to price. Rates are typed straight on the sheet (and
+     come back pre-filled from plan.ruleConfig.rates); amounts and
+     the total follow live, and Save rates writes them back to the
+     plan so the next quote for this show remembers them.
+     ============================================================ */
+  function quoteLines() {
+    const p = FP.plan;
+    const BILLABLE = new Set(['rentals', 'contents', 'electrical', 'utilities']);
+    const lines = new Map();
+    const add = (key, label, unit, qty) => {
+      const l = lines.get(key) || { key, label, unit, qty: 0 };
+      l.qty += qty;
+      lines.set(key, l);
+    };
+    /* booth spaces first, one line per size */
+    for (const s of FP.spaces()) {
+      const g = s.geometry;
+      if (!g || g.w === undefined) continue;
+      const dims = G.fmtDims(g.w, g.h, p.unit);
+      add(`space:${dims}`, `Booth space ${dims}`, 'each', 1);
+    }
+    for (const el of p.elements || []) {
+      const k = C.kind(el.kind);
+      if (el.kind === 'drape') {
+        const g = el.geometry;
+        if (g?.x1 !== undefined) {
+          add('drape', 'Pipe & drape', 'lin ft', Math.hypot(g.x2 - g.x1, g.y2 - g.y1));
+        }
+        continue;
+      }
+      if (!BILLABLE.has(k.cat)) continue;
+      if (el.kind === 'carpet' || el.kind === 'turf') {
+        add(el.kind, k.name, 'sq ft', G.area(el));
+        continue;
+      }
+      add(el.kind, k.name, 'each', 1);
+    }
+    const out = [...lines.values()];
+    out.forEach((l) => { l.qty = Math.round(l.qty * 10) / 10; });
+    /* booths lead, then the big-count rentals */
+    return out.sort((a, b) =>
+      (b.key.startsWith('space:') - a.key.startsWith('space:')) || b.qty - a.qty);
+  }
+
+  /* the print window calls back through its opener to persist rates */
+  FP.saveQuoteRates = (rates) => {
+    FP.plan.ruleConfig = FP.plan.ruleConfig || {};
+    FP.plan.ruleConfig.rates = rates;
+    FP.changed();
+    FP.toast?.('Rates saved with this plan');
+  };
+
+  function printQuote() {
+    const p = FP.plan;
+    const win = window.open('', '_blank');
+    if (!win) return FP.toast('Allow pop-ups to print', true);
+
+    const rates = (p.ruleConfig && p.ruleConfig.rates) || {};
+    const rows = quoteLines().map((l, i) => {
+      const r = rates[l.key];
+      return `<tr data-key="${esc(l.key)}" data-qty="${l.qty}">
+        <td class="n">${i + 1}</td><td>${esc(l.label)}</td>
+        <td class="q">${l.qty}</td><td>${esc(l.unit)}</td>
+        <td class="r"><input type="number" min="0" step="0.25"
+             value="${r != null ? r : ''}" placeholder="—"></td>
+        <td class="a">—</td></tr>`;
+    }).join('');
+
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="utf-8">
+<title>${esc(p.name)} — rental quote</title>
+<style>
+  @page { size: portrait; margin: 12mm; }
+  * { box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body { margin: 0; font: 11px/1.45 Arial, Helvetica, sans-serif; color: #111; }
+  .bar { position: sticky; top: 0; background: #f3f4f6; border-bottom: 1px solid #d1d5db;
+         padding: 8px 12px; display: flex; gap: 8px; align-items: center; }
+  .bar span { color: #555; font-size: 10.5px; }
+  .bar .grow { flex: 1; }
+  .bar button { font: 600 11.5px Arial; padding: 6px 14px; cursor: pointer;
+                border: 1px solid #9ca3af; border-radius: 5px; background: #fff; }
+  .bar button.go { background: #214670; border-color: #214670; color: #fff; }
+  @media print { .bar { display: none; } }
+  .page { max-width: 720px; margin: 0 auto; padding: 18px 10px; }
+  .head { display: flex; justify-content: space-between; align-items: flex-start;
+          border-bottom: 2.5px solid #214670; padding-bottom: 10px; }
+  .head .tel { font-size: 9.5px; line-height: 1.5; text-align: right; }
+  h1 { font-size: 17px; margin: 14px 0 1px; }
+  .sub { color: #444; font-size: 10.5px; margin-bottom: 12px; }
+  table { width: 100%; border-collapse: collapse; }
+  th { text-align: left; font-size: 9.5px; text-transform: uppercase; letter-spacing: .04em;
+       border-bottom: 1.5px solid #111; padding: 4px 6px; }
+  td { border-bottom: 1px solid #e2e4e9; padding: 4.5px 6px; }
+  td.n { color: #999; width: 22px; }
+  td.q, th.q, td.a, th.a { text-align: right; }
+  td.r input { width: 74px; font: inherit; text-align: right; padding: 2px 4px;
+               border: 1px solid #cbd2dc; border-radius: 4px; }
+  td.r input:placeholder-shown { border-style: dashed; }
+  @media print { td.r input { border: none; } }
+  tr.total td { border-top: 2px solid #111; border-bottom: none;
+                font-weight: 700; font-size: 12.5px; padding-top: 8px; }
+  .foot { margin-top: 26px; font-size: 9px; color: #666; }
+  .sig { margin-top: 34px; display: flex; gap: 40px; }
+  .sig div { flex: 1; border-top: 1px solid #111; padding-top: 3px; font-size: 9.5px; }
+</style></head><body>
+<div class="bar">
+  <span>Type your rates — amounts and the total update as you go.</span>
+  <div class="grow"></div>
+  <button id="save">Save rates to plan</button>
+  <button class="go" onclick="print()">Print</button>
+</div>
+<div class="page">
+  <div class="head">
+    <img src="${location.origin}/assets/soe-logo.svg" style="width:190px" alt="Source One Events">
+    <div class="tel">Tradeshows ~ Expositions ~ Electrical ~ Rigging<br>
+      (877) SOE.EXPO toll free<br>(708) 344.4111 phone · (708) 344-3050 fax<br>
+      www.sourceoneevents.com</div>
+  </div>
+  <h1>Rental Quote — ${esc(p.name)}</h1>
+  <div class="sub">Prepared ${stamp()} · quantities counted from the floor plan</div>
+  <table id="q">
+    <tr><th></th><th>Item</th><th class="q">Qty</th><th>Unit</th><th>Rate</th><th class="a">Amount</th></tr>
+    ${rows}
+    <tr class="total"><td colspan="5">Estimated total</td><td class="a" id="tot">—</td></tr>
+  </table>
+  <div class="foot">Quantities reflect the floor plan as drawn and may change with revisions.
+    This is an estimate, not an invoice. Lines without a rate are excluded from the total.</div>
+  <div class="sig"><div>Prepared by</div><div>Approved — client</div><div>Date</div></div>
+</div>
+<script>
+  const fmt = (n) => '$' + n.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+  function recalc() {
+    let tot = 0;
+    document.querySelectorAll('#q tr[data-key]').forEach((tr) => {
+      const r = parseFloat(tr.querySelector('input').value);
+      const cell = tr.querySelector('.a');
+      if (isFinite(r)) { const a = r * Number(tr.dataset.qty); tot += a; cell.textContent = fmt(a); }
+      else cell.textContent = '—';
+    });
+    document.getElementById('tot').textContent = tot ? fmt(tot) : '—';
+  }
+  document.querySelectorAll('#q input').forEach((i) => i.addEventListener('input', recalc));
+  document.getElementById('save').onclick = () => {
+    const rates = {};
+    document.querySelectorAll('#q tr[data-key]').forEach((tr) => {
+      const r = parseFloat(tr.querySelector('input').value);
+      if (isFinite(r)) rates[tr.dataset.key] = r;
+    });
+    try { window.opener.FP.saveQuoteRates(rates); } catch (e) { alert('Could not reach the editor — is it still open?'); }
+  };
+  recalc();
+</script>
+</body></html>`);
+    win.document.close();
+    win.focus();
+  }
+
+  /* ============================================================
      Dispatch
      ============================================================ */
   FP.exporters = {
@@ -988,6 +1146,7 @@ ${issues.map((i) => `<div class="issue ${i.severity}"><b>${esc(i.message)}</b> �
         case 'svg': return exportSvg();
         case 'pdf': return printPlan();
         case 'pdfplan': return printPlanOnly();
+        case 'quote': return printQuote();
         case 'csv': return exportCsv();
         case 'json': return exportJson();
         case 'import': return importPlan();

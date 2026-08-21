@@ -62,7 +62,7 @@
     layer: el.layer,
     geometry: el.geometry,
     props: el.props,
-    z: index,
+    z: el.z ?? index,
   });
 
   const fromRow = (row) => ({
@@ -73,6 +73,7 @@
     parentId: row.parent_id || null,
     geometry: row.geometry || {},
     props: row.props || {},
+    z: row.z ?? 0,
   });
 
   function showRow(plan) {
@@ -133,6 +134,36 @@
   }
 
   /* ------------------------------------------------------------
+     Save baseline — what the cloud last accepted, per plan. A save
+     diffs against this in memory and writes only the rows that
+     changed, instead of re-uploading the whole floor and reading
+     every id back to find deletions.
+     ------------------------------------------------------------ */
+  const baseline = new Map();   /* plan id → { show, els: Map<id, {str, layer, kind}> } */
+
+  function rememberBaseline(planId, showStr, rows) {
+    const els = new Map();
+    for (const r of rows) {
+      els.set(r.id, { str: JSON.stringify(r), layer: r.layer, kind: r.kind });
+    }
+    baseline.set(planId, { show: showStr, els });
+  }
+
+  async function upsertChunked(sb, rows) {
+    for (let i = 0; i < rows.length; i += 500) {
+      const { error } = await sb.from('element').upsert(rows.slice(i, i + 500));
+      if (error) throw new Error(error.message);
+    }
+  }
+
+  async function deleteChunked(sb, ids) {
+    for (let i = 0; i < ids.length; i += 200) {
+      const { error } = await sb.from('element').delete().in('id', ids.slice(i, i + 200));
+      if (error) console.warn('Could not prune deleted elements', error.message);
+    }
+  }
+
+  /* ------------------------------------------------------------
      The adapter
      ------------------------------------------------------------ */
   const cloudStore = {
@@ -179,7 +210,11 @@
         return null;
       }
       const rows = await allElements(sb, id, '*');
-      return planFromRows(show, rows);
+      const plan = planFromRows(show, rows);
+      /* seed the diff baseline from exactly what a save would produce */
+      rememberBaseline(plan.id, JSON.stringify(showRow(plan)),
+        plan.elements.map((el, i) => toRow(plan, el, i)));
+      return plan;
     },
 
     async put(plan) {
@@ -188,12 +223,15 @@
       if (!FP.auth.signedIn()) throw new Error('Sign in to save to the cloud');
 
       const doc = normalise(plan);
+      const base = baseline.get(doc.id);
+      const showStr = JSON.stringify(showRow(doc));
 
       /* The show row is staff territory — clients hold element-level
          rights only. Writing it from a client session dies on RLS and
          took the whole save down with it, so their furniture moves
          never reached the cloud. Elements are the client's edit. */
-      if (FP.auth.canEdit?.()) {
+      const canEditShow = FP.auth.canEdit?.();
+      if (canEditShow && (!base || base.show !== showStr)) {
         const { error: showErr } = await sb.from('show').upsert(showRow(doc));
         if (showErr) throw new Error(showErr.message);
       }
@@ -208,31 +246,34 @@
       const writable = doc.elements.filter((el) => !isClient || editable(el));
 
       const rows = writable.map((el, i) => toRow(doc, el, i));
+      const keep = new Set(rows.map((r) => r.id));
+
+      /* With a baseline, the diff is pure memory: write rows whose JSON
+         changed, delete ids the baseline knew that the plan no longer
+         has. Without one (first save of a plan this page never loaded)
+         fall back to the full write + read-back reconcile. */
+      let changed = rows, stale = [];
+      if (base) {
+        changed = rows.filter((r) => base.els.get(r.id)?.str !== JSON.stringify(r));
+        stale = [...base.els]
+          .filter(([id, m]) => (!isClient || editable(m)) && !keep.has(id))
+          .map(([id]) => id);
+      } else {
+        const existing = await allElements(sb, doc.id, 'id, layer, kind');
+        stale = (existing || [])
+          .filter((r) => !isClient || editable(r))
+          .map((r) => r.id)
+          .filter((id) => !keep.has(id));
+      }
 
       /* Parents must exist before children, or the parent_id FK fails. */
-      const parents = rows.filter((r) => !r.parent_id);
-      const children = rows.filter((r) => r.parent_id);
-      for (const batch of [parents, children]) {
-        if (!batch.length) continue;
-        const { error } = await sb.from('element').upsert(batch);
-        if (error) throw new Error(error.message);
-      }
+      await upsertChunked(sb, changed.filter((r) => !r.parent_id));
+      await upsertChunked(sb, changed.filter((r) => r.parent_id));
+      if (stale.length) await deleteChunked(sb, stale);
 
-      /* Remove anything deleted since the last save. Diffing against the
-         stored ids keeps the delete bounded — a `not.in` filter carrying
-         every current id would blow past URL length on a real floor.
-         Client sessions diff only against rows they may write, so the
-         structure they can't touch is never flagged stale. */
-      const existing = await allElements(sb, doc.id, 'id, layer, kind');
-      const keep = new Set(rows.map((r) => r.id));
-      const stale = (existing || [])
-        .filter((r) => !isClient || editable(r))
-        .map((r) => r.id)
-        .filter((id) => !keep.has(id));
-      if (stale.length) {
-        const { error } = await sb.from('element').delete().in('id', stale);
-        if (error) console.warn('Could not prune deleted elements', error.message);
-      }
+      /* Only after every write landed — a failed save must leave the
+         baseline alone so the next save retries the same diff. */
+      rememberBaseline(doc.id, canEditShow ? showStr : (base?.show ?? showStr), rows);
 
       try { localStorage.setItem(LAST_KEY, doc.id); } catch {}
 
@@ -244,6 +285,7 @@
     async remove(id) {
       const sb = FP.auth.client();
       if (!sb) return;
+      baseline.delete(id);
       /* element.show_id cascades, so deleting the show is enough. */
       const { error } = await sb.from('show').delete().eq('id', id);
       if (error) throw new Error(error.message);

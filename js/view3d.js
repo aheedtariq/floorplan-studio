@@ -1022,10 +1022,19 @@
       .map((e) => e.geometry);
 
     /* elements — children carry absolute coordinates, so one flat pass */
+    const chairEls = [];
     for (const el of FP.plan.elements || []) {
       const k = FP.config.kind(el.kind);
       const h = heightFor(el, k);
       if (h <= 0) continue;
+
+      /* chairs dominate a furnished floor (hundreds of identical folding
+         chairs) — collect them and draw every copy in a handful of GPU
+         instanced calls instead of thousands of individual meshes */
+      if (el.kind === 'chair' && el.shape === 'rect' && el.geometry?.w !== undefined) {
+        chairEls.push(el);
+        continue;
+      }
 
       if (el.shape === 'line') {
         const g = el.geometry;
@@ -1279,6 +1288,33 @@
       }
     }
 
+    /* all chairs at once: one InstancedMesh per chair part. A 900-chair
+       floor drops from ~5,000 draw objects to about six. */
+    if (chairEls.length) {
+      const template = BUILDERS.chair(chairEls[0], { w: 1.7, h: 1.7 });
+      template.updateMatrixWorld(true);
+      const parts = [];
+      template.traverse((o) => { if (o.isMesh) parts.push(o); });
+      const dummy = new THREE.Object3D();
+      for (const part of parts) {
+        const inst = new THREE.InstancedMesh(part.geometry, part.material, chairEls.length);
+        inst.castShadow = inst.receiveShadow = true;
+        chairEls.forEach((el, i) => {
+          const g = el.geometry;
+          dummy.position.set(g.x + g.w / 2, 0, g.y + g.h / 2);
+          dummy.rotation.y = -((g.rot || 0) * Math.PI) / 180;
+          const s = Math.min(Math.min(g.w, g.h), 1.7) / 1.7;
+          dummy.scale.set(s, 1, s);
+          dummy.updateMatrix();
+          dummy.matrix.multiply(part.matrixWorld);
+          inst.setMatrixAt(i, dummy.matrix);
+        });
+        inst.instanceMatrix.needsUpdate = true;
+        inst.userData.chairEls = chairEls;
+        model.add(inst);
+      }
+    }
+
     scene.add(model);
   }
 
@@ -1436,6 +1472,11 @@
          object they decorate */
       if (h.object.isSprite || h.object.type === 'GridHelper' ||
           h.object.userData.isHelper) continue;
+      /* instanced chairs: the hit carries which copy was clicked */
+      if (h.object.userData.chairEls && h.instanceId !== undefined) {
+        const el = h.object.userData.chairEls[h.instanceId];
+        if (el) return { obj: { userData: { elId: el.id } }, point: h.point };
+      }
       let o = h.object;
       while (o && !o.userData.elId) o = o.parent;
       if (o) return { obj: o, point: h.point };
