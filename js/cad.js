@@ -670,6 +670,13 @@
           if (res.error) return FP.toast?.(res.error, true);
           FP.render.fit();
           FP.toast?.(`Imported ${res.booths} booths (${res.numbered} numbered), ${res.walls} walls, ${res.furniture} furniture pieces`);
+          /* the plan arrives furnished — show the finished 3D version
+             without asking. Wait a beat so the save has left the gate
+             and the toast is readable. */
+          setTimeout(() => {
+            document.getElementById('btn3D')?.click();
+            FP.toast?.('3D walkthrough generated — drag to look around, or press Back to plan');
+          }, 1600);
         };
       },
     });

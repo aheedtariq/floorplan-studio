@@ -65,6 +65,12 @@
       setTimeout(() => FP.render.fit(), 350);
     }
 
+    /* ?view=3d deep link (dashboard "3D view" buttons) — land straight
+       in the walkthrough instead of the 2D editor */
+    if (new URLSearchParams(location.search).get('view') === '3d') {
+      setTimeout(() => document.getElementById('btn3D')?.click(), 400);
+    }
+
     /* dashboard hand-offs — checked at boot AND on hash changes, because
        navigating to an already-open editor with #admin only fires
        hashchange, and some hosts apply the fragment after load */

@@ -123,6 +123,10 @@
       FP.setPref('store', 'supabase');
       location.href = `index.html?plan=${encodeURIComponent(b.dataset.open)}`;
     }));
+    c.querySelectorAll('[data-view3d]').forEach((b) => (b.onclick = () => {
+      FP.setPref('store', 'supabase');
+      location.href = `index.html?plan=${encodeURIComponent(b.dataset.view3d)}&view=3d`;
+    }));
     c.querySelectorAll('[data-photos]').forEach((b) => (b.onclick = () => photosModal(b.dataset.photos)));
     c.querySelectorAll('[data-link]').forEach((b) => (b.onclick = () => linkModal(b.dataset.link)));
     c.querySelectorAll('[data-use]').forEach((b) => (b.onclick = () => newPlanModal(b.dataset.use)));
@@ -180,6 +184,7 @@
 
       <div class="card-actions">
         <button class="btn soft" data-open="${esc(s.id)}">Open plan</button>
+        <button class="mini" data-view3d="${esc(s.id)}" title="Jump straight into the 3D walkthrough">3D view</button>
         <button class="mini" data-photos="${esc(s.id)}">Photos</button>
         ${!isClientUser && client ? `<button class="mini" data-link="${esc(s.client_id)}">Client link</button>` : ''}
         ${!isClientUser && FP.auth.canEdit() ? `<button class="mini" data-mktpl="${esc(s.id)}"
