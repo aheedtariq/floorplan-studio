@@ -1,5 +1,8 @@
 {
   "cleanUrls": true,
+  "crons": [
+    { "path": "/api/keepalive", "schedule": "0 6 * * *" }
+  ],
   "headers": [
     {
       "source": "/(.*)",
