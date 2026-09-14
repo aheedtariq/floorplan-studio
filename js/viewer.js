@@ -314,6 +314,11 @@
     renderList();
 
     fillFilterOptions();
+    /* ?view=3d — a crew link: open straight into the 3D walkthrough so
+       nobody on the floor has to hunt for the cube button */
+    if (new URLSearchParams(location.search).get('view') === '3d') {
+      setTimeout(() => $('btn3D')?.click(), 400);
+    }
     /* a plan with no exhibitors yet is a booth sales sheet — open with
        the available-booth view instead of an empty list */
     if (!spaces().some((s) => (s.props.exhibitor || '').trim()) && spaces().length) {
