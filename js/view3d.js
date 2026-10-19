@@ -866,6 +866,40 @@
 
   /* A run of pipe & drape: uprights every ~10 ft, chrome crossbar,
      cloth hanging shy of the floor. Centred on x, running along x. */
+  /* Vertical pleat shading, drawn once and tinted by material colour.
+     Real pipe-and-drape is never a flat slab — the gathered cloth
+     catches light in stripes, and that is most of what makes a booth
+     photo read as "trade show". */
+  let _pleatTex = null;
+  function pleatTexture() {
+    if (_pleatTex) return _pleatTex;
+    const c = document.createElement('canvas');
+    c.width = 128; c.height = 2;
+    const x = c.getContext('2d');
+    for (let px = 0; px < 128; px++) {
+      /* two overlapping sine folds so the pleats look gathered, not striped */
+      const s = 0.78 + 0.16 * Math.sin((px / 128) * Math.PI * 8)
+                     + 0.06 * Math.sin((px / 128) * Math.PI * 26 + 1.3);
+      const v = Math.round(255 * Math.min(1, s));
+      x.fillStyle = `rgb(${v},${v},${v})`;
+      x.fillRect(px, 0, 1, 2);
+    }
+    _pleatTex = new THREE.CanvasTexture(c);
+    _pleatTex.wrapS = THREE.RepeatWrapping;
+    _pleatTex.colorSpace = THREE.SRGBColorSpace;
+    return _pleatTex;
+  }
+
+  function clothMat(colorHex, lenFt) {
+    const map = pleatTexture().clone();
+    map.needsUpdate = true;
+    /* one pleat fold roughly every 8 inches of run */
+    map.repeat.set(Math.max(1, Math.round(lenFt * 1.5 / 8)), 1);
+    return new THREE.MeshStandardMaterial({
+      color: colorHex, map, bumpMap: map, bumpScale: 1.6, roughness: 0.94,
+    });
+  }
+
   function drapeRun(len, h, colorHex) {
     const grp = new THREE.Group();
     const n = Math.max(2, Math.round(len / 10) + 1);
@@ -879,7 +913,7 @@
     bar.rotation.z = Math.PI / 2;
     bar.position.y = h - 0.05;
     grp.add(bar);
-    const cloth = box(len - 0.08, h - 0.3, 0.18, mat(colorHex, { rough: .96 }));
+    const cloth = box(len - 0.08, h - 0.3, 0.18, clothMat(colorHex, len));
     cloth.position.y = (h - 0.3) / 2 + 0.22;
     grp.add(cloth);
     return grp;
@@ -911,12 +945,69 @@
     ground.receiveShadow = true;
     model.add(ground);
 
-    const floor = new THREE.Mesh(
-      new THREE.BoxGeometry(W, 0.1, H),
-      new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .95 }));
+    /* sealed-concrete floor: subtle speckle + expansion joints every
+       25 ft. Real halls are never paper-white, and the faint texture is
+       what keeps a big empty aisle from looking like a render. */
+    const floorMat = (() => {
+      const c = document.createElement('canvas');
+      c.width = 1024; c.height = Math.max(64, Math.round(1024 * H / W));
+      const x = c.getContext('2d');
+      x.fillStyle = '#eceae6';
+      x.fillRect(0, 0, c.width, c.height);
+      for (let i = 0; i < 9000; i++) {
+        const g = 215 + Math.floor(Math.random() * 35);
+        x.fillStyle = `rgba(${g},${g},${g - 3},${0.1 + Math.random() * 0.25})`;
+        x.fillRect(Math.random() * c.width, Math.random() * c.height, 1.4, 1.4);
+      }
+      x.strokeStyle = 'rgba(120,118,112,.18)';
+      x.lineWidth = 1.5;
+      const ppfX = c.width / W, ppfZ = c.height / H;
+      for (let f = 25; f < W; f += 25) {
+        x.beginPath(); x.moveTo(f * ppfX, 0); x.lineTo(f * ppfX, c.height); x.stroke();
+      }
+      for (let f = 25; f < H; f += 25) {
+        x.beginPath(); x.moveTo(0, f * ppfZ); x.lineTo(c.width, f * ppfZ); x.stroke();
+      }
+      const t = new THREE.CanvasTexture(c);
+      t.anisotropy = 8;
+      t.colorSpace = THREE.SRGBColorSpace;
+      return new THREE.MeshStandardMaterial({ map: t, roughness: .72, metalness: .04 });
+    })();
+    const floor = new THREE.Mesh(new THREE.BoxGeometry(W, 0.1, H), floorMat);
     floor.position.set(W / 2, -0.05, H / 2);
     floor.receiveShadow = true;
     model.add(floor);
+
+    /* the venue above the booths: box trusses across the hall with can
+       lights hung from them — the ceiling a crew actually rigs under */
+    {
+      /* high and visually quiet: they give eye-level shots a ceiling
+         without striping the overhead view the planner actually works in */
+      const trussY = 38, trussMat = new THREE.MeshStandardMaterial({
+        color: 0xb9bec6, roughness: .55, metalness: .5,
+        transparent: true, opacity: .82 });
+      const canGeo = new THREE.CylinderGeometry(0.5, 0.62, 1.3, 10);
+      const canMat = new THREE.MeshStandardMaterial({
+        color: 0x5b6069, roughness: .45, metalness: .55,
+        emissive: 0xfff3d6, emissiveIntensity: .4 });
+      const rows = [];
+      for (let z = 40; z < H - 10; z += 70) rows.push(z);
+      const cansPer = Math.max(2, Math.floor(W / 40));
+      const cans = new THREE.InstancedMesh(canGeo, canMat, rows.length * cansPer);
+      const d = new THREE.Object3D();
+      let ci = 0;
+      for (const z of rows) {
+        const truss = new THREE.Mesh(new THREE.BoxGeometry(W - 8, 0.9, 0.9), trussMat);
+        truss.position.set(W / 2, trussY, z);
+        model.add(truss);
+        for (let i = 0; i < cansPer; i++) {
+          d.position.set((W / (cansPer + 1)) * (i + 1), trussY - 1.1, z);
+          d.updateMatrix();
+          cans.setMatrixAt(ci++, d.matrix);
+        }
+      }
+      if (rows.length) { cans.instanceMatrix.needsUpdate = true; model.add(cans); }
+    }
 
     /* a real survey grid: minor lines at the plan grid (5 ft), heavier
        majors every 10 ft, drawn at exact spacing on both axes so every
@@ -1061,7 +1152,7 @@
           bar.position.y = h - 0.06;
           grp.add(bar);
           const cloth = box(len - 0.1, h - 0.35, 0.22,
-            mat(DRAPE_COLORS[el.props?.drapeColor] ?? 0x24272e, { rough: .96 }));
+            clothMat(DRAPE_COLORS[el.props?.drapeColor] ?? 0x24272e, len));
           cloth.position.y = (h - 0.35) / 2 + 0.25;
           grp.add(cloth);
           grp.position.set((g.x1 + g.x2) / 2, 0, (g.y1 + g.y2) / 2);
@@ -1669,6 +1760,10 @@
 
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0xeceff4);
+      /* a touch of aerial perspective — distant booths soften instead
+         of staying CAD-crisp, which is most of what "looks rendered"
+         vs "looks photographed" comes down to */
+      scene.fog = new THREE.Fog(0xeceff4, 420, 1900);
 
       camera = new THREE.PerspectiveCamera(46, 1, 0.5, 4000);
 
