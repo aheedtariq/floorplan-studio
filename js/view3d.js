@@ -767,6 +767,11 @@
         <span class="v3d-hint">Drag the floor to slide the view · right-drag to orbit ·
           scroll or +/− zooms · double-click flies there ·
           360° circles the booth you selected</span>
+        <select class="btn ghost" id="v3dFloor" title="Hall floor finish">
+          <option value="carpet">Show carpet</option>
+          <option value="concrete">Concrete</option>
+          <option value="wood">Hardwood</option>
+        </select>
         <button class="btn ghost" id="v3dFit">Fit floor</button>
         <button class="btn ghost" id="v3dClose">Back to plan</button>
       </div>
@@ -788,6 +793,12 @@
     stage.appendChild(overlay);
     overlay.querySelector('#v3dClose').onclick = close;
     overlay.querySelector('#v3dFit').onclick = () => flyFit();
+    const floorSel = overlay.querySelector('#v3dFloor');
+    floorSel.value = FP.prefs?.hallFloor3d || 'carpet';
+    floorSel.onchange = () => {
+      FP.setPref?.('hallFloor3d', floorSel.value);
+      rebuild();
+    };
     overlay.querySelectorAll('[data-vrot]').forEach((b) =>
       b.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -895,9 +906,87 @@
     map.needsUpdate = true;
     /* one pleat fold roughly every 8 inches of run */
     map.repeat.set(Math.max(1, Math.round(lenFt * 1.5 / 8)), 1);
-    return new THREE.MeshStandardMaterial({
-      color: colorHex, map, bumpMap: map, bumpScale: 1.6, roughness: 0.94,
-    });
+    const lite = renderer?.userData?.lite;
+    /* velour drape has a soft nap sheen — the physical material's sheen
+       term is what makes black cloth read as fabric instead of rubber */
+    return lite
+      ? new THREE.MeshStandardMaterial({
+          color: colorHex, map, bumpMap: map, bumpScale: 1.6, roughness: 0.94 })
+      : new THREE.MeshPhysicalMaterial({
+          color: colorHex, map, bumpMap: map, bumpScale: 1.6, roughness: 0.9,
+          sheen: 0.55, sheenRoughness: 0.85, sheenColor: new THREE.Color(0x8d93a0) });
+  }
+
+  /* fine loop-pile speckle shared by every carpet; the material colour
+     does the tinting so one texture serves the whole floor */
+  let _carpetTex = null;
+  function carpetTexture() {
+    if (_carpetTex) return _carpetTex;
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const x = c.getContext('2d');
+    x.fillStyle = '#e8e8e8';
+    x.fillRect(0, 0, 128, 128);
+    for (let i = 0; i < 3200; i++) {
+      const v = 190 + Math.floor(Math.random() * 66);
+      x.fillStyle = `rgba(${v},${v},${v},${0.35 + Math.random() * 0.4})`;
+      x.fillRect(Math.random() * 128, Math.random() * 128, 1.3, 1.3);
+    }
+    _carpetTex = new THREE.CanvasTexture(c);
+    _carpetTex.wrapS = _carpetTex.wrapT = THREE.RepeatWrapping;
+    _carpetTex.colorSpace = THREE.SRGBColorSpace;
+    return _carpetTex;
+  }
+
+  function carpetMat(colorHex, wFt, hFt) {
+    const map = carpetTexture().clone();
+    map.needsUpdate = true;
+    map.repeat.set(Math.max(1, Math.round(wFt)), Math.max(1, Math.round(hFt)));
+    return new THREE.MeshStandardMaterial({ color: colorHex, map, roughness: .93 });
+  }
+
+  /* Booth carpet colourway — muted exhibition tones that sit well next
+     to each other, assigned stably by booth number so the mix doesn't
+     reshuffle between visits. An explicitly coloured booth keeps it. */
+  const BOOTH_CARPETS = [0x2e4a68, 0x53606f, 0x6e3b43, 0x3a574d,
+                         0x56504a, 0x45517d, 0x33415c, 0x615549];
+  function boothCarpetColor(el) {
+    const own = (el.props?.color || '').toLowerCase();
+    if (own && own !== '#7c5cfc') return new THREE.Color(own).getHex();
+    const num = parseInt(el.props?.number, 10);
+    const seed = Number.isFinite(num)
+      ? num
+      : String(el.id).split('').reduce((a, ch) => a + ch.charCodeAt(0), 0);
+    return BOOTH_CARPETS[seed % BOOTH_CARPETS.length];
+  }
+
+  /* hall floor finishes — what the whole show floor is dressed in */
+  function woodTexture() {
+    const c = document.createElement('canvas');
+    c.width = 512; c.height = 512;         /* one tile = 24 × 24 ft */
+    const x = c.getContext('2d');
+    const row = 32;                         /* plank width 1.5 ft */
+    for (let y = 0; y < 512; y += row) {
+      let px = -Math.floor(Math.random() * 180);
+      while (px < 512) {
+        const len = 140 + Math.floor(Math.random() * 160);
+        const tone = 0.82 + Math.random() * 0.36;
+        const r = Math.round(146 * tone), g = Math.round(104 * tone), b = Math.round(70 * tone);
+        x.fillStyle = `rgb(${r},${g},${b})`;
+        x.fillRect(px, y, len - 2, row - 1);
+        /* grain streaks */
+        x.fillStyle = `rgba(60,38,22,${0.05 + Math.random() * 0.07})`;
+        for (let s = 0; s < 3; s++) {
+          x.fillRect(px, y + 4 + Math.random() * (row - 8), len - 2, 1);
+        }
+        px += len;
+      }
+    }
+    const t = new THREE.CanvasTexture(c);
+    t.wrapS = t.wrapT = THREE.RepeatWrapping;
+    t.anisotropy = 8;
+    t.colorSpace = THREE.SRGBColorSpace;
+    return t;
   }
 
   function drapeRun(len, h, colorHex) {
@@ -945,10 +1034,16 @@
     ground.receiveShadow = true;
     model.add(ground);
 
-    /* sealed-concrete floor: subtle speckle + expansion joints every
-       25 ft. Real halls are never paper-white, and the faint texture is
-       what keeps a big empty aisle from looking like a render. */
-    const floorMat = (() => {
+    /* The hall wears one of three finishes — full show carpet (the
+       typical look), sealed concrete, or hardwood — switchable from the
+       3D toolbar because different shows dress the floor differently. */
+    const finish = FP.prefs?.hallFloor3d || 'carpet';
+    let floorMat;
+    if (finish === 'wood') {
+      const t = woodTexture();
+      t.repeat.set(W / 24, H / 24);
+      floorMat = new THREE.MeshStandardMaterial({ map: t, roughness: .5, metalness: .06 });
+    } else if (finish === 'concrete') {
       const c = document.createElement('canvas');
       c.width = 1024; c.height = Math.max(64, Math.round(1024 * H / W));
       const x = c.getContext('2d');
@@ -971,8 +1066,12 @@
       const t = new THREE.CanvasTexture(c);
       t.anisotropy = 8;
       t.colorSpace = THREE.SRGBColorSpace;
-      return new THREE.MeshStandardMaterial({ map: t, roughness: .72, metalness: .04 });
-    })();
+      floorMat = new THREE.MeshStandardMaterial({ map: t, roughness: .72, metalness: .04 });
+    } else {
+      /* show carpet: deep exhibition blue-grey aisle carpet, wall to wall */
+      floorMat = carpetMat(0x41536b, W / 2, H / 2);
+      floorMat.map.repeat.set(W / 2, H / 2);
+    }
     const floor = new THREE.Mesh(new THREE.BoxGeometry(W, 0.1, H), floorMat);
     floor.position.set(W / 2, -0.05, H / 2);
     floor.receiveShadow = true;
@@ -1108,6 +1207,19 @@
     const spaceGeos = (FP.plan.elements || [])
       .filter((e) => e.kind === 'space' && e.shape === 'rect' && e.geometry?.w !== undefined)
       .map((e) => e.geometry);
+
+    /* A handful of demo booths get real spotlights — enough to show a
+       client what a lit booth looks like without melting the GPU on
+       hundreds of dynamic lights. Exhibitor booths first. */
+    const rectSpaces = (FP.plan.elements || [])
+      .filter((e) => e.kind === 'space' && e.shape === 'rect' && e.geometry?.w !== undefined);
+    const withExhib = rectSpaces.filter((e) => (e.props?.exhibitor || '').trim());
+    let demoLit = new Set(withExhib.slice(0, 6).map((e) => e.id));
+    if (!demoLit.size && rectSpaces.length) {
+      const step = Math.max(1, Math.floor(rectSpaces.length / 5));
+      demoLit = new Set(rectSpaces.filter((_, i) => i % step === 0).slice(0, 5).map((e) => e.id));
+    }
+    const liteGPU = renderer?.userData?.lite;
 
     /* elements — children carry absolute coordinates, so one flat pass */
     const chairEls = [];
@@ -1260,9 +1372,9 @@
          centre, the way inline rows actually stand. Islands stay open. */
       if (el.kind === 'space') {
         const grp = new THREE.Group();
-        const st = FP.config.status(el.props?.status);
-        const col = new THREE.Color(st?.color || '#94a3b8').getHex();
-        const tile = box(g.w, 0.07, g.h, mat(col, { rough: .92 }));
+        /* booth carpet in the show colourway — real pile, not a status
+           swatch; the 2D plan stays the status view */
+        const tile = box(g.w, 0.07, g.h, carpetMat(boothCarpetColor(el), g.w, g.h));
         tile.position.y = 0.045;
         grp.add(tile);
 
@@ -1299,6 +1411,36 @@
             else if (back === 'w') { sign.position.set(-g.w / 2 + inset, sy, 0); sign.rotation.y = Math.PI / 2; }
             else { sign.position.set(g.w / 2 - inset, sy, 0); sign.rotation.y = -Math.PI / 2; }
             grp.add(sign);
+          }
+
+          /* demo booth lighting: two arm-light heads on the back bar and
+             one warm wash pooling onto the carpet */
+          if (demoLit.has(el.id)) {
+            const alongX = back === 'n' || back === 's';
+            const bz = back === 'n' ? -g.h / 2 + 0.35 : back === 's' ? g.h / 2 - 0.35 : 0;
+            const bx = back === 'w' ? -g.w / 2 + 0.35 : back === 'e' ? g.w / 2 - 0.35 : 0;
+            const span = (alongX ? g.w : g.h) / 4;
+            for (const sgn of [-1, 1]) {
+              const head = cyl(0.22, 0.3, 0.55, mat(0x23252a, { rough: .4, metal: .6 }), 10);
+              head.position.set(alongX ? sgn * span : bx, 8.25, alongX ? bz : sgn * span);
+              head.rotation.x = alongX ? (bz < 0 ? 0.6 : -0.6) : 0;
+              head.rotation.z = alongX ? 0 : (bx < 0 ? -0.6 : 0.6);
+              grp.add(head);
+              const lens = new THREE.Mesh(
+                new THREE.SphereGeometry(0.16, 8, 8),
+                new THREE.MeshStandardMaterial({ color: 0xfff6e0,
+                  emissive: 0xffe9b8, emissiveIntensity: 2.2 }));
+              lens.position.copy(head.position);
+              lens.position.y -= 0.3;
+              grp.add(lens);
+            }
+            if (!liteGPU) {
+              const lamp = new THREE.SpotLight(0xffe2b8, 160, 32, Math.PI / 4.1, 0.55, 1.6);
+              lamp.position.set(bx, 8.1, bz);
+              lamp.target.position.set(0, 0, 0);
+              grp.add(lamp);
+              grp.add(lamp.target);
+            }
           }
         }
 
@@ -1755,6 +1897,7 @@
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = lite ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      renderer.toneMappingExposure = 1.07;
       renderer.userData = { lite };
       overlay.appendChild(renderer.domElement);
 
@@ -1769,12 +1912,14 @@
 
       const hemi = new THREE.HemisphereLight(0xffffff, 0xd8dde6, 0.75);
       scene.add(hemi);
-      const sun = new THREE.DirectionalLight(0xffffff, 1.35);
+      /* warm key against a cool fill — the colour contrast photographers
+         light trade shows with; flat white light is what reads as CGI */
+      const sun = new THREE.DirectionalLight(0xfff1dd, 1.45);
       sun.castShadow = true;
-      sun.shadow.mapSize.set(2048, 2048);
+      sun.shadow.mapSize.set(lite ? 2048 : 4096, lite ? 2048 : 4096);
       sun.shadow.bias = -0.0004;
       scene.add(sun);
-      const fill = new THREE.DirectionalLight(0xdfe6f5, 0.45);
+      const fill = new THREE.DirectionalLight(0xcfdcf5, 0.5);
       fill.position.set(-1, 1, -0.5);
       scene.add(fill);
       scene.userData.sun = sun;
@@ -1825,6 +1970,15 @@
     controls.maxDistance = R * 3;
     const sun = scene.userData.sun;
     sun.position.set(W / 2 - R * 0.4, R * 0.9, H / 2 - R * 0.3);
+    /* fit the shadow camera to the hall — default bounds smear the
+       whole map over empty ground and make every shadow a blur */
+    const sc = sun.shadow.camera;
+    sc.left = -R * 0.8; sc.right = R * 0.8;
+    sc.top = R * 0.8; sc.bottom = -R * 0.8;
+    sc.near = R * 0.1; sc.far = R * 2.6;
+    sc.updateProjectionMatrix();
+    sun.target.position.set(W / 2, 0, H / 2);
+    sun.target.updateMatrixWorld();
     sun.shadow.camera.left = -R; sun.shadow.camera.right = R;
     sun.shadow.camera.top = R; sun.shadow.camera.bottom = -R;
     sun.shadow.camera.far = R * 4;
