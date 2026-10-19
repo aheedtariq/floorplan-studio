@@ -69,7 +69,6 @@
     led:     '<rect x="7" y="3" width="10" height="18" rx="1"/><path d="M10 7h4M10 11h4M10 15h4"/>',
     charge:  '<rect x="3" y="9" width="18" height="4" rx="1"/><path d="M6 13v6M18 13v6"/><path d="m13 2-3 5h4l-3 5"/>',
   };
-  FP.ICONS = ic;
 
   /* ------------------------------------------------------------
      Reusable field fragments — kind props and submission forms are
@@ -672,7 +671,6 @@
 
   cfg.kind      = (id) => cfg._index.kinds[id] || cfg._index.kinds.space;
   cfg.status    = (id) => cfg._index.statuses[id] || cfg.statuses[0];
-  cfg.layer     = (id) => cfg._index.layers[id] || { id, name: id, order: 99 };
   cfg.spaceType = (id) => cfg._index.spaceTypes[id] || cfg.spaceTypes[0];
   cfg.layerOrder = (id) => (cfg._index.layers[id]?.order ?? 99);
   cfg.kindsForScope = (scope) => cfg.kinds.filter((k) => !k.scope || k.scope.includes(scope));

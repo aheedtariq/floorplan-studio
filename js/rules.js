@@ -531,7 +531,6 @@
     plan.ruleConfig[id] = { ...cur, ...patch, params: { ...(cur.params || {}), ...(patch.params || {}) } };
   };
 
-  rules.resetOverrides = (plan = FP.plan) => { plan.ruleConfig = {}; };
 
   /**
    * @param {object} plan
@@ -614,23 +613,14 @@
   /** Errors block a submission; warnings only flag it. */
   rules.blocking = (issues) => issues.filter((i) => i.severity === 'error');
 
-  rules.summary = rules.counts;
 
-  /** Errors block submission; warnings only flag it. */
-  rules.canSubmit = (issues) => rules.blocking(issues).length === 0;
 
-  /** Register a new evaluator type. Rule RECORDS stay in config. */
-  rules.register = (type, fn) => (EVAL[type] = fn);
-  rules.types = () => Object.keys(EVAL);
 
   /* Exposed so the Electrical panel schedule and the exports compute
      load and voltage drop from exactly the same code as the rules. */
   rules.electrical = { loadByBoard, boardId, boardsOf, dropsOf, voltageDrop, CIRCULAR_MILS };
-  rules.voltageDrop = voltageDrop;
 
   rules.label = label;
-  rules.evaluators = EVAL;
-  rules.severityOrder = SEV;
 
   FP.rules = rules;
 })(window);

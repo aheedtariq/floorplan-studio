@@ -16,7 +16,6 @@
     url: 'https://bvbjjawpmdfpkmasrcpk.supabase.co',
     key: 'sb_publishable_phh-vhvlqPg8YGEjuxIorw_hgn7bnAX',
   };
-  FP.backendConfig = CONFIG;
 
   const A = (FP.auth = {});
   let client = null;
@@ -43,7 +42,6 @@
     return client;
   };
 
-  A.session = () => session;
   A.user = () => session?.user || null;
   A.profile = () => profile;
   A.role = () => profile?.role || null;
@@ -52,11 +50,9 @@
   /* Mirrors private.can_edit() / private.is_staff() so the UI can hide
      what the database would refuse anyway. The database remains the
      authority; this is only about not showing dead buttons. */
-  A.isStaff = () => ['admin', 'planner', 'sales', 'crew'].includes(A.role());
   A.canEdit = () => ['admin', 'planner'].includes(A.role());
   A.isAdmin = () => A.role() === 'admin';
   A.isClient = () => A.role() === 'client';
-  A.clientId = () => profile?.client_id || null;
 
   /** Invoke an edge function with the caller's JWT; unwraps the server's
       error message so the UI can show it verbatim. */
@@ -160,12 +156,4 @@
     FP.emit('auth', { session: null, profile: null });
   };
 
-  A.resetPassword = async (email) => {
-    const sb = A.client();
-    if (!sb) return { error: 'Supabase SDK not loaded' };
-    const { error } = await sb.auth.resetPasswordForEmail(email, {
-      redirectTo: root.location.origin + root.location.pathname,
-    });
-    return error ? { error: error.message } : { sent: true };
-  };
 })(window);

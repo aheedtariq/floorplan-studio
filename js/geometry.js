@@ -45,11 +45,6 @@
     }
   };
 
-  /** World point -> element-local (un-rotated) space. */
-  G.toLocal = (px, py, el) => {
-    const c = G.center(el);
-    return G.rotate(px, py, c.x, c.y, -(g(el).rot || 0));
-  };
 
   /** The four corners of a rect element, rotation applied. */
   G.corners = (el) => {

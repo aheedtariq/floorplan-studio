@@ -33,9 +33,7 @@
     position: sticky; top: 0; z-index: 20;
   }
   .top .logo { display: flex; align-items: center; gap: 10px; }
-  .top .logo svg { width: 30px; height: 30px; border-radius: 8px; }
   .top .logo b { font-size: 14px; display: block; line-height: 1.15; letter-spacing: -.01em; }
-  .top .logo span { font-size: 10.5px; letter-spacing: .06em; text-transform: uppercase; color: var(--tx-3); font-weight: 600; }
   .top .grow { flex: 1; }
   .who { font-size: 13px; color: var(--tx-2); }
   .who b { color: var(--tx); }
@@ -100,14 +98,6 @@
   }
   .sheet h2 { margin: 0 0 4px; font-size: 20px; font-weight: 700; letter-spacing: -.02em; }
   .sheet > p { color: var(--tx-3); margin: 0 0 20px; font-size: 14px; }
-  .step { display: flex; gap: 14px; margin: 0 0 16px; }
-  .step .n {
-    width: 30px; height: 30px; flex-shrink: 0; border-radius: 99px; background: var(--accent);
-    color: #fff; font-weight: 700; font-size: 14px; display: grid; place-items: center;
-  }
-  .step > div > b { display: block; font-size: 14px; margin-bottom: 1px; }
-  .step span { font-size: 13px; color: var(--tx-2); }
-  .step span b { color: var(--tx); }
   .sheet-foot { display: flex; gap: 10px; margin-top: 22px; align-items: center; }
   .sheet-foot .grow { flex: 1; }
 
@@ -131,7 +121,6 @@
   /* ---------- phone ---------- */
   @media (max-width: 640px) {
     .top { height: auto; flex-wrap: wrap; padding: 10px 14px; gap: 8px 10px; }
-    .top .logo span { display: none; }
     .who { display: none; }
     .page { padding: 22px 14px 70px; }
     .page-head { flex-wrap: wrap; gap: 10px; }
@@ -173,12 +162,12 @@
 <div id="overlay" hidden></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.58.0/dist/umd/supabase.min.js"></script>
-<script src="js/geometry.js?v=73"></script>
-<script src="js/config.js?v=73"></script>
-<script src="js/state.js?v=95"></script>
-<script src="js/backend.js?v=105"></script>
-<script src="js/heartbeat.js?v=108"></script>
-<script src="js/tour.js?v=109"></script>
-<script src="js/home.js?v=138"></script>
+<script src="js/geometry.js?v=141"></script>
+<script src="js/config.js?v=141"></script>
+<script src="js/state.js?v=141"></script>
+<script src="js/backend.js?v=141"></script>
+<script src="js/heartbeat.js?v=141"></script>
+<script src="js/tour.js?v=141"></script>
+<script src="js/home.js?v=141"></script>
 </body>
 </html>

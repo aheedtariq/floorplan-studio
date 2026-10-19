@@ -48,9 +48,6 @@
     'network-drop': 0, 'power-drop': 0, 'rigging-point': 0, disconnect: 0,
   };
 
-  /* Kinds drawn as cylinders — seats and round tables. */
-  const ROUND = new Set(['chair', 'stool', 'cocktail-table', 'table-round-60',
-                         'cube-seat']);
 
   /* ============================================================
      Parametric furniture.
@@ -222,7 +219,7 @@
     registration: 'REGISTRATION', food: 'FOOD & BEVERAGE', lounge: 'LOUNGE',
     storage: 'STORAGE', 'av-booth': 'AV / PRODUCTION',
     'fire-lane': 'FIRE LANE · KEEP CLEAR', 'first-aid': 'FIRST AID',
-    'dead-space': 'NO BUILD', 'dead-space-poly': 'NO BUILD',
+    'dead-space': 'NO BUILD',
     zone: 'ZONE', carpet: '', turf: '', 'rigging-zone': 'RIGGING',
   };
 
@@ -1249,13 +1246,7 @@
         transparent: flat, opacity: flat ? .55 : 1,
       });
 
-      let mesh;
-      if (ROUND.has(el.kind)) {
-        const r = Math.min(g.w, g.h) / 2;
-        mesh = new THREE.Mesh(new THREE.CylinderGeometry(r * 0.92, r * 0.92, h, 28), tileMat);
-      } else {
-        mesh = new THREE.Mesh(new THREE.BoxGeometry(g.w, h, g.h), tileMat);
-      }
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(g.w, h, g.h), tileMat);
       mesh.position.set(g.x + g.w / 2, flat ? h / 2 + 0.011 : h / 2, g.y + g.h / 2);
       if (g.rot) mesh.rotation.y = -(g.rot * Math.PI) / 180;
       if (!flat) mesh.castShadow = mesh.receiveShadow = true;
@@ -1278,14 +1269,6 @@
         }
       }
 
-      /* booth number floats above sold/held tiles */
-      if (el.kind === 'space' && el.props?.number) {
-        const spr = numberSprite(String(el.props.number));
-        if (spr) {
-          spr.position.set(g.x + g.w / 2, 2.2, g.y + g.h / 2);
-          model.add(spr);
-        }
-      }
     }
 
     /* all chairs at once: one InstancedMesh per chair part. A 900-chair
@@ -1794,11 +1777,6 @@
   FP.view3d = {
     open, close,
     toggle: () => (opened ? close() : open()),
-    /** Fly the camera to a plan point — used for zoom-to-selection. */
-    frame(x, z, dist = 40) {
-      if (!camera || !controls) return;
-      flyPoint(x, z, dist);
-    },
   };
 
   /* self-wire: the button exists on pages that include this file */

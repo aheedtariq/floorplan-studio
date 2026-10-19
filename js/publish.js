@@ -123,7 +123,6 @@
     return snapshot;
   };
 
-  FP.PUBLIC_KEY = PUBLIC_KEY;
 
   /** What publishing would remove — shown in the confirmation dialog. */
   FP.publishAudit = (plan = FP.plan) => {

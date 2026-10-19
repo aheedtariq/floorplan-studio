@@ -747,62 +747,9 @@
      ============================================================ */
   const I = (FP.interact = {});
 
-  I.setTool = setTool;
 
-  /** Arm a kind for placement, choosing the tool from its shape. */
-  I.armKind = (kindId, size = null, spaceType = null) => {
-    const k = C.kind(kindId);
-    const tool = { rect: 'draw', poly: 'poly', line: 'line',
-                   marker: 'marker', text: 'text' }[k.shape] || 'draw';
-    setTool(tool, kindId);
-    S.armedSize = size;
-    S.armedSpaceType = spaceType;
-    FP.emit('tool');
-  };
 
-  I.align = (mode) => {
-    const sel = FP.selected().filter((e) => !FP.isLocked(e));
-    if (sel.length < 2) return;
-    const box = G.bboxOfMany(sel);
-    FP.snapshot();
-    for (const el of sel) {
-      const b = G.bbox(el);
-      let dx = 0, dy = 0;
-      switch (mode) {
-        case 'left':    dx = box.x - b.x; break;
-        case 'right':   dx = box.x + box.w - (b.x + b.w); break;
-        case 'top':     dy = box.y - b.y; break;
-        case 'bottom':  dy = box.y + box.h - (b.y + b.h); break;
-        case 'hcenter': dx = box.x + box.w / 2 - (b.x + b.w / 2); break;
-        case 'vcenter': dy = box.y + box.h / 2 - (b.y + b.h / 2); break;
-      }
-      if (dx || dy) FP.moveElementDeep(el, dx, dy);
-    }
-    FP.changed();
-    R().draw();
-  };
 
-  I.distribute = (axis) => {
-    const sel = FP.selected().filter((e) => !FP.isLocked(e));
-    if (sel.length < 3) return;
-    const key = axis === 'h' ? 'x' : 'y';
-    const dim = axis === 'h' ? 'w' : 'h';
-    const items = sel.map((el) => ({ el, b: G.bbox(el) })).sort((a, b) => a.b[key] - b.b[key]);
-    const first = items[0].b, last = items[items.length - 1].b;
-    const span = (last[key] + last[dim]) - first[key];
-    const used = items.reduce((s, o) => s + o.b[dim], 0);
-    const gap = (span - used) / (items.length - 1);
-
-    FP.snapshot();
-    let cursor = first[key];
-    for (const o of items) {
-      const delta = cursor - o.b[key];
-      if (delta) FP.moveElementDeep(o.el, axis === 'h' ? delta : 0, axis === 'h' ? 0 : delta);
-      cursor += o.b[dim] + gap;
-    }
-    FP.changed();
-    R().draw();
-  };
 
   /**
    * Lay out a block of spaces. Rows are placed back-to-back in pairs with
@@ -810,24 +757,6 @@
    * built — this is the most-used authoring action, so it is first-class
    * rather than repeated copy-paste.
    */
-  I.generateBlock = ({ cols, rows, w, h, aisle = 10, gap = 0,
-                       startX = 0, startY = 0, spaceType = 'inline', prefix = '' }) => {
-    const els = [];
-    for (let r = 0; r < rows; r++) {
-      const pair = Math.floor(r / 2);
-      const y = startY + pair * (h * 2 + aisle) + (r % 2) * h;
-      for (let c = 0; c < cols; c++) {
-        const el = FP.makeElement('space', {
-          x: startX + c * (w + gap), y, w, h, rot: 0,
-        }, null);
-        el.props.spaceType = spaceType;
-        if (prefix) el.props.number = `${prefix}${el.props.number}`;
-        els.push(el);
-      }
-    }
-    if (els.length) FP.addElements(els);
-    return els;
-  };
 
   /**
    * Aisle numbering — the convention actually used on the floor.
@@ -904,25 +833,6 @@
     return spaces.length;
   };
 
-  /** Renumber every space in reading order so the manifest matches the floor. */
-  I.autoNumber = (start = 101, stepBy = 1, prefix = '') => {
-    const rowTol = 2;
-    const spaces = FP.spaces()
-      .map((el) => ({ el, b: G.bbox(el) }))
-      .sort((a, b) => (Math.abs(a.b.y - b.b.y) <= rowTol ? a.b.x - b.b.x : a.b.y - b.b.y));
-    if (!spaces.length) return 0;
-
-    FP.snapshot();
-    let no = start;
-    for (const { el } of spaces) {
-      el.props.number = `${prefix}${no}`;
-      no += stepBy;
-    }
-    FP.plan.nextSpaceNo = no;
-    FP.changed();
-    R().draw();
-    return spaces.length;
-  };
 
   /**
    * Fill a region with booths on the module.

@@ -72,7 +72,6 @@
     return { sum, unpriced };
   };
 
-  O.lines = () => lines;
 
   /* ---------------- rendering ---------------- */
 
@@ -253,7 +252,7 @@
     const sb = FP.auth.client();
     if (!sb || !ctx?.space) return null;
 
-    const space = FP.get ? ctx.plan.elements.find((e) => e.id === ctx.space.id) : null;
+    const space = ctx.plan.elements.find((e) => e.id === ctx.space.id);
     if (!space) return null;
 
     const rows = layout(space, O.itemsById());

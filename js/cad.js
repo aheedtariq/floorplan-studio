@@ -531,8 +531,13 @@
               ctx.fillStyle = '#ffffff';
               ctx.fillRect(0, 0, cnv.width, cnv.height);
               ctx.drawImage(img, 0, 0, cnv.width, cnv.height);
+              /* WebP is ~3x smaller than PNG for CAD line art at the same
+                 resolution — that is megabytes off every save and load.
+                 Browsers that can't encode it return a PNG data URL. */
+              let src = cnv.toDataURL('image/webp', 0.9);
+              if (!src.startsWith('data:image/webp')) src = cnv.toDataURL('image/png');
               FP.setUnderlay({
-                src: cnv.toDataURL('image/png'),
+                src,
                 x: 0, y: 0, w: snap(exW), h: snap(exH), opacity: 0.95, locked: true,
               });
             } catch {

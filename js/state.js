@@ -60,7 +60,6 @@
     showLabels: true,
     dirty: false,
     drag: null,
-    hover: null,
     draft: null,
     issues: [],
     filter: '',
@@ -173,7 +172,6 @@
     return map;
   };
 
-  FP.spaceAmps = (spaceId) => FP.ampsBySpace()[spaceId] || 0;
 
   FP.select = (ids, additive = false) => {
     const list = Array.isArray(ids) ? ids : ids ? [ids] : [];
@@ -445,21 +443,6 @@
       : (zs.length ? Math.min(...zs) : 0) - sel.length;
     sel.forEach((e) => { e.z = z++; });
     FP.plan.elements = dir === 'front' ? [...rest, ...sel] : [...sel, ...rest];
-    FP.changed();
-  };
-
-  /** Patch props on every selected element. */
-  FP.patchSelected = (patch, { snapshot = true } = {}) => {
-    const sel = FP.selected();
-    if (!sel.length) return;
-    if (snapshot) FP.snapshot();
-    sel.forEach((el) => Object.assign(el.props, patch));
-    FP.changed();
-  };
-
-  FP.patchGeometry = (el, patch, { snapshot = true } = {}) => {
-    if (snapshot) FP.snapshot();
-    Object.assign(el.geometry, patch);
     FP.changed();
   };
 

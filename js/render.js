@@ -37,11 +37,6 @@
     return { x: v.x + px / v.zoom, y: v.y + py / v.zoom };
   };
 
-  R.toScreen = (wx, wy) => {
-    const v = FP.state.view;
-    return { x: (wx - v.x) * v.zoom, y: (wy - v.y) * v.zoom };
-  };
-
   /** Pointer event -> world coordinates. */
   R.eventWorld = (ev) => {
     const r = svg.getBoundingClientRect();
